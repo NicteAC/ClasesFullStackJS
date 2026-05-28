@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootcamp Full Stack - 4 Horas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            color: white;
+            text-align: center;
+        }
+
+        .slide h1 {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .slide h2 {
+            font-size: 3rem;
+            margin-bottom: 40px;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .slide h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .slide p, .slide li {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .slide-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 40px 60px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            max-width: 1200px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #FFD700;
+        }
+
+        .card h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .emoji {
+            font-size: 6rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0,0,0,0.3);
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .nav-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 12px 28px;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #FFD700;
+            transition: width 0.5s ease;
+        }
+
+        ul {
+            list-style: none;
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        ul li:before {
+            content: "✓ ";
+            color: #FFD700;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .accent-text {
+            color: #FFD700;
+            font-weight: 700;
+        }
+
+        .warning-text {
+            color: #FF6B6B;
+            font-weight: 700;
+        }
+
+        .activity-alert {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #FF6B6B;
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 30px;
+        }
+
+        .activity-alert h3 {
+            color: #FF6B6B;
+            margin-bottom: 15px;
+        }
+
+        .break-slide {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFA500 100%);
+        }
+
+        .break-content {
+            font-family: 'Courier New', monospace;
+            font-size: 5rem;
+            font-weight: 700;
+            margin: 30px 0;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .break-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .break-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid white;
+            color: white;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 700;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .break-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .break-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-counter" id="counter">1 / 24</div>
+    
+    <div class="slide-container" id="slideContainer">
+        
+        <!-- SLIDE 1: PORTADA -->
+        <div class="slide">
+            <div class="emoji">🎓</div>
+            <h1>Bootcamp Full Stack</h1>
+            <h2 style="font-size: 2.5rem; margin-top: 40px;">Plan Formativo + Metodología</h2>
+            <p style="margin-top: 50px; font-size: 1.5rem;">Clase de 4 Horas</p>
+        </div>
+
+        <!-- SLIDE 2: AGENDA -->
+        <div class="slide">
+            <h2>📋 Agenda de Hoy</h2>
+            <div class="slide-content">
+                <div style="text-align: left;">
+                    <h3 style="text-align: center; color: #FFD700; margin-bottom: 30px;">Bloque 1: Plan Formativo (90 min)</h3>
+                    <ul>
+                        <li>Estructura del curso</li>
+                        <li>10 Módulos del programa</li>
+                        <li>Herramientas clave</li>
+                        <li>Tu portafolio profesional</li>
+                        <li>Actividad: Preguntas frecuentes</li>
+                    </ul>
+                    
+                    <h3 style="text-align: center; color: #FFD700; margin-top: 40px; margin-bottom: 30px;">☕ Break (20 min)</h3>
+                    
+                    <h3 style="text-align: center; color: #FFD700; margin-bottom: 30px;">Bloque 2: Metodología (90 min)</h3>
+                    <ul>
+                        <li>¿Qué es un bootcamp?</li>
+                        <li>Estructura día a día</li>
+                        <li>Miedos comunes (y cómo enfrentarlos)</li>
+                        <li>Habilidades clave a desarrollar</li>
+                        <li>Actividad: Puente de palabras</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: BIENVENIDA -->
+        <div class="slide">
+            <div class="emoji">👋</div>
+            <h2>¡Bienvenidos!</h2>
+            <div class="slide-content">
+                <p style="font-size: 1.5rem;">Hoy conocerán la estructura completa del bootcamp, los módulos que van a cursar, y cómo prepararse mentalmente para esta experiencia única.</p>
+                <p style="font-size: 1.5rem; margin-top: 30px;">Vamos a dividirnos en <span class="accent-text">2 grandes bloques</span> con un descanso en el medio para que se relajen.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: ESTRUCTURA DEL CURSO -->
+        <div class="slide">
+            <h2>🗺️ Estructura del Curso</h2>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Duración</h3>
+                        <p>3.5 meses<br>Lunes a Viernes</p>
+                    </div>
+                    <div class="card">
+                        <h3>Sincrónico</h3>
+                        <p>4 horas/día<br>Clases en vivo</p>
+                    </div>
+                    <div class="card">
+                        <h3>Asincrónico</h3>
+                        <p>2 horas/día<br>Plataforma LMS</p>
+                    </div>
+                    <div class="card">
+                        <h3>Enfoque</h3>
+                        <p>Intensivo<br>Práctico</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5-14: MÓDULOS (10 slides) -->
+        <div class="slide">
+            <h2>📚 Módulo 1: Orientación</h2>
+            <div class="slide-content">
+                <p>Comprenderás la estructura del curso, el enfoque metodológico y cómo cada módulo contribuye a tu formación.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Base sólida para el resto del programa</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 2: Front-End</h2>
+            <div class="slide-content">
+                <p>Implementarás páginas web básicas responsivas usando HTML, CSS y JavaScript.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: Sitio web responsivo</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 3: JavaScript Fundamentos</h2>
+            <div class="slide-content">
+                <p>Codificarás piezas de software usando JavaScript para resolver problemáticas comunes.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: Aplicación interactiva en JS</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 4: JavaScript Avanzado</h2>
+            <div class="slide-content">
+                <p>Codificarás software usando paradigmas OOP, eventos y programación asincrónica.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: App web compleja e interactiva</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 5: Bases de Datos</h2>
+            <div class="slide-content">
+                <p>Operarás bases de datos relacionales usando SQL para obtener, manipular y definir datos.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: Diseño y gestión de BD</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 6: Node.js + Express</h2>
+            <div class="slide-content">
+                <p>Desarrollarás aplicaciones web usando Node.js y Express para crear backends.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: Servidor web funcional</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 7: Acceso a Datos</h2>
+            <div class="slide-content">
+                <p>Desarrollarás operaciones de consulta y manipulación de datos en Node.js con ORM.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: App con conexión a BD</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 8: APIs REST</h2>
+            <div class="slide-content">
+                <p>Implementarás aplicaciones empresariales que disponibilicen servicios REST con Express.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Proyecto: API REST completa</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 9: Portafolio Digital</h2>
+            <div class="slide-content">
+                <p>Presentarás un producto digital en un portafolio personal integrando todos tus proyectos.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>Tu portafolio profesional completo</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>📚 Módulo 10: Empleabilidad</h2>
+            <div class="slide-content">
+                <p>Construirás un plan de búsqueda laboral y te prepararás para entrevistas técnicas.</p>
+                <div class="activity-alert">
+                    <h3>Outcome</h3>
+                    <p>CV + Portafolio + Estrategia laboral</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 15: HERRAMIENTAS -->
+        <div class="slide">
+            <h2>🛠️ Herramientas Clave</h2>
+            <div class="slide-content">
+                <div class="grid-2" style="grid-template-columns: 1fr;">
+                    <div class="card">
+                        <h3>Frontend</h3>
+                        <p>HTML, CSS, JavaScript, VS Code</p>
+                    </div>
+                    <div class="card">
+                        <h3>Backend</h3>
+                        <p>Node.js, Express, Git, GitHub</p>
+                    </div>
+                    <div class="card">
+                        <h3>Datos</h3>
+                        <p>SQL, PostgreSQL, pgAdmin, Mongoose</p>
+                    </div>
+                    <div class="card">
+                        <h3>Testing</h3>
+                        <p>Postman, Test Frameworks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 16: PORTAFOLIO -->
+        <div class="slide">
+            <h2>🪪 Tu Portafolio Profesional</h2>
+            <div class="slide-content">
+                <p style="font-size: 1.4rem; margin-bottom: 20px;">Una colección de tus mejores proyectos que demuestre:</p>
+                <ul>
+                    <li>Tus habilidades técnicas reales</li>
+                    <li>Tu capacidad de resolver problemas</li>
+                    <li>Tu identidad profesional</li>
+                    <li>Tu potencial como desarrollador</li>
+                </ul>
+                <p style="font-size: 1.4rem; margin-top: 30px;">Cada módulo contribuye con un proyecto que irá en tu portafolio.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 17: ACTIVIDAD 1 -->
+        <div class="slide">
+            <h2>🎯 Actividad 1: Preguntas Frecuentes</h2>
+            <div class="slide-content">
+                <div class="activity-alert">
+                    <h3>📝 Consigna</h3>
+                    <p>Escribe las dudas que tengas sobre el plan formativo, módulos, herramientas y portafolio.</p>
+                    <h3 style="margin-top: 20px;">⏱️ Tiempo: 15 minutos</h3>
+                    <p>Luego compartiremos y responderemos en grupo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 18: BREAK -->
+        <div class="slide break-slide">
+            <div class="emoji">☕</div>
+            <h1>DESCANSO</h1>
+            <div class="break-content" id="breakTimer">20:00</div>
+            <p style="font-size: 1.5rem; margin-top: 30px;">Estira las piernas, toma agua, relájate</p>
+            
+            <div class="break-controls">
+                <button class="break-btn" id="startBreakBtn" onclick="startBreakTimer()">▶ Iniciar</button>
+                <button class="break-btn" onclick="pauseBreakTimer()">⏸ Pausar</button>
+                <button class="break-btn" onclick="resetBreakTimer()">🔄 Reiniciar</button>
+            </div>
+
+            <p style="font-size: 1.3rem; margin-top: 50px;">⏰ Regresamos cuando termine el cronómetro</p>
+        </div>
+
+        <!-- SLIDE 19: BOOTCAMP -->
+        <div class="slide">
+            <h2>🏕️ ¿Qué es un Bootcamp?</h2>
+            <div class="slide-content">
+                <ul>
+                    <li>Programa intensivo de formación práctica</li>
+                    <li>Diseñado para principiantes y quienes quieren cambiar de carrera</li>
+                    <li>Combinación de teoría + práctica</li>
+                    <li>Enfoque en proyectos reales</li>
+                    <li>Comunidad de aprendizaje</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SLIDE 20: ESTRUCTURA DÍA A DÍA -->
+        <div class="slide">
+            <h2>📅 Tu Día a Día</h2>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Mañana</h3>
+                        <p>4 horas de clase sincrónica en vivo por Meet</p>
+                    </div>
+                    <div class="card">
+                        <h3>Tarde/Noche</h3>
+                        <p>2 horas de estudio asincrónico en la plataforma</p>
+                    </div>
+                </div>
+                <p style="margin-top: 30px; font-size: 1.4rem;">De lunes a viernes, durante <span class="accent-text">3.5 meses</span>.</p>
+                <p style="font-size: 1.2rem; margin-top: 20px;">Total: 6 horas diarias dedicadas al aprendizaje</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 21: MIEDOS COMUNES -->
+        <div class="slide">
+            <h2>😰 Miedos Comunes</h2>
+            <div class="slide-content">
+                <div style="text-align: left;">
+                    <h3 style="color: #FF6B6B;">❌ "No tengo experiencia"</h3>
+                    <p style="margin-bottom: 20px;">✓ El bootcamp está diseñado para principiantes</p>
+                    
+                    <h3 style="color: #FF6B6B;">❌ "Es muy rápido"</h3>
+                    <p style="margin-bottom: 20px;">✓ Divide el aprendizaje en tareas pequeñas</p>
+                    
+                    <h3 style="color: #FF6B6B;">❌ "Es muy difícil"</h3>
+                    <p style="margin-bottom: 20px;">✓ La práctica construye grandes profesionales</p>
+                    
+                    <h3 style="color: #FF6B6B;">❌ "¿Conseguiré trabajo?"</h3>
+                    <p>✓ Tu portafolio es tu mejor carta de presentación</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 22: HABILIDADES CLAVE -->
+        <div class="slide">
+            <h2>💪 Habilidades Clave</h2>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Trabajo en Equipo</h3>
+                        <p>Colaboración, comunicación, responsabilidades compartidas</p>
+                    </div>
+                    <div class="card">
+                        <h3>Autoaprendizaje</h3>
+                        <p>Independencia, curiosidad, mejora continua</p>
+                    </div>
+                    <div class="card">
+                        <h3>Tolerancia a la Frustración</h3>
+                        <p>Resiliencia, paciencia, aprender del error</p>
+                    </div>
+                    <div class="card">
+                        <h3>Ética Profesional</h3>
+                        <p>Honestidad, respeto, responsabilidad</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 23: ACTIVIDAD 2 -->
+        <div class="slide">
+            <h2>🎯 Actividad 2: Puente de Palabras</h2>
+            <div class="slide-content">
+                <div class="activity-alert">
+                    <h3>📝 Consigna</h3>
+                    <p>En equipos, construyan una historia coherente conectando palabras que parecen no tener relación.</p>
+                    <h3 style="margin-top: 20px;">🎯 Objetivo</h3>
+                    <p>Practicar trabajo en equipo, creatividad y adaptabilidad</p>
+                    <h3 style="margin-top: 20px;">⏱️ Tiempo: 15 minutos</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 24: CIERRE -->
+        <div class="slide">
+            <div class="emoji">🚀</div>
+            <h2>¡Adelante!</h2>
+            <div class="slide-content">
+                <p style="font-size: 1.5rem;">Hoy vieron la estructura completa, los módulos, las herramientas y cómo será el día a día.</p>
+                <p style="font-size: 1.5rem; margin-top: 30px;">Ahora vayan a la plataforma, completen las actividades y <span class="accent-text">prepárense mentalmente</span> para esta increíble experiencia.</p>
+                <p style="font-size: 1.3rem; margin-top: 50px; color: #FFD700;">¡Nos vemos en la próxima clase!</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="previousSlide()">← Anterior</button>
+        <button class="nav-btn" onclick="nextSlide()">Siguiente →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 24;
+        let breakInterval = null;
+        let breakTime = 1200; // 20 minutos en segundos
+
+        function updateSlide() {
+            const container = document.getElementById('slideContainer');
+            container.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            document.getElementById('counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function startBreakTimer() {
+            if (breakInterval) return;
+            
+            document.getElementById('startBreakBtn').style.opacity = '0.5';
+            
+            breakInterval = setInterval(() => {
+                if (breakTime > 0) {
+                    breakTime--;
+                    const minutes = Math.floor(breakTime / 60);
+                    const seconds = breakTime % 60;
+                    document.getElementById('breakTimer').textContent = 
+                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    clearInterval(breakInterval);
+                    breakInterval = null;
+                    document.getElementById('breakTimer').textContent = '¡TIEMPO!';
+                    playBreakSound();
+                }
+            }, 1000);
+        }
+
+        function pauseBreakTimer() {
+            if (breakInterval) {
+                clearInterval(breakInterval);
+                breakInterval = null;
+                document.getElementById('startBreakBtn').style.opacity = '1';
+            }
+        }
+
+        function resetBreakTimer() {
+            pauseBreakTimer();
+            breakTime = 1200;
+            document.getElementById('breakTimer').textContent = '20:00';
+            document.getElementById('startBreakBtn').style.opacity = '1';
+        }
+
+        function playBreakSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.frequency.value = 1000;
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    osc.start(audioContext.currentTime);
+                    osc.stop(audioContext.currentTime + 0.3);
+                }, i * 400);
+            }
+        }
+
+        // Navegación con teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Inicializar
+        updateSlide();
+    </script>
+</body>
+</html>

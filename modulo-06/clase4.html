@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manejo de Eventos en Vue 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --primary:#2D5BFF; --secondary:#00D4AA; --accent:#FF6B6B;
+    --dark:#1A1A2E;    --light:#F8F9FA;     --warning:#FFA500;
+    --card-bg:rgba(255,255,255,0.05); --border:rgba(255,255,255,0.1);
+  }
+  html,body { width:100%; height:100%; overflow:hidden; font-family:'Sora',sans-serif; background:var(--dark); color:var(--light); }
+  #app { display:flex; flex-direction:column; width:100vw; height:100vh; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding:0.55rem 2rem; background:rgba(26,26,46,0.98); border-bottom:1px solid var(--border); flex-shrink:0; }
+  .header-brand { font-size:0.78rem; font-weight:600; color:var(--secondary); letter-spacing:0.08em; text-transform:uppercase; }
+  .header-counter { font-family:'Space Mono',monospace; font-size:0.9rem; }
+  .header-title { font-size:0.76rem; color:rgba(255,255,255,0.45); text-align:right; }
+
+  .progress-bar { height:3px; background:rgba(255,255,255,0.07); flex-shrink:0; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--secondary)); transition:width 0.4s ease; }
+
+  #slides-viewport { flex:1; overflow:hidden; position:relative; }
+  .slide { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:1rem 2rem; animation:slideIn 0.45s ease-out; }
+  .slide.active { display:flex; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(36px)} to{opacity:1;transform:translateX(0)} }
+  .container { width:100%; max-width:1200px; display:flex; flex-direction:column; gap:0.9rem; }
+
+  footer { display:flex; align-items:center; justify-content:space-between; padding:0.55rem 2rem; background:rgba(26,26,46,0.98); border-top:1px solid var(--border); flex-shrink:0; }
+  .nav-btn { font-family:'Sora',sans-serif; font-size:0.85rem; font-weight:600; padding:0.45rem 1.3rem; border:1.5px solid var(--primary); background:transparent; color:var(--primary); border-radius:8px; cursor:pointer; transition:all 0.2s; }
+  .nav-btn:hover { background:var(--primary); color:#fff; }
+  .nav-btn:disabled { opacity:0.2; cursor:not-allowed; }
+  .slide-dots { display:flex; gap:7px; align-items:center; }
+  .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.18); transition:all 0.3s; cursor:pointer; }
+  .dot.active { background:var(--primary); transform:scale(1.5); }
+  .dot.d-act { background:var(--secondary); }
+  .dot.d-brk { background:var(--warning); }
+  .dot.d-cov { background:rgba(255,255,255,0.35); }
+
+  h1 { font-size:3.5rem; font-weight:800; line-height:1.1; }
+  h2 { font-size:2.1rem; font-weight:700; line-height:1.2; }
+  h3 { font-size:1.35rem; font-weight:600; line-height:1.3; }
+  p,li { font-size:1.12rem; line-height:1.8; }
+  .gradient-text { background:linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .muted { opacity:0.5; }
+
+  .badge { display:inline-block; padding:0.28rem 0.9rem; border-radius:50px; font-size:0.74rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.6rem; }
+  .b-blue   { background:rgba(45,91,255,0.2);  color:var(--primary);   border:1px solid var(--primary); }
+  .b-green  { background:rgba(0,212,170,0.2);  color:var(--secondary); border:1px solid var(--secondary); }
+  .b-red    { background:rgba(255,107,107,0.2);color:var(--accent);    border:1px solid var(--accent); }
+  .b-orange { background:rgba(255,165,0,0.2);  color:var(--warning);   border:1px solid var(--warning); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.3rem; transition:all 0.25s; }
+  .card:hover { border-color:var(--primary); transform:translateY(-3px); box-shadow:0 5px 18px rgba(45,91,255,0.15); }
+
+  .act-grid { display:grid; grid-template-columns:280px 1fr; gap:3rem; align-items:start; }
+
+  .timer-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1.5rem; text-align:center; }
+  .t-label { font-size:0.78rem; opacity:0.5; margin-bottom:0.2rem; }
+  .t-display { font-family:'Space Mono',monospace; font-size:4.5rem; font-weight:700; color:var(--secondary); text-shadow:0 0 18px rgba(0,212,170,0.4); line-height:1; margin:0.5rem 0; transition:color 0.5s,text-shadow 0.5s; }
+  .t-display.warn   { color:var(--warning); text-shadow:0 0 18px rgba(255,165,0,0.4); }
+  .t-display.danger { color:var(--accent);  text-shadow:0 0 18px rgba(255,107,107,0.4); animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .t-status { font-size:0.78rem; color:rgba(255,255,255,0.4); min-height:1em; margin-bottom:0.9rem; }
+  .t-controls { display:flex; gap:0.65rem; justify-content:center; flex-wrap:wrap; }
+  .tbtn { font-family:'Sora',sans-serif; font-size:0.77rem; font-weight:700; padding:0.38rem 0.95rem; border-radius:7px; cursor:pointer; border:none; transition:all 0.2s; }
+  .tbtn.start { background:var(--secondary); color:#000; }
+  .tbtn.pause { background:var(--warning);   color:#000; }
+  .tbtn.reset { background:rgba(255,255,255,0.1); color:var(--light); }
+  .tbtn:hover { opacity:0.8; transform:scale(1.05); }
+
+  .instr { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1.3rem 1.5rem; }
+  .instr h3 { font-size:1.2rem; color:var(--secondary); margin-bottom:0.8rem; }
+  .instr ol { padding-left:1.25rem; }
+  .instr li { font-size:1.03rem; line-height:1.72; margin-bottom:0.32rem; }
+  .context-box { font-size:0.97rem; opacity:0.7; margin-bottom:0.9rem; padding:0.75rem 1rem; background:rgba(255,255,255,0.04); border-radius:8px; border-left:3px solid var(--secondary); line-height:1.6; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:0.42rem; margin-top:0.6rem; }
+  .chip { font-family:'Space Mono',monospace; font-size:0.75rem; padding:0.2rem 0.62rem; border-radius:6px; background:rgba(45,91,255,0.15); color:var(--primary); border:1px solid rgba(45,91,255,0.3); }
+  .chip.g { background:rgba(0,212,170,0.15); color:var(--secondary); border-color:rgba(0,212,170,0.3); }
+  .chip.r { background:rgba(255,107,107,0.15);color:var(--accent);   border-color:rgba(255,107,107,0.3); }
+  .chip.o { background:rgba(255,165,0,0.15);  color:var(--warning);  border-color:rgba(255,165,0,0.3); }
+
+  .timeline { display:flex; flex-direction:column; gap:0.38rem; }
+  .tl { display:flex; align-items:center; gap:1rem; padding:0.58rem 1rem; background:var(--card-bg); border-radius:9px; border-left:3px solid var(--primary); }
+  .tl.act  { border-left-color:var(--secondary); }
+  .tl.brk  { border-left-color:var(--warning); }
+  .tl.demo { border-left-color:var(--accent); }
+  .tl-t { font-family:'Space Mono',monospace; font-size:0.8rem; color:rgba(255,255,255,0.4); min-width:65px; }
+  .tl-l { font-size:0.97rem; font-weight:600; }
+  .tl-d { margin-left:auto; font-family:'Space Mono',monospace; font-size:0.76rem; opacity:0.4; }
+
+  .s-cover { background:linear-gradient(135deg,#1A1A2E 0%,#16213E 50%,#0F3460 100%); }
+  .s-demo  { background:linear-gradient(135deg,rgba(255,107,107,0.09) 0%,rgba(45,91,255,0.07) 100%); }
+  .s-act   { background:linear-gradient(135deg,rgba(0,212,170,0.08) 0%,rgba(45,91,255,0.06) 100%); }
+  .s-brk   { background:linear-gradient(135deg,rgba(255,165,0,0.1) 0%,rgba(255,107,107,0.07) 100%); }
+
+  .hl { background:linear-gradient(135deg,rgba(45,91,255,0.1),rgba(0,212,170,0.06)); border:1px solid rgba(45,91,255,0.25); border-radius:10px; padding:0.85rem 1.2rem; }
+
+  @media (max-height:860px){
+    h1{font-size:2.7rem} h2{font-size:1.8rem} h3{font-size:1.2rem}
+    p,li{font-size:1rem} .t-display{font-size:3.6rem}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <span class="header-brand">Vue 2 CLI — Manejo de Eventos</span>
+    <span class="header-counter" id="slide-counter">1 / 8</span>
+    <span class="header-title" id="slide-title-header">Portada</span>
+  </header>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:12.5%"></div></div>
+
+  <div id="slides-viewport">
+
+    <!-- ══ 1 · PORTADA ══ -->
+    <div class="slide s-cover active" data-title="Portada" data-dot="d-cov">
+      <div class="container" style="align-items:center;text-align:center;gap:1.5rem">
+        <span class="badge b-blue">Vue 2 CLI · Módulo 6 · Lección 4</span>
+        <h1>Manejo de <span class="gradient-text">Eventos</span><br>en Vue 2</h1>
+        <p class="muted" style="max-width:580px;font-size:1.1rem">
+          Clase de 3 horas · 2 demos en vivo · 2 ejercicios prácticos
+        </p>
+        <div class="chips" style="justify-content:center">
+          <span class="chip">@click · @input · @keydown</span>
+          <span class="chip">modificadores</span>
+          <span class="chip">$event</span>
+          <span class="chip">data()</span>
+          <span class="chip">methods</span>
+          <span class="chip">computed</span>
+          <span class="chip g">this.$emit</span>
+          <span class="chip o">Vuex</span>
+          <span class="chip r">2 demos en vivo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 2 · AGENDA ══ -->
+    <div class="slide s-cover" data-title="Agenda del día" data-dot="d-cov">
+      <div class="container">
+        <div><span class="badge b-blue">Agenda</span>
+          <h2>Plan de las <span class="gradient-text">3 horas</span></h2>
+        </div>
+        <div class="timeline">
+          <div class="tl"     ><span class="tl-t">00:00</span><span class="tl-l">🎯 Repaso y contexto</span><span class="tl-d">10 min</span></div>
+          <div class="tl demo"><span class="tl-t">00:10</span><span class="tl-l">💻 Demo 1 — Lista de tareas reactiva</span><span class="tl-d">25 min</span></div>
+          <div class="tl act" ><span class="tl-t">00:35</span><span class="tl-l">✍️ Ejercicio 1 — Carrito de compras interactivo</span><span class="tl-d">45 min</span></div>
+          <div class="tl brk" ><span class="tl-t">01:20</span><span class="tl-l">☕ Descanso</span><span class="tl-d">20 min</span></div>
+          <div class="tl demo"><span class="tl-t">01:40</span><span class="tl-l">💻 Demo 2 — Formulario con <code>$emit</code> + Vuex</span><span class="tl-d">25 min</span></div>
+          <div class="tl act" ><span class="tl-t">02:05</span><span class="tl-l">✍️ Ejercicio 2 — Sistema de reseñas con estrellas</span><span class="tl-d">45 min</span></div>
+          <div class="tl"     ><span class="tl-t">02:50</span><span class="tl-l">🏁 Cierre y resumen</span><span class="tl-d">10 min</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 3 · DEMO 1 ══ -->
+    <div class="slide s-demo" data-title="Demo 1 — Lista de tareas reactiva" data-dot="">
+      <div class="container">
+        <div><span class="badge b-red">💻 Demo en Vivo 1 · 25 min</span>
+          <h2>Lista de tareas <span class="gradient-text">reactiva</span></h2>
+        </div>
+        <div class="act-grid">
+          <div>
+            <div class="timer-card">
+              <div class="t-label">⏱ Tiempo de demo</div>
+              <div class="t-display" id="t1">25:00</div>
+              <div class="t-status" id="t1-s">Listo para iniciar</div>
+              <div class="t-controls">
+                <button class="tbtn start" onclick="startTimer('t1',25)">▶ Iniciar</button>
+                <button class="tbtn pause" onclick="pauseTimer('t1')">⏸</button>
+                <button class="tbtn reset" onclick="resetTimer('t1',25)">↺</button>
+              </div>
+            </div>
+          </div>
+          <div class="instr">
+            <h3>🛠 Lo que construimos</h3>
+            <div class="context-box">
+              <code>App.vue</code> con <code>data()</code>, <code>methods</code> y <code>computed</code>. Explico cada sección mientras la escribo.
+            </div>
+            <ol>
+              <li><strong><code>data() { return {} }</code></strong> — declarar <code>nueva</code>, <code>tareas</code> y <code>error</code></li>
+              <li><strong><code>v-model</code></strong> en el input — vincularlo con la propiedad <code>nueva</code></li>
+              <li><strong><code>@keydown.enter</code></strong> en el input y <strong><code>@click</code></strong> en el botón, ambos llaman al mismo método</li>
+              <li><strong>Método <code>agregar()</code></strong> con <code>this.nueva.trim()</code> — validar vacío y duplicado</li>
+              <li><strong><code>$event</code></strong> — leer el valor del input manualmente sin <code>v-model</code></li>
+              <li><strong><code>v-for</code></strong> en la lista + método <code>eliminar(i)</code> con <code>@click</code></li>
+              <li><strong><code>computed: { total() }</code></strong> — contar cuántas tareas hay</li>
+              <li><strong>Componente <code>TareaItem.vue</code></strong> con <code>props</code> y <code>this.$emit('eliminar-tarea', i)</code></li>
+            </ol>
+            <div class="chips" style="margin-top:0.9rem">
+              <span class="chip">data()</span>
+              <span class="chip">methods</span>
+              <span class="chip">computed</span>
+              <span class="chip">@click</span>
+              <span class="chip">@keydown.enter</span>
+              <span class="chip">$event</span>
+              <span class="chip">.once</span>
+              <span class="chip g">this.$emit</span>
+              <span class="chip g">props</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 4 · EJERCICIO 1 ══ -->
+    <div class="slide s-act" data-title="Ejercicio 1 — Carrito de compras" data-dot="d-act">
+      <div class="container">
+        <div><span class="badge b-green">✍️ Ejercicio 1 · 45 min</span>
+          <h2>Carrito de compras <span class="gradient-text">interactivo</span></h2>
+        </div>
+        <div class="act-grid">
+          <div>
+            <div class="timer-card">
+              <div class="t-label">⏱ Tiempo disponible</div>
+              <div class="t-display" id="t2">45:00</div>
+              <div class="t-status" id="t2-s">Listo para iniciar</div>
+              <div class="t-controls">
+                <button class="tbtn start" onclick="startTimer('t2',45)">▶ Iniciar</button>
+                <button class="tbtn pause" onclick="pauseTimer('t2')">⏸</button>
+                <button class="tbtn reset" onclick="resetTimer('t2',45)">↺</button>
+              </div>
+            </div>
+          </div>
+          <div class="instr">
+            <h3>📋 Contexto</h3>
+            <div class="context-box">
+              Catálogo de 4 productos con nombre y precio. El usuario agrega productos al carrito, ajusta la cantidad con botones + / − y ve el total actualizado en tiempo real.
+            </div>
+            <h3 style="margin-bottom:0.7rem">Consigna:</h3>
+            <ol>
+              <li>En <code>data()</code> declarar array <code>productos</code> con <code>{ id, nombre, precio }</code> y array <code>carrito</code> vacío</li>
+              <li><code>@click</code> en cada producto para ejecutar <code>agregar(producto)</code> — no agregar duplicados</li>
+              <li>Lista del carrito con <code>v-for</code>; botones <code>+</code> y <code>−</code> con <code>@click</code> cambian <code>item.cantidad</code> (mínimo 1)</li>
+              <li>Botón eliminar ítem con <code>@click.stop</code></li>
+              <li><code>computed: { total() }</code> que suma <code>precio × cantidad</code> de todos los ítems</li>
+              <li>Componente <code>ProductoCard.vue</code> con <code>props: ['producto']</code> que hace <code>this.$emit('agregar', producto)</code></li>
+              <li>El padre escucha <code>@agregar="agregarAlCarrito"</code></li>
+              <li>Botón "Vaciar carrito" con <code>@click.once</code> — solo funciona una vez</li>
+            </ol>
+            <div class="chips" style="margin-top:0.9rem">
+              <span class="chip">data()</span>
+              <span class="chip">methods</span>
+              <span class="chip">computed</span>
+              <span class="chip">@click .stop .once</span>
+              <span class="chip">v-for</span>
+              <span class="chip g">props · this.$emit</span>
+              <span class="chip r">≠ Demo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 5 · DESCANSO ══ -->
+    <div class="slide s-brk" data-title="Descanso" data-dot="d-brk">
+      <div class="container" style="align-items:center;text-align:center;gap:1.8rem">
+        <span class="badge b-orange">☕ Descanso</span>
+        <h1 style="font-size:3.8rem">¡A <span style="background:linear-gradient(135deg,var(--warning),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">descansar!</span></h1>
+        <div class="timer-card" style="width:295px">
+          <div class="t-label">Regresamos en</div>
+          <div class="t-display warn" id="t-brk">20:00</div>
+          <div class="t-status" id="t-brk-s">Pausa activa</div>
+          <div class="t-controls" style="justify-content:center">
+            <button class="tbtn start" onclick="startTimer('t-brk',20)">▶ Iniciar</button>
+            <button class="tbtn pause" onclick="pauseTimer('t-brk')">⏸</button>
+            <button class="tbtn reset" onclick="resetTimer('t-brk',20)">↺</button>
+          </div>
+        </div>
+        <p class="muted">Segunda parte — <code>$emit</code> con payload · Vuex</p>
+      </div>
+    </div>
+
+    <!-- ══ 6 · DEMO 2 ══ -->
+    <div class="slide s-demo" data-title="Demo 2 — Formulario con $emit + Vuex" data-dot="">
+      <div class="container">
+        <div><span class="badge b-red">💻 Demo en Vivo 2 · 25 min</span>
+          <h2>Formulario con <span class="gradient-text"><code>$emit</code></span> y <span class="gradient-text">Vuex</span></h2>
+        </div>
+        <div class="act-grid">
+          <div>
+            <div class="timer-card">
+              <div class="t-label">⏱ Tiempo de demo</div>
+              <div class="t-display" id="t3">25:00</div>
+              <div class="t-status" id="t3-s">Listo para iniciar</div>
+              <div class="t-controls">
+                <button class="tbtn start" onclick="startTimer('t3',25)">▶ Iniciar</button>
+                <button class="tbtn pause" onclick="pauseTimer('t3')">⏸</button>
+                <button class="tbtn reset" onclick="resetTimer('t3',25)">↺</button>
+              </div>
+            </div>
+          </div>
+          <div class="instr">
+            <h3>🛠 Lo que construimos</h3>
+            <div class="context-box">
+              <code>ContactoForm.vue</code> valida y emite al padre. El padre guarda los mensajes en <strong>Vuex</strong> y los muestra con un <code>computed</code> que lee el store.
+            </div>
+            <ol>
+              <li><strong><code>data()</code></strong> en el hijo — <code>email</code>, <code>mensaje</code>, <code>errorMsg</code>, <code>enviando</code></li>
+              <li><strong><code>@submit.prevent</code></strong> en el form — frenar el comportamiento nativo</li>
+              <li><strong>Método <code>enviar()</code></strong> — validar, luego <code>this.$emit('enviar', { email, mensaje })</code></li>
+              <li><strong><code>@keydown.ctrl.enter</code></strong> en el textarea — atajo de teclado</li>
+              <li><strong><code>:disabled="enviando"</code></strong> en el botón mientras procesa</li>
+              <li><strong>Vuex store</strong> — <code>state.mensajes</code> y mutation <code>AGREGAR_MENSAJE</code></li>
+              <li><strong>El padre</strong> escucha <code>@enviar</code> y llama a <code>this.$store.commit('AGREGAR_MENSAJE', payload)</code></li>
+              <li><strong><code>computed: { mensajes() { return this.$store.state.mensajes } }</code></strong></li>
+            </ol>
+            <div class="chips" style="margin-top:0.9rem">
+              <span class="chip">data()</span>
+              <span class="chip">methods</span>
+              <span class="chip">computed</span>
+              <span class="chip">.prevent · .ctrl.enter</span>
+              <span class="chip">:disabled</span>
+              <span class="chip g">this.$emit</span>
+              <span class="chip o">Vuex · state · mutations</span>
+              <span class="chip o">$store.commit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 7 · EJERCICIO 2 ══ -->
+    <div class="slide s-act" data-title="Ejercicio 2 — Sistema de reseñas con estrellas" data-dot="d-act">
+      <div class="container">
+        <div><span class="badge b-green">✍️ Ejercicio 2 · 45 min</span>
+          <h2>Sistema de <span class="gradient-text">reseñas con estrellas</span></h2>
+        </div>
+        <div class="act-grid">
+          <div>
+            <div class="timer-card">
+              <div class="t-label">⏱ Tiempo disponible</div>
+              <div class="t-display" id="t4">45:00</div>
+              <div class="t-status" id="t4-s">Listo para iniciar</div>
+              <div class="t-controls">
+                <button class="tbtn start" onclick="startTimer('t4',45)">▶ Iniciar</button>
+                <button class="tbtn pause" onclick="pauseTimer('t4')">⏸</button>
+                <button class="tbtn reset" onclick="resetTimer('t4',45)">↺</button>
+              </div>
+            </div>
+          </div>
+          <div class="instr">
+            <h3>📋 Contexto</h3>
+            <div class="context-box">
+              Componente hijo <code>ResenaForm.vue</code> donde el usuario ingresa nombre, selecciona puntuación con estrellas y escribe un comentario. El padre guarda las reseñas en Vuex y muestra el promedio.
+            </div>
+            <h3 style="margin-bottom:0.7rem">Consigna:</h3>
+            <ol>
+              <li><code>data()</code> en el hijo: <code>nombre</code>, <code>puntuacion</code>, <code>puntPreview</code>, <code>comentario</code>, <code>errores</code></li>
+              <li>5 <code>&lt;span&gt;</code> como estrellas: <code>@click</code> asigna <code>puntuacion</code>, <code>@mouseover</code> asigna <code>puntPreview</code> para efecto visual</li>
+              <li>Validar en <code>methods</code>: nombre no vacío, puntuación 1–5, comentario ≥ 15 caracteres</li>
+              <li><code>this.$emit('nueva-resena', { nombre, puntuacion, comentario })</code> solo si pasa la validación</li>
+              <li>Vuex store con <code>state.resenas</code> y mutation <code>AGREGAR_RESENA</code></li>
+              <li>El padre escucha <code>@nueva-resena</code> y hace <code>this.$store.commit('AGREGAR_RESENA', payload)</code></li>
+              <li>Botón "👍 Me gusta" por reseña con <code>@click.stop</code> que incrementa un contador en <code>data()</code></li>
+              <li><code>computed: { promedio() }</code> en el padre que calcula el promedio de puntuaciones del store</li>
+            </ol>
+            <div class="chips" style="margin-top:0.9rem">
+              <span class="chip">data()</span>
+              <span class="chip">methods</span>
+              <span class="chip">computed</span>
+              <span class="chip">@mouseover</span>
+              <span class="chip">.stop</span>
+              <span class="chip g">this.$emit</span>
+              <span class="chip o">Vuex · $store.commit</span>
+              <span class="chip r">≠ Demo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 8 · CIERRE ══ -->
+    <div class="slide s-cover" data-title="Cierre y resumen" data-dot="d-cov">
+      <div class="container" style="align-items:center;text-align:center;gap:1.2rem">
+        <span class="badge b-green">🏁 Cierre</span>
+        <h2>Conceptos que se <span class="gradient-text">llevan hoy</span></h2>
+        <div class="grid-2" style="text-align:left;width:100%">
+          <div class="card" style="border-color:rgba(45,91,255,0.35)">
+            <h3 style="margin-bottom:0.8rem">Demo 1</h3>
+            <div class="chips">
+              <span class="chip">data() { return {} }</span>
+              <span class="chip">methods: {}</span>
+              <span class="chip">computed: {}</span>
+              <span class="chip">@click · @keydown.enter</span>
+              <span class="chip">$event · .once · .stop</span>
+              <span class="chip g">props · this.$emit</span>
+            </div>
+          </div>
+          <div class="card" style="border-color:rgba(0,212,170,0.35)">
+            <h3 style="margin-bottom:0.8rem">Demo 2</h3>
+            <div class="chips">
+              <span class="chip">.prevent · .ctrl.enter</span>
+              <span class="chip">:disabled</span>
+              <span class="chip g">this.$emit con payload</span>
+              <span class="chip o">Vuex state</span>
+              <span class="chip o">mutations · $store.commit</span>
+              <span class="chip o">computed ← $store.state</span>
+            </div>
+          </div>
+        </div>
+        <div class="hl" style="width:100%">
+          <p><strong>Regla de oro:</strong> Props bajan ↓ &nbsp;·&nbsp; Eventos suben ↑ &nbsp;·&nbsp; Vuex para el estado global ↔</p>
+        </div>
+        <p class="muted">Próxima clase: <strong>Vue Router</strong> — rutas, navegación programática, parámetros dinámicos 🗺️</p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Anterior</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" id="btn-next" onclick="navigate(1)">Siguiente →</button>
+  </footer>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let current  = 0;
+
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((s, i) => {
+    const d  = document.createElement('div');
+    const dc = s.dataset.dot || '';
+    d.className = 'dot' + (dc ? ' ' + dc : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function updateUI() {
+    slides.forEach((s,i) => s.classList.toggle('active', i===current));
+    document.getElementById('slide-counter').textContent      = `${current+1} / ${total}`;
+    document.getElementById('slide-title-header').textContent = slides[current].dataset.title || '';
+    document.getElementById('progress-fill').style.width      = `${((current+1)/total)*100}%`;
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===current));
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === total-1;
+  }
+  function navigate(dir) { const n=current+dir; if(n>=0&&n<total){current=n;updateUI();} }
+  function goTo(i) { current=i; updateUI(); }
+  document.addEventListener('keydown', e => {
+    if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();navigate(1);}
+    if(e.key==='ArrowLeft') navigate(-1);
+  });
+  updateUI();
+
+  const timers = {};
+  const pad = n => String(n).padStart(2,'0');
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      [0,0.4,0.8].forEach(t => {
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value=880;
+        g.gain.setValueAtTime(0.3,ctx.currentTime+t);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.3);
+        o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+0.3);
+      });
+    } catch(e){}
+  }
+
+  function startTimer(id, minutes) {
+    if(timers[id]?.interval) return;
+    if(!timers[id]) timers[id] = { remaining:minutes*60, interval:null };
+    const disp = document.getElementById(id);
+    const stat = document.getElementById(id+'-s');
+    if(!disp) return;
+    timers[id].interval = setInterval(() => {
+      timers[id].remaining--;
+      const r=timers[id].remaining, m=Math.floor(r/60), s=r%60;
+      disp.textContent = `${pad(m)}:${pad(s)}`;
+      disp.className = 't-display';
+      if(id==='t-brk') disp.classList.add('warn');
+      if(r<=60)       { disp.classList.add('danger'); stat.textContent='⚠️ ¡Menos de 1 minuto!'; }
+      else if(r<=300) { disp.classList.add('warn');   stat.textContent='⏰ Menos de 5 minutos'; }
+      else              stat.textContent='En progreso...';
+      if(r<=0){ clearInterval(timers[id].interval); timers[id].interval=null; disp.textContent='00:00'; stat.textContent='✅ ¡Tiempo!'; beep(); }
+    }, 1000);
+    stat.textContent='En progreso...';
+  }
+  function pauseTimer(id) {
+    if(timers[id]?.interval){ clearInterval(timers[id].interval); timers[id].interval=null;
+      const s=document.getElementById(id+'-s'); if(s) s.textContent='⏸ Pausado'; }
+  }
+  function resetTimer(id, minutes) {
+    pauseTimer(id);
+    timers[id] = { remaining:minutes*60, interval:null };
+    const disp=document.getElementById(id), stat=document.getElementById(id+'-s');
+    if(disp){ disp.textContent=`${pad(minutes)}:00`; disp.className='t-display'; if(id==='t-brk') disp.classList.add('warn'); }
+    if(stat) stat.textContent='Listo para iniciar';
+  }
+</script>
+</body>
+</html>

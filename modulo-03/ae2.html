@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metodologías CSS con SASS: BEM + OOCSS + SMACSS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D5BFF;
+            --secondary: #00D4AA;
+            --accent: #FF6B6B;
+            --dark: #1A1A2E;
+            --light: #F8F9FA;
+            --warning: #FFA500;
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.8;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(45, 91, 255, 0.3);
+        }
+
+        .slide-counter {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--secondary);
+        }
+
+        .block-indicator {
+            font-size: 0.9rem;
+            color: rgba(248, 249, 250, 0.6);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .presentation {
+            height: 100vh;
+            padding-top: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: calc(100vh - 140px);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--light);
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+        }
+
+        p, li { font-size: 1.25rem; line-height: 1.8; }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: rgba(248, 249, 250, 0.8);
+            margin-bottom: 2rem;
+        }
+
+        .time-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .cards-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .cards-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(45, 91, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .card p { font-size: 1rem; color: rgba(248, 249, 250, 0.7); }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 1.2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            border: 1px solid rgba(45, 91, 255, 0.3);
+            margin: 0.8rem 0;
+        }
+
+        .code-block code { color: var(--light); line-height: 1.5; }
+        .code-block pre { margin: 0; font-family: inherit; font-size: inherit; }
+
+        .code-comment { color: #6a9955; }
+        .code-selector { color: var(--secondary); }
+        .code-property { color: var(--accent); }
+        .code-value { color: #ce9178; }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .comparison-col h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+
+        .comparison-col.bad h4 { color: var(--accent); border-color: var(--accent); }
+        .comparison-col.good h4 { color: var(--secondary); border-color: var(--secondary); }
+
+        .highlight-box {
+            background: rgba(45, 91, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .timer-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(45, 91, 255, 0.3);
+            margin-bottom: 1.5rem;
+        }
+
+        .timer-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);
+            margin: 0.5rem 0;
+        }
+
+        .timer-display.warning { color: var(--warning); }
+        .timer-display.danger { color: var(--accent); }
+
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .timer-btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timer-btn.start { background: var(--secondary); color: var(--dark); }
+        .timer-btn.pause { background: var(--warning); color: var(--dark); }
+        .timer-btn.reset { background: rgba(255,255,255,0.1); color: var(--light); }
+        .timer-btn:hover { transform: scale(1.05); }
+
+        .timer-status {
+            margin-top: 0.8rem;
+            font-size: 1rem;
+            color: rgba(248, 249, 250, 0.6);
+        }
+
+        .activity-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .activity-option {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(45, 91, 255, 0.2);
+            text-align: center;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .requirements-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .requirements-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+
+        .summary-list {
+            list-style: none;
+        }
+
+        .summary-list li {
+            padding: 0.6rem 0;
+            padding-left: 2rem;
+            position: relative;
+            font-size: 1.15rem;
+        }
+
+        .summary-list li::before {
+            content: '✅';
+            position: absolute;
+            left: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            background: rgba(45, 91, 255, 0.2);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 0.8rem 2rem;
+            border: 2px solid var(--primary);
+            background: rgba(45, 91, 255, 0.1);
+            color: var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: var(--primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .error-box {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .success-box {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 2rem; }
+            .cards-grid, .cards-grid-3, .cards-grid-4 { grid-template-columns: 1fr; }
+            .comparison-grid { grid-template-columns: 1fr; }
+            .activity-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <span class="block-indicator" id="blockIndicator">Bloque 1</span>
+        <span class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">21</span>
+        </span>
+    </header>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <main class="presentation">
+
+        <!-- ========== BLOQUE 1: INTRO + BEM + OOCSS + DEMO (50 min) ========== -->
+
+        <!-- Slide 1: Título -->
+        <section class="slide" data-slide="1" data-block="Bloque 1 - Introducción">
+            <h1>Metodologías CSS con SASS</h1>
+            <p class="subtitle">BEM + OOCSS + SMACSS</p>
+            <div class="cards-grid cards-grid-3" style="margin-top: 2rem;">
+                <div class="card">
+                    <h3>🎯 BEM</h3>
+                    <p>Nomenclatura clara para clases</p>
+                </div>
+                <div class="card">
+                    <h3>🧩 OOCSS</h3>
+                    <p>Separar estructura de apariencia</p>
+                </div>
+                <div class="card">
+                    <h3>📁 SMACSS</h3>
+                    <p>Organización de archivos</p>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 2rem;">
+                <p>💡 Combinaremos las tres metodologías usando <strong>SASS</strong> para máxima eficiencia</p>
+            </div>
+        </section>
+
+        <!-- Slide 2: Objetivos -->
+        <section class="slide" data-slide="2" data-block="Bloque 1 - Introducción">
+            <span class="time-badge">⏱️ 2 min</span>
+            <h2>🎯 Objetivos de la Clase</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>1. Identificar</h3>
+                    <p>Cuándo el CSS se vuelve un problema</p>
+                </div>
+                <div class="card">
+                    <h3>2. Aplicar BEM</h3>
+                    <p>Nombrar clases de forma clara y predecible</p>
+                </div>
+                <div class="card">
+                    <h3>3. Separar con OOCSS</h3>
+                    <p>Estructura vs apariencia visual</p>
+                </div>
+                <div class="card">
+                    <h3>4. Organizar con SMACSS</h3>
+                    <p>Arquitectura de archivos escalable</p>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 1.5rem;">
+                <p>🚀 Esto diferencia a un desarrollador junior de uno que trabaja en equipos grandes</p>
+            </div>
+        </section>
+
+        <!-- Slide 3: El Problema -->
+        <section class="slide" data-slide="3" data-block="Bloque 1 - Introducción">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>😱 El Problema</h2>
+            <div class="comparison-grid">
+                <div class="comparison-col bad">
+                    <h4>❌ CSS Caótico</h4>
+                    <div class="code-block">
+<pre><code><span class="code-comment">/* ¿Qué hace esto? */</span>
+<span class="code-selector">.sidebar .nav ul li a</span> { }
+<span class="code-selector">.btn</span> { }
+<span class="code-selector">.button</span> { }
+<span class="code-selector">.header .nav .active</span> { }
+<span class="code-selector">#main-content .card</span> { }</code></pre>
+                    </div>
+                    <p style="font-size: 1rem; color: var(--accent);">Alta especificidad, nombres inconsistentes, difícil mantener</p>
+                </div>
+                <div class="comparison-col good">
+                    <h4>✅ CSS Organizado</h4>
+                    <div class="code-block">
+<pre><code><span class="code-comment">/* Claro y predecible */</span>
+<span class="code-selector">.nav__link</span> { }
+<span class="code-selector">.nav__link--active</span> { }
+<span class="code-selector">.card</span> { }
+<span class="code-selector">.card__title</span> { }
+<span class="code-selector">.card--featured</span> { }</code></pre>
+                    </div>
+                    <p style="font-size: 1rem; color: var(--secondary);">Selectores planos, nombres autoexplicativos</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Intro BEM -->
+        <section class="slide" data-slide="4" data-block="Bloque 1 - BEM">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>🧱 BEM: Block Element Modifier</h2>
+            <div class="cards-grid cards-grid-3">
+                <div class="card">
+                    <h3>Block (Bloque)</h3>
+                    <p>Entidad independiente</p>
+                    <div class="code-block">
+                        <code><span class="code-selector">.card</span><br><span class="code-selector">.nav</span><br><span class="code-selector">.form</span></code>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Element (Elemento)</h3>
+                    <p>Parte del bloque</p>
+                    <div class="code-block">
+                        <code><span class="code-selector">.card<span style="color: var(--accent);">__</span>title</span><br><span class="code-selector">.nav<span style="color: var(--accent);">__</span>link</span></code>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Modifier (Modificador)</h3>
+                    <p>Variante o estado</p>
+                    <div class="code-block">
+                        <code><span class="code-selector">.card<span style="color: var(--warning);">--</span>featured</span><br><span class="code-selector">.btn<span style="color: var(--warning);">--</span>primary</span></code>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 1.5rem;">
+                <p>📐 <strong>Convención:</strong> <code>bloque__elemento--modificador</code></p>
+            </div>
+        </section>
+
+        <!-- Slide 5: BEM en HTML -->
+        <section class="slide" data-slide="5" data-block="Bloque 1 - BEM">
+            <span class="time-badge">⏱️ 2 min</span>
+            <h2>📝 BEM en HTML</h2>
+            <div class="code-block">
+<pre><code><span class="code-comment">&lt;!-- Bloque: card --&gt;</span>
+&lt;article class="<span class="code-selector">card card--featured</span>"&gt;
+    &lt;img class="<span class="code-selector">card__image</span>" src="foto.jpg"&gt;
+    &lt;div class="<span class="code-selector">card__content</span>"&gt;
+        &lt;h2 class="<span class="code-selector">card__title</span>"&gt;Título&lt;/h2&gt;
+        &lt;p class="<span class="code-selector">card__description</span>"&gt;Texto...&lt;/p&gt;
+        &lt;button class="<span class="code-selector">card__button card__button--primary</span>"&gt;
+            Ver más
+        &lt;/button&gt;
+    &lt;/div&gt;
+&lt;/article&gt;</code></pre>
+            </div>
+            <div class="highlight-box">
+                <p>👀 Al leer las clases ya sabes qué es cada cosa sin ver el CSS</p>
+            </div>
+        </section>
+
+        <!-- Slide 6: BEM en SASS -->
+        <section class="slide" data-slide="6" data-block="Bloque 1 - BEM">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>✨ BEM + SASS = Magia</h2>
+            <div class="comparison-grid">
+                <div class="comparison-col">
+                    <h4 style="color: var(--primary); border-color: var(--primary);">SASS (escribes)</h4>
+                    <div class="code-block">
+<pre><code><span class="code-selector">.card</span> {
+  <span class="code-property">max-width</span>: <span class="code-value">320px</span>;
+  
+  <span class="code-selector">&__image</span> {
+    <span class="code-property">width</span>: <span class="code-value">100%</span>;
+  }
+  
+  <span class="code-selector">&__title</span> {
+    <span class="code-property">font-size</span>: <span class="code-value">1.25rem</span>;
+  }
+  
+  <span class="code-selector">&--featured</span> {
+    <span class="code-property">border</span>: <span class="code-value">2px solid gold</span>;
+  }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="comparison-col">
+                    <h4 style="color: var(--secondary); border-color: var(--secondary);">CSS (compila a)</h4>
+                    <div class="code-block">
+<pre><code><span class="code-selector">.card</span> {
+  <span class="code-property">max-width</span>: <span class="code-value">320px</span>;
+}
+
+<span class="code-selector">.card__image</span> {
+  <span class="code-property">width</span>: <span class="code-value">100%</span>;
+}
+
+<span class="code-selector">.card__title</span> {
+  <span class="code-property">font-size</span>: <span class="code-value">1.25rem</span>;
+}
+
+<span class="code-selector">.card--featured</span> {
+  <span class="code-property">border</span>: <span class="code-value">2px solid gold</span>;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 1rem;">📦 Código organizado → Selectores planos. ¡Lo mejor de ambos mundos!</p>
+        </section>
+
+        <!-- Slide 7: Ventajas BEM -->
+        <section class="slide" data-slide="7" data-block="Bloque 1 - BEM">
+            <span class="time-badge">⏱️ 2 min</span>
+            <h2>💪 Ventajas de BEM</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>🔮 Predictibilidad</h3>
+                    <p>Leen HTML y saben qué hace cada clase</p>
+                </div>
+                <div class="card">
+                    <h3>👥 Colaboración</h3>
+                    <p>Cualquiera del equipo entiende la estructura</p>
+                </div>
+                <div class="card">
+                    <h3>📈 Escalabilidad</h3>
+                    <p>Agregan componentes sin conflictos</p>
+                </div>
+                <div class="card">
+                    <h3>🔧 Refactorización</h3>
+                    <p>Modifican una clase sin efectos secundarios</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Intro OOCSS -->
+        <section class="slide" data-slide="8" data-block="Bloque 1 - OOCSS">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>🧩 OOCSS: Object-Oriented CSS</h2>
+            <p style="margin-bottom: 1.5rem;">Tratar estilos como objetos reutilizables</p>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>1️⃣ Separar Estructura de Skin</h3>
+                    <p><strong>Estructura:</strong> layout, tamaño, spacing</p>
+                    <p><strong>Skin:</strong> colores, bordes, sombras</p>
+                </div>
+                <div class="card">
+                    <h3>2️⃣ Evitar Dependencia Contextual</h3>
+                    <p>Un botón se ve igual en el header que en el sidebar</p>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 1.5rem;">
+                <p>🎯 <strong>Beneficio:</strong> Cambias colores sin tocar estructura, y viceversa</p>
+            </div>
+        </section>
+
+        <!-- Slide 9: OOCSS Ejemplo -->
+        <section class="slide" data-slide="9" data-block="Bloque 1 - OOCSS">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>📊 OOCSS en Práctica</h2>
+            <div class="comparison-grid">
+                <div class="comparison-col bad">
+                    <h4>❌ Sin OOCSS</h4>
+                    <div class="code-block">
+<pre><code><span class="code-selector">.error-button</span> {
+  <span class="code-property">padding</span>: <span class="code-value">10px 20px</span>;
+  <span class="code-property">border-radius</span>: <span class="code-value">8px</span>;
+  <span class="code-property">background</span>: <span class="code-value">red</span>;
+}
+
+<span class="code-selector">.success-button</span> {
+  <span class="code-property">padding</span>: <span class="code-value">10px 20px</span>;  <span class="code-comment">/* repetido */</span>
+  <span class="code-property">border-radius</span>: <span class="code-value">8px</span>;  <span class="code-comment">/* repetido */</span>
+  <span class="code-property">background</span>: <span class="code-value">green</span>;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="comparison-col good">
+                    <h4>✅ Con OOCSS</h4>
+                    <div class="code-block">
+<pre><code><span class="code-comment">/* Estructura */</span>
+<span class="code-selector">.button</span> {
+  <span class="code-property">padding</span>: <span class="code-value">10px 20px</span>;
+  <span class="code-property">border-radius</span>: <span class="code-value">8px</span>;
+}
+
+<span class="code-comment">/* Skins */</span>
+<span class="code-selector">.button--error</span> { <span class="code-property">background</span>: <span class="code-value">red</span>; }
+<span class="code-selector">.button--success</span> { <span class="code-property">background</span>: <span class="code-value">green</span>; }</code></pre>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 1rem;">🔄 Cambiar padding de TODOS los botones = 1 solo lugar</p>
+        </section>
+
+        <!-- Slide 10: Demo Tarjeta -->
+        <section class="slide" data-slide="10" data-block="Bloque 1 - Demo">
+            <span class="time-badge">⏱️ 28 min - DEMO EN VIVO</span>
+            <h2>🛠️ Demo: Tarjeta con BEM + OOCSS + SASS</h2>
+            <div class="code-block">
+<pre><code>tarjeta-bem/
+├── index.html
+├── scss/
+│   ├── main.scss
+│   ├── _variables.scss      <span class="code-comment">← Colores, espaciados</span>
+│   ├── _mixins.scss         <span class="code-comment">← Patrones reutilizables</span>
+│   ├── base/
+│   │   └── _reset.scss      <span class="code-comment">← Estilos base</span>
+│   ├── components/
+│   │   └── _card.scss       <span class="code-comment">← Estructura (OOCSS)</span>
+│   └── skins/
+│       └── _card-skin.scss  <span class="code-comment">← Apariencia (OOCSS)</span>
+└── css/
+    └── main.css             <span class="code-comment">← Generado automáticamente</span></code></pre>
+            </div>
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p>⚡ <strong>Activen Live Sass Compiler</strong> → Click en "Watch Sass" en la barra inferior de VS Code</p>
+            </div>
+        </section>
+
+        <!-- ========== BLOQUE 2: ACTIVIDAD 1 (25 min) ========== -->
+
+        <!-- Slide 11: Actividad 1 -->
+        <section class="slide" data-slide="11" data-block="Bloque 2 - Actividad">
+            <span class="time-badge">⏱️ 25 min - ACTIVIDAD</span>
+            <h2>✏️ Actividad 1: Componente BEM + OOCSS</h2>
+            
+            <div class="timer-section">
+                <div class="timer-display" id="timer1">25:00</div>
+                <div class="timer-controls">
+                    <button class="timer-btn start" onclick="startTimer('timer1', 25)">▶ Iniciar</button>
+                    <button class="timer-btn pause" onclick="pauseTimer('timer1')">⏸ Pausar</button>
+                    <button class="timer-btn reset" onclick="resetTimer('timer1', 25)">↺ Reiniciar</button>
+                </div>
+                <p class="timer-status" id="timer1-status">Listo para comenzar</p>
+            </div>
+
+            <div class="activity-options">
+                <div class="activity-option">
+                    <h3>👤 Perfil de Usuario</h3>
+                    <p>Avatar, nombre, bio, botón seguir</p>
+                </div>
+                <div class="activity-option">
+                    <h3>📰 Artículo de Blog</h3>
+                    <p>Imagen, título, extracto, autor</p>
+                </div>
+                <div class="activity-option">
+                    <h3>🎬 Ficha de Película</h3>
+                    <p>Póster, título, rating, sinopsis</p>
+                </div>
+            </div>
+
+            <ul class="requirements-list">
+                <li>Mínimo 3 archivos SCSS: variables, componente, skin</li>
+                <li>Nomenclatura BEM con <code>&</code> de SASS</li>
+                <li>Al menos 1 modificador (<code>--variante</code>)</li>
+                <li>Separación clara estructura/apariencia</li>
+            </ul>
+        </section>
+
+        <!-- ========== DESCANSO (15 min) ========== -->
+
+        <!-- Slide 12: Descanso -->
+        <section class="slide" data-slide="12" data-block="Descanso">
+            <h2>☕ Descanso</h2>
+            
+            <div class="timer-section">
+                <div class="timer-display" id="timerBreak">15:00</div>
+                <div class="timer-controls">
+                    <button class="timer-btn start" onclick="startTimer('timerBreak', 15)">▶ Iniciar</button>
+                    <button class="timer-btn pause" onclick="pauseTimer('timerBreak')">⏸ Pausar</button>
+                    <button class="timer-btn reset" onclick="resetTimer('timerBreak', 15)">↺ Reiniciar</button>
+                </div>
+                <p class="timer-status" id="timerBreak-status">15 minutos de descanso</p>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 2rem;">
+                <p style="font-size: 1.3rem;">🚶 Estiren las piernas, tomen agua</p>
+                <p style="margin-top: 1rem;"><strong>Cuando volvamos:</strong> SMACSS + Comparación + Demo Navbar responsive</p>
+            </div>
+        </section>
+
+        <!-- ========== BLOQUE 3: SMACSS + COMPARACIÓN + DEMO NAVBAR (45 min) ========== -->
+
+        <!-- Slide 13: Intro SMACSS -->
+        <section class="slide" data-slide="13" data-block="Bloque 3 - SMACSS">
+            <span class="time-badge">⏱️ 5 min</span>
+            <h2>📁 SMACSS: Organización de Archivos</h2>
+            <p style="margin-bottom: 1rem;">Scalable and Modular Architecture for CSS</p>
+            <div class="cards-grid" style="grid-template-columns: repeat(5, 1fr);">
+                <div class="card" style="text-align: center;">
+                    <h3>Base</h3>
+                    <p>Reset, elementos HTML</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>Layout</h3>
+                    <p>Header, footer, grid</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>Module</h3>
+                    <p>Componentes</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>State</h3>
+                    <p>is-active, is-open</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>Theme</h3>
+                    <p>Tema oscuro/claro</p>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p>🏷️ <strong>Estados SMACSS:</strong> Prefijo <code>is-</code> (is-active, is-open) y <code>has-</code> (has-error)</p>
+            </div>
+        </section>
+
+        <!-- Slide 14: Categorías SMACSS -->
+        <section class="slide" data-slide="14" data-block="Bloque 3 - SMACSS">
+            <span class="time-badge">⏱️ 5 min</span>
+            <h2>📂 Estructura de Carpetas SMACSS</h2>
+            <div class="comparison-grid">
+                <div class="code-block">
+<pre><code>scss/
+├── base/
+│   └── _reset.scss
+├── layout/
+│   ├── _header.scss
+│   └── _footer.scss
+├── modules/
+│   ├── _card.scss
+│   └── _nav.scss
+├── states/
+│   └── _states.scss
+└── themes/
+    └── _dark.scss</code></pre>
+                </div>
+                <div>
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <h3>Estados con JavaScript</h3>
+                        <div class="code-block">
+<pre><code><span class="code-comment">// Agregar estado</span>
+element.classList.add('<span class="code-value">is-active</span>');
+
+<span class="code-comment">// Toggle estado</span>
+element.classList.toggle('<span class="code-value">is-open</span>');</code></pre>
+                        </div>
+                    </div>
+                    <p>Los estados <code>is-</code> y <code>has-</code> son controlados por JS, nunca hardcodeados en HTML.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 15: Comparación -->
+        <section class="slide" data-slide="15" data-block="Bloque 3 - Comparación">
+            <span class="time-badge">⏱️ 5 min</span>
+            <h2>⚖️ Comparación de Metodologías</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspecto</th>
+                        <th>BEM</th>
+                        <th>OOCSS</th>
+                        <th>SMACSS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Enfoque</strong></td>
+                        <td>Nombrar clases</td>
+                        <td>Reutilizar objetos</td>
+                        <td>Organizar archivos</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Convención</strong></td>
+                        <td><code>bloque__elem--mod</code></td>
+                        <td>Estructura + Skin</td>
+                        <td>Base/Layout/Module/State</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fortaleza</strong></td>
+                        <td>Claridad</td>
+                        <td>DRY (no repetir)</td>
+                        <td>Escalabilidad</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ideal para</strong></td>
+                        <td>Componentes</td>
+                        <td>Sistemas de diseño</td>
+                        <td>Proyectos grandes</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="highlight-box" style="margin-top: 1rem;">
+                <p>🎯 <strong>En la práctica:</strong> Se combinan las tres → Nombres BEM + Separación OOCSS + Organización SMACSS</p>
+            </div>
+        </section>
+
+        <!-- Slide 16: Demo Navbar -->
+        <section class="slide" data-slide="16" data-block="Bloque 3 - Demo">
+            <span class="time-badge">⏱️ 30 min - DEMO EN VIVO</span>
+            <h2>🛠️ Demo: Navbar Responsive con Estados</h2>
+            <div class="code-block">
+<pre><code>navbar-hibrida/
+├── index.html
+├── js/
+│   └── nav.js               <span class="code-comment">← Controla estados</span>
+├── scss/
+│   ├── main.scss
+│   ├── _variables.scss
+│   ├── _mixins.scss         <span class="code-comment">← @mixin mobile { }</span>
+│   ├── base/_reset.scss
+│   ├── layout/_nav.scss     <span class="code-comment">← Estructura BEM</span>
+│   ├── skins/_nav-theme.scss <span class="code-comment">← Colores OOCSS</span>
+│   └── states/_states.scss  <span class="code-comment">← is-active, is-open, is-scrolled</span>
+└── css/main.css</code></pre>
+            </div>
+            <div class="cards-grid cards-grid-3" style="margin-top: 1rem;">
+                <div class="card" style="text-align: center;">
+                    <h3>📱 Responsive</h3>
+                    <p>Menú hamburguesa en mobile</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>🎭 Estados</h3>
+                    <p>is-active, is-open, is-scrolled</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3>⚡ Animaciones</h3>
+                    <p>Hamburguesa → X</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== BLOQUE 4: ACTIVIDAD 2 + CIERRE (45 min) ========== -->
+
+        <!-- Slide 17: Actividad 2 -->
+        <section class="slide" data-slide="17" data-block="Bloque 4 - Actividad">
+            <span class="time-badge">⏱️ 30 min - ACTIVIDAD FINAL</span>
+            <h2>✏️ Actividad 2: Componente Completo</h2>
+            
+            <div class="timer-section">
+                <div class="timer-display" id="timer2">30:00</div>
+                <div class="timer-controls">
+                    <button class="timer-btn start" onclick="startTimer('timer2', 30)">▶ Iniciar</button>
+                    <button class="timer-btn pause" onclick="pauseTimer('timer2')">⏸ Pausar</button>
+                    <button class="timer-btn reset" onclick="resetTimer('timer2', 30)">↺ Reiniciar</button>
+                </div>
+                <p class="timer-status" id="timer2-status">Listo para comenzar</p>
+            </div>
+
+            <div class="activity-options">
+                <div class="activity-option">
+                    <h3>🍔 Menú Hamburguesa</h3>
+                    <p>Con submenús desplegables</p>
+                </div>
+                <div class="activity-option">
+                    <h3>📝 Formulario</h3>
+                    <p>Con validación visual</p>
+                </div>
+                <div class="activity-option">
+                    <h3>🖼️ Galería</h3>
+                    <p>Con modal/lightbox</p>
+                </div>
+            </div>
+
+            <ul class="requirements-list">
+                <li>Mínimo 4 archivos SCSS: variables, mixins, componente, states</li>
+                <li>Al menos 2 estados <code>is-</code> o <code>has-</code></li>
+                <li>Mínimo 1 mixin personalizado</li>
+                <li>Responsive con mixin de media query</li>
+            </ul>
+        </section>
+
+        <!-- Slide 18: Errores Comunes -->
+        <section class="slide" data-slide="18" data-block="Bloque 4 - Cierre">
+            <span class="time-badge">⏱️ 5 min</span>
+            <h2>⚠️ Errores Comunes y Soluciones</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>1. Menú mobile no aparece</h3>
+                    <div class="error-box">
+                        <code>.nav__menu.is-open { display: flex; }</code>
+                    </div>
+                    <div class="success-box">
+                        <code>@include mobile { &.is-open { display: flex; } }</code>
+                    </div>
+                    <p style="font-size: 0.9rem;">is-open debe estar DENTRO del media query</p>
+                </div>
+                <div class="card">
+                    <h3>2. Menú a 100vh del viewport</h3>
+                    <div class="error-box">
+                        <code>.nav { display: flex; }</code>
+                    </div>
+                    <div class="success-box">
+                        <code>.nav { position: sticky; top: 0; }</code>
+                    </div>
+                    <p style="font-size: 0.9rem;">Nav necesita position para que top:100% funcione</p>
+                </div>
+                <div class="card">
+                    <h3>3. Mixin no acepta múltiples props</h3>
+                    <div class="error-box">
+                        <code>@mixin transition($prop: all)</code>
+                    </div>
+                    <div class="success-box">
+                        <code>@mixin transition($props...)</code>
+                    </div>
+                    <p style="font-size: 0.9rem;">Usar varargs (...) para múltiples valores</p>
+                </div>
+                <div class="card">
+                    <h3>4. Menú se cierra al abrir</h3>
+                    <div class="error-box">
+                        <code>toggle.addEventListener('click', () => {})</code>
+                    </div>
+                    <div class="success-box">
+                        <code>toggle.addEventListener('click', (e) => { e.stopPropagation(); })</code>
+                    </div>
+                    <p style="font-size: 0.9rem;">stopPropagation evita que el evento cierre el menú</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 19: Impacto -->
+        <section class="slide" data-slide="19" data-block="Bloque 4 - Cierre">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>📊 Impacto de las Metodologías</h2>
+            <div class="cards-grid cards-grid-3">
+                <div class="card" style="text-align: center;">
+                    <h3 style="font-size: 3rem; color: var(--secondary);">30%</h3>
+                    <p>Reducción de código por reutilización</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3 style="font-size: 3rem; color: var(--primary);">65%</h3>
+                    <p>Menos tiempo de debugging</p>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <h3 style="font-size: 3rem; color: var(--accent);">80%</h3>
+                    <p>Mayor reutilización entre proyectos</p>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 2rem;">
+                <p>💼 <strong>En la industria:</strong> Airbnb, GitHub, Spotify usan estas metodologías como estándar</p>
+            </div>
+        </section>
+
+        <!-- Slide 20: Próximos Pasos -->
+        <section class="slide" data-slide="20" data-block="Bloque 4 - Cierre">
+            <span class="time-badge">⏱️ 3 min</span>
+            <h2>🚀 Próximos Pasos</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>📚 Profundizar SASS</h3>
+                    <p>Funciones, maps, loops, @each</p>
+                </div>
+                <div class="card">
+                    <h3>🏗️ Arquitectura 7-1</h3>
+                    <p>Para proyectos grandes</p>
+                </div>
+                <div class="card">
+                    <h3>⚛️ CSS Modules / CSS-in-JS</h3>
+                    <p>Alternativas modernas para React/Vue</p>
+                </div>
+                <div class="card">
+                    <h3>🎨 Tailwind / Bootstrap</h3>
+                    <p>Frameworks que implementan estas ideas</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 21: Resumen -->
+        <section class="slide" data-slide="21" data-block="Bloque 4 - Cierre">
+            <span class="time-badge">⏱️ 4 min</span>
+            <h2>✅ Resumen de la Clase</h2>
+            <ul class="summary-list">
+                <li>CSS sin metodología es insostenible</li>
+                <li><strong>BEM</strong> → Nombres predecibles (<code>bloque__elemento--modificador</code>)</li>
+                <li><strong>OOCSS</strong> → Separar estructura de apariencia</li>
+                <li><strong>SMACSS</strong> → Organizar por categorías (Base, Layout, Module, State)</li>
+                <li><strong>SASS</strong> → Variables, nesting con <code>&</code>, mixins, partials</li>
+                <li>En la práctica, <strong>combinamos las tres metodologías</strong></li>
+            </ul>
+            <div class="highlight-box" style="margin-top: 1.5rem;">
+                <p style="font-size: 1.4rem; text-align: center;">🎯 <strong>La mejor metodología es la que tu equipo adopta consistentemente</strong></p>
+            </div>
+            <p style="text-align: center; margin-top: 2rem; font-size: 1.5rem;">¿Preguntas? 🙋</p>
+        </section>
+
+    </main>
+
+    <nav class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Anterior</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Siguiente →</button>
+    </nav>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            currentSlide = n;
+            
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === n - 1) {
+                    slide.classList.add('active');
+                    const block = slide.getAttribute('data-block') || '';
+                    document.getElementById('blockIndicator').textContent = block;
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = n;
+            document.getElementById('progressBar').style.width = ((n / totalSlides) * 100) + '%';
+            document.getElementById('prevBtn').disabled = (n === 1);
+            document.getElementById('nextBtn').disabled = (n === totalSlides);
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+
+        // Timer functionality
+        const timers = {};
+        let audioContext;
+
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        function playBeep() {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                setTimeout(() => oscillator.stop(), 200);
+            } catch(e) {}
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerDisplay(timerId) {
+            const timer = timers[timerId];
+            const display = document.getElementById(timerId);
+            const status = document.getElementById(`${timerId}-status`);
+            
+            display.textContent = formatTime(timer.remaining);
+            display.classList.remove('warning', 'danger');
+            
+            if (timer.remaining <= 60) {
+                display.classList.add('danger');
+                if (status) status.textContent = '⚠️ ¡Menos de 1 minuto!';
+            } else if (timer.remaining <= 300) {
+                display.classList.add('warning');
+                if (status) status.textContent = '⏰ Menos de 5 minutos';
+            } else {
+                if (status) status.textContent = '🔄 En progreso...';
+            }
+        }
+
+        function startTimer(timerId, minutes) {
+            getAudioContext(); // Initialize on user interaction
+            
+            if (!timers[timerId]) {
+                timers[timerId] = { total: minutes * 60, remaining: minutes * 60, interval: null };
+            }
+            if (timers[timerId].interval) return;
+            
+            const status = document.getElementById(`${timerId}-status`);
+            if (status) status.textContent = '🔄 En progreso...';
+            
+            timers[timerId].interval = setInterval(() => {
+                timers[timerId].remaining--;
+                updateTimerDisplay(timerId);
+                
+                if (timers[timerId].remaining <= 0) {
+                    clearInterval(timers[timerId].interval);
+                    timers[timerId].interval = null;
+                    playBeep();
+                    setTimeout(playBeep, 300);
+                    setTimeout(playBeep, 600);
+                    if (status) status.textContent = '✅ ¡Tiempo completado!';
+                }
+            }, 1000);
+        }
+
+        function pauseTimer(timerId) {
+            if (timers[timerId] && timers[timerId].interval) {
+                clearInterval(timers[timerId].interval);
+                timers[timerId].interval = null;
+                const status = document.getElementById(`${timerId}-status`);
+                if (status) status.textContent = '⏸️ Pausado';
+            }
+        }
+
+        function resetTimer(timerId, minutes) {
+            if (timers[timerId]) {
+                clearInterval(timers[timerId].interval);
+                timers[timerId].interval = null;
+            }
+            timers[timerId] = { total: minutes * 60, remaining: minutes * 60, interval: null };
+            
+            const display = document.getElementById(timerId);
+            display.textContent = formatTime(minutes * 60);
+            display.classList.remove('warning', 'danger');
+            
+            const status = document.getElementById(`${timerId}-status`);
+            if (status) status.textContent = 'Listo para comenzar';
+        }
+
+        showSlide(1);
+    </script>
+</body>
+</html>
