@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bases del Lenguaje JavaScript – Clase 4 horas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #FFD700;
+    --dark: #1e1e1e;
+    --light: #ffffff;
+    --warning: #FF6B6B;
+    --success: #4CAF50;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e;
+    --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1);
+    --card-hover: rgba(255,255,255,0.15);
+  }
+
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--dark); color: var(--light);
+  }
+
+  /* ── SLIDER ── */
+  .slider { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 55px 60px;
+    opacity: 0; transform: translateX(100%);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    background: var(--grad); overflow: hidden;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); }
+  .slide.prev   { opacity: 0; transform: translateX(-100%); }
+
+  .slide.dark-bg   { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+  .slide.js-bg     { background: linear-gradient(135deg, #323330 0%, #1a1a00 100%); }
+  .slide.break-bg  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+  .slide.orange-bg { background: linear-gradient(135deg, #f46b45 0%, #eea849 100%); }
+  .slide.teal-bg   { background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); }
+  .slide.red-bg    { background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%); }
+  .slide.code-bg   { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); }
+  .slide.dom-bg    { background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); }
+
+  /* ── NAV ── */
+  #counter {
+    position: fixed; top: 30px; right: 30px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px; padding: 8px 18px;
+    font-size: 0.9rem; color: #fff; z-index: 100; letter-spacing: 1px;
+  }
+  .nav-btns { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 12px; z-index: 100; }
+  .nav-btn {
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3); color: #fff;
+    border-radius: 50px; padding: 12px 24px; font-size: 1rem; cursor: pointer; transition: all 0.3s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
+  .progress-bar { position: fixed; bottom: 0; left: 0; height: 4px; background: var(--js-yellow); transition: width 0.5s ease; z-index: 200; }
+  .section-label { position: absolute; top: 25px; left: 40px; font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+  /* ── TYPOGRAPHY ── */
+  h1 { font-size: 3.8rem; line-height: 1.15; text-align: center; text-shadow: 2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size: 3rem; }
+  h2 { font-size: 2.3rem; text-align: center; margin-bottom: 26px; text-shadow: 2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size: 1.55rem; margin-bottom: 10px; }
+  p, li { font-size: 1.2rem; line-height: 1.8; }
+  .subtitle { font-size: 1.35rem; opacity: 0.85; text-align: center; margin-top: 14px; }
+  .accent { color: var(--accent); }
+  .js-yellow { color: var(--js-yellow); }
+  .bold { font-weight: 700; }
+  .center { text-align: center; }
+
+  /* ── CODE ── */
+  .code-block {
+    background: #0d1117; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; padding: 20px 26px;
+    font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.85;
+    width: 100%; max-width: 1100px;
+  }
+  .code-block.sm { font-size: 0.88rem; line-height: 1.7; }
+  .kw  { color: #ff7b72; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a8ff78; }
+  .num { color: #79c0ff; }
+  .cm  { color: #8b949e; }
+  .op  { color: #f0883e; }
+  .var { color: #ffa657; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card-bg); backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 26px 24px;
+    transition: all 0.3s;
+  }
+  .card:hover { background: var(--card-hover); transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color: var(--accent); }
+
+  /* ── GRIDS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 1200px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; max-width: 1200px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; width: 100%; max-width: 1200px; }
+
+  /* ── LISTS ── */
+  .list-clean { list-style: none; }
+  .list-clean li { padding: 5px 0; }
+  .list-clean li::before { content: "▸ "; color: var(--accent); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; list-style: none; }
+  .two-col li { padding: 5px 0; }
+  .two-col li::before { content: "▸ "; color: var(--accent); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; gap: 16px; width: 100%; max-width: 1200px; }
+  .step {
+    flex: 1; background: var(--card-bg); backdrop-filter: blur(10px);
+    border-radius: 16px; padding: 20px 16px; text-align: center;
+    border: 1px solid rgba(255,255,255,0.15); transition: all 0.3s;
+  }
+  .step:hover { transform: translateY(-7px); }
+  .step-num {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--js-yellow); color: var(--js-dark);
+    font-size: 1.2rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+  }
+  .step h3 { font-size: 0.95rem; color: var(--accent); margin-bottom: 6px; }
+  .step p  { font-size: 0.9rem; opacity: 0.9; line-height: 1.5; }
+
+  /* ── MISC ── */
+  .emoji-big { font-size: 6rem; line-height: 1; }
+  .emoji-md  { font-size: 2.6rem; }
+  .mt10 { margin-top: 10px; } .mt20 { margin-top: 20px; }
+  .w100 { width: 100%; max-width: 1200px; }
+  .highlight {
+    background: rgba(247,223,30,0.15); border: 2px solid var(--js-yellow);
+    border-radius: 15px; padding: 16px 26px; margin-top: 16px;
+    font-size: 1.15rem; text-align: center; max-width: 950px;
+  }
+  .pill { display: inline-block; background: rgba(102,126,234,0.4); border: 1px solid rgba(102,126,234,0.6); border-radius: 30px; padding: 5px 15px; font-size: 0.9rem; margin: 4px; }
+  .pill.gold { background: rgba(247,223,30,0.2); border-color: var(--js-yellow); color: var(--js-yellow); }
+  .pill.green { background: rgba(76,175,80,0.2); border-color: var(--success); color: #a5d6a7; }
+
+  /* ── OPERATOR TABLE ── */
+  .op-row { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .op-badge { background: rgba(247,223,30,0.2); border: 1px solid var(--js-yellow); border-radius: 8px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: 1.1rem; color: var(--js-yellow); min-width: 50px; text-align: center; }
+
+  /* ── SCHED ── */
+  .sched-row { display: flex; gap: 13px; width: 100%; max-width: 950px; margin-bottom: 10px; align-items: center; }
+  .sched-time { background: rgba(247,223,30,0.15); border: 1px solid var(--js-yellow); border-radius: 10px; padding: 7px 14px; font-size: 0.95rem; white-space: nowrap; color: var(--js-yellow); font-weight: 700; min-width: 120px; text-align: center; }
+  .sched-label { flex: 1; background: var(--card-bg); border-radius: 10px; padding: 7px 16px; font-size: 1rem; }
+  .sched-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+
+  .float { animation: float 3s ease-in-out infinite; }
+  .glow  { animation: glow 2s ease-in-out infinite; }
+
+  .slide.active .card  { animation: fadeUp 0.5s ease both; }
+  .slide.active .step  { animation: fadeUp 0.5s ease both; }
+  .slide.active h2     { animation: fadeUp 0.4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(5) { animation-delay:.32s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 44</div>
+<div class="progress-bar" id="progress"></div>
+
+<div class="slider" id="slider">
+
+<!-- ══ PORTADA & CRONOGRAMA ══ -->
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active">
+  <div style="font-size:7rem;line-height:1;" class="float">JS</div>
+  <h1 class="mt20">Bases del Lenguaje<br><span class="js-yellow glow">JavaScript</span></h1>
+  <p class="subtitle mt20">Clase intensiva de 4 horas · Partes I y II</p>
+  <div class="mt20" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Variables</span>
+    <span class="pill">Operadores</span>
+    <span class="pill">Condicionales</span>
+    <span class="pill">Funciones</span>
+    <span class="pill">DOM</span>
+    <span class="pill gold">4 Horas</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#667eea"></div><div class="sched-time">0:00 – 0:50</div><div class="sched-label">📜 <strong>Bloque 1</strong> · Historia · Variables · Funciones nativas</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#667eea"></div><div class="sched-time">0:50 – 1:20</div><div class="sched-label">➕ <strong>Bloque 2</strong> · Operadores aritméticos · Comparación · Lógicos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#764ba2"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔀 <strong>Bloque 3</strong> · Condicionales · Switch · Operador ternario</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#11998e"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">⚙️ <strong>Bloque 4</strong> · Funciones · Scope · DOM · Eventos</div></div>
+  </div>
+</div>
+
+<!-- ══ BLOQUE 1 – HISTORIA & VARIABLES ══ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide js-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 0:50</span>
+  <div style="font-size:6rem;line-height:1;" class="float">📜</div>
+  <h1 class="sm mt20">Introducción a<br><span class="js-yellow">JavaScript</span></h1>
+  <p class="subtitle">Historia · Variables · Funciones nativas</p>
+</div>
+
+<!-- SLIDE 4 – HISTORIA -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Historia</span>
+  <h2>Historia de JavaScript</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">1995</div><h3>Nace JS</h3><p>Brendan Eich lo crea en Netscape. Se llamaba "LiveScript".</p></div>
+    <div class="step"><div class="step-num">1997</div><h3>ECMAScript</h3><p>Se estandariza bajo ECMA. Comienza la evolución formal.</p></div>
+    <div class="step"><div class="step-num">2009</div><h3>Node.js</h3><p>JS sale del navegador: ahora también corre en el servidor.</p></div>
+    <div class="step"><div class="step-num">2015</div><h3>ES6+</h3><p>let, const, arrow functions, clases. JavaScript moderno.</p></div>
+    <div class="step"><div class="step-num">Hoy</div><h3>Universal</h3><p>Front-end, back-end, mobile, IA. El lenguaje más usado del mundo.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 5 – RELEVANCIA -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Relevancia</span>
+  <h2>¿Por qué aprender JavaScript?</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="emoji-md">🖥️</div>
+      <h3>Front-end</h3>
+      <p>Interactividad, animaciones, validaciones y UX dinámica directamente en el navegador.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">⚙️</div>
+      <h3>Back-end</h3>
+      <p><span class="accent">Node.js</span> permite usar JS en el servidor. Un solo lenguaje para todo el stack.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">🚀</div>
+      <h3>Frameworks</h3>
+      <p>React, Angular, Vue.js, Next.js. Todos se basan en JavaScript.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">JS es el único lenguaje que corre <span class="js-yellow">nativamente en todos los navegadores</span> sin compilación previa.</div>
+</div>
+
+<!-- SLIDE 6 – CÓMO ESCRIBIR JS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Sintaxis</span>
+  <h2>¿Cómo Escribir Código JS?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📄 Inline en HTML</h3>
+      <p>Entre etiquetas <code style="color:#f0883e;">&lt;script&gt;</code> al final del <code style="color:#f0883e;">&lt;body&gt;</code>.</p>
+      <div class="code-block mt10" style="font-size:0.9rem;margin-top:12px;">
+        <span class="kw">&lt;script&gt;</span><br>
+        &nbsp;&nbsp;<span class="cm">// código JS aquí</span><br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hola"</span>);<br>
+        <span class="kw">&lt;/script&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📂 Archivo externo</h3>
+      <p>Separar el JS en un archivo <code style="color:#f0883e;">.js</code> y enlazarlo con <code style="color:#f0883e;">src</code>.</p>
+      <div class="code-block mt10" style="font-size:0.9rem;margin-top:12px;">
+        <span class="kw">&lt;script</span><br>
+        &nbsp;&nbsp;<span class="var">src</span>=<span class="str">"script.js"</span><span class="kw">&gt;</span><br>
+        <span class="kw">&lt;/script&gt;</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Comentarios: <span class="js-yellow">// una línea</span> &nbsp;·&nbsp; <span class="js-yellow">/* varias líneas */</span></div>
+</div>
+
+<!-- SLIDE 7 – VARIABLES -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Variables</span>
+  <h2>Variables en JavaScript</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:#FF6B6B;">var</h3>
+      <p>Forma tradicional. Alcance de función. <span class="accent">Ya no se recomienda</span> en código moderno.</p>
+      <div class="code-block mt10" style="font-size:0.9rem;margin-top:10px;"><span class="kw">var</span> <span class="var">edad</span> = <span class="num">25</span>;</div>
+    </div>
+    <div class="card">
+      <h3 style="color:#a8ff78;">let</h3>
+      <p>Alcance de <span class="accent">bloque</span>. Puede cambiar su valor. Recomendada para variables que mutan.</p>
+      <div class="code-block mt10" style="font-size:0.9rem;margin-top:10px;"><span class="kw">let</span> <span class="var">nombre</span> = <span class="str">"Juan"</span>;</div>
+    </div>
+    <div class="card">
+      <h3 style="color:#79c0ff;">const</h3>
+      <p>Alcance de <span class="accent">bloque</span>. Su valor <span class="accent">no puede reasignarse</span>. Preferida siempre que sea posible.</p>
+      <div class="code-block mt10" style="font-size:0.9rem;margin-top:10px;"><span class="kw">const</span> <span class="var">PI</span> = <span class="num">3.1416</span>;</div>
+    </div>
+  </div>
+  <div class="highlight mt20">Regla de oro: usa <span class="js-yellow">const</span> por defecto. Cambia a <span class="js-yellow">let</span> solo si necesitas reasignar el valor.</div>
+</div>
+
+<!-- SLIDE 8 – VARIABLES: DECLARACIÓN Y ASIGNACIÓN -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 1 · Variables</span>
+  <h2>Declarar · Asignar · Inicializar</h2>
+  <div class="code-block">
+    <span class="cm">// Declaración (sin valor)</span><br>
+    <span class="kw">let</span> <span class="var">nombreCompleto</span>;<br><br>
+    <span class="cm">// Asignación posterior</span><br>
+    <span class="var">nombreCompleto</span> = <span class="str">"María García"</span>;<br><br>
+    <span class="cm">// Inicialización (declarar + asignar en un paso)</span><br>
+    <span class="kw">let</span> <span class="var">edad</span> = <span class="num">30</span>;<br>
+    <span class="kw">const</span> <span class="var">PI</span> = <span class="num">3.1416</span>;<br><br>
+    <span class="cm">// Usar variables en operaciones</span><br>
+    <span class="kw">let</span> <span class="var">x</span> = <span class="num">10</span>;<br>
+    <span class="kw">let</span> <span class="var">y</span> = <span class="num">5</span>;<br>
+    <span class="kw">let</span> <span class="var">suma</span> = <span class="var">x</span> + <span class="var">y</span>;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">suma</span>); <span class="cm">// 15</span>
+  </div>
+</div>
+
+<!-- SLIDE 9 – FUNCIONES NATIVAS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Funciones Nativas</span>
+  <h2>Funciones Nativas Esenciales</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🖨️ console.log()</h3>
+      <p>Imprime en la consola del navegador. Tu mejor aliado para depurar.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;"><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hola mundo"</span>);</div>
+    </div>
+    <div class="card">
+      <h3>💬 alert() / confirm()</h3>
+      <p>Muestra ventanas emergentes. <span class="accent">alert</span> informa, <span class="accent">confirm</span> pide confirmación.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;"><span class="fn">alert</span>(<span class="str">"¡Hola!"</span>);<br><span class="fn">confirm</span>(<span class="str">"¿Seguro?"</span>);</div>
+    </div>
+    <div class="card">
+      <h3>⌨️ prompt()</h3>
+      <p>Solicita entrada al usuario. Devuelve el texto ingresado como <span class="accent">string</span>.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;"><span class="kw">let</span> <span class="var">n</span> = <span class="fn">prompt</span>(<span class="str">"Tu nombre:"</span>);</div>
+    </div>
+    <div class="card">
+      <h3>🔢 parseInt() / parseFloat()</h3>
+      <p>Convierten texto a número entero o decimal.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;"><span class="fn">parseInt</span>(<span class="str">"10"</span>); <span class="cm">// 10</span><br><span class="fn">parseFloat</span>(<span class="str">"3.14"</span>); <span class="cm">// 3.14</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – CONCATENACIÓN Y TEMPLATE LITERALS -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 1 · Strings</span>
+  <h2>Concatenación y Template Literals</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>➕ Concatenación clásica</h3>
+      <div class="code-block" style="font-size:0.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nombre</span> = <span class="str">"Juan"</span>;<br>
+        <span class="kw">let</span> <span class="var">apellido</span> = <span class="str">"Pérez"</span>;<br>
+        <span class="kw">let</span> <span class="var">completo</span> = <span class="var">nombre</span> + <span class="str">" "</span> + <span class="var">apellido</span>;<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">completo</span>); <span class="cm">// Juan Pérez</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✨ Template literals (ES6+)</h3>
+      <div class="code-block" style="font-size:0.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nombre</span> = <span class="str">"Juan"</span>;<br>
+        <span class="kw">let</span> <span class="var">edad</span> = <span class="num">30</span>;<br>
+        <span class="kw">let</span> <span class="var">msg</span> = <span class="str">`Hola, ${<span class="var">nombre</span>}! Tenés ${<span class="var">edad</span>} años.`</span>;<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">msg</span>);
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Template literals usan <span class="js-yellow">comillas graves ` `</span> y permiten incrustar expresiones con <span class="js-yellow">${ }</span>. Siempre preferirlos.</div>
+</div>
+
+<!-- SLIDE 11 – LIVE CODING 1: VARIABLES Y BIENVENIDA -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 10 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Variables y Bienvenida</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.15rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Solicitar nombre y edad con <code>prompt()</code></li>
+        <li>2️⃣ Mostrar mensaje de bienvenida con <code>console.log()</code></li>
+        <li>3️⃣ Usar template literals para el mensaje</li>
+        <li>4️⃣ Probar en el navegador con F12</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BLOQUE 2 – OPERADORES ══ -->
+
+<!-- SLIDE 12 – TÍTULO BLOQUE 2 -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · 0:50 – 1:20</span>
+  <div class="emoji-big float">➕</div>
+  <h1 class="sm mt20">Operadores en<br><span class="js-yellow">JavaScript</span></h1>
+  <p class="subtitle">Aritméticos · Comparación · Lógicos · Asignación</p>
+</div>
+
+<!-- SLIDE 13 – OPERADORES ARITMÉTICOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Aritméticos</span>
+  <h2>Operadores Aritméticos</h2>
+  <div class="code-block" style="max-width:900px;">
+    <span class="kw">let</span> <span class="var">x</span> = <span class="num">5</span>, <span class="var">y</span> = <span class="num">3</span>;<br><br>
+    <span class="kw">let</span> <span class="var">suma</span>           = <span class="var">x</span> <span class="op">+</span> <span class="var">y</span>;  <span class="cm">// 8</span><br>
+    <span class="kw">let</span> <span class="var">resta</span>          = <span class="var">x</span> <span class="op">-</span> <span class="var">y</span>;  <span class="cm">// 2</span><br>
+    <span class="kw">let</span> <span class="var">multiplicacion</span>  = <span class="var">x</span> <span class="op">*</span> <span class="var">y</span>;  <span class="cm">// 15</span><br>
+    <span class="kw">let</span> <span class="var">division</span>        = <span class="var">x</span> <span class="op">/</span> <span class="var">y</span>;  <span class="cm">// 1.666...</span><br>
+    <span class="kw">let</span> <span class="var">resto</span>           = <span class="var">x</span> <span class="op">%</span> <span class="var">y</span>;  <span class="cm">// 2 (módulo)</span><br>
+    <span class="kw">let</span> <span class="var">exponente</span>       = <span class="var">x</span> <span class="op">**</span> <span class="var">y</span>; <span class="cm">// 125 (5³)</span><br><br>
+    <span class="cm">// Incremento y decremento</span><br>
+    <span class="var">x</span><span class="op">++</span>; <span class="cm">// x = 6 (equivale a x = x + 1)</span><br>
+    <span class="var">x</span><span class="op">--</span>; <span class="cm">// x = 5 (equivale a x = x - 1)</span>
+  </div>
+</div>
+
+<!-- SLIDE 14 – OPERADORES DE ASIGNACIÓN -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 2 · Asignación</span>
+  <h2>Operadores de Asignación Compuestos</h2>
+  <div class="code-block">
+    <span class="kw">let</span> <span class="var">z</span> = <span class="num">10</span>;<br><br>
+    <span class="var">z</span> <span class="op">+=</span> <span class="num">5</span>;  <span class="cm">// z = z + 5  → 15</span><br>
+    <span class="var">z</span> <span class="op">-=</span> <span class="num">3</span>;  <span class="cm">// z = z - 3  → 12</span><br>
+    <span class="var">z</span> <span class="op">*=</span> <span class="num">2</span>;  <span class="cm">// z = z * 2  → 24</span><br>
+    <span class="var">z</span> <span class="op">/=</span> <span class="num">4</span>;  <span class="cm">// z = z / 4  → 6</span><br>
+    <span class="var">z</span> <span class="op">%=</span> <span class="num">2</span>;  <span class="cm">// z = z % 2  → 0</span>
+  </div>
+  <div class="highlight mt20">Los operadores compuestos hacen el código más <span class="js-yellow">conciso y legible</span>. Son equivalentes a escribir la operación completa.</div>
+</div>
+
+<!-- SLIDE 15 – OPERADORES DE COMPARACIÓN -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Comparación</span>
+  <h2>Operadores de Comparación</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>== vs ===</h3>
+      <div class="code-block" style="font-size:0.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">a</span> = <span class="num">5</span>, <span class="var">b</span> = <span class="str">"5"</span>;<br>
+        <span class="var">a</span> <span class="op">==</span>  <span class="var">b</span> <span class="cm">// true  (igual valor)</span><br>
+        <span class="var">a</span> <span class="op">===</span> <span class="var">b</span> <span class="cm">// false (distinto tipo)</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>!= vs !==</h3>
+      <div class="code-block" style="font-size:0.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">x</span> = <span class="num">5</span>, <span class="var">y</span> = <span class="num">10</span>;<br>
+        <span class="var">x</span> <span class="op">!=</span>  <span class="var">y</span> <span class="cm">// true</span><br>
+        <span class="var">x</span> <span class="op">!==</span> <span class="var">y</span> <span class="cm">// true (valor y tipo)</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Mayor / Menor</h3>
+      <div class="code-block" style="font-size:0.9rem;margin-top:10px;">
+        <span class="var">x</span> <span class="op">&gt;</span>  <span class="var">y</span>  <span class="cm">// false</span><br>
+        <span class="var">x</span> <span class="op">&lt;</span>  <span class="var">y</span>  <span class="cm">// true</span><br>
+        <span class="var">x</span> <span class="op">&gt;=</span> <span class="var">y</span>  <span class="cm">// false</span><br>
+        <span class="var">x</span> <span class="op">&lt;=</span> <span class="var">y</span>  <span class="cm">// true</span>
+      </div>
+    </div>
+    <div class="card center">
+      <h3>⚠️ Regla importante</h3>
+      <p style="font-size:1.1rem;">Siempre usa <span class="js-yellow">===</span> en lugar de <span class="accent">==</span>. El triple igual compara <strong>valor Y tipo</strong>, evitando comportamientos inesperados.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16 – OPERADORES LÓGICOS -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Lógicos</span>
+  <h2>Operadores Lógicos</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>AND &nbsp;<code style="color:#a8ff78;">&&</code></h3>
+      <p>Devuelve <span class="accent">true</span> solo si <strong>ambas</strong> condiciones son verdaderas.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="num">5</span> <span class="op">&gt;</span> <span class="num">0</span> <span class="op">&&</span> <span class="num">10</span> <span class="op">&gt;</span> <span class="num">0</span> <span class="cm">// true</span><br>
+        <span class="num">5</span> <span class="op">&gt;</span> <span class="num">0</span> <span class="op">&&</span> <span class="num">10</span> <span class="op">&lt;</span> <span class="num">0</span> <span class="cm">// false</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>OR &nbsp;<code style="color:#a8ff78;">||</code></h3>
+      <p>Devuelve <span class="accent">true</span> si <strong>al menos una</strong> condición es verdadera.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="num">5</span> <span class="op">&gt;</span> <span class="num">0</span> <span class="op">||</span> <span class="num">10</span> <span class="op">&lt;</span> <span class="num">0</span> <span class="cm">// true</span><br>
+        <span class="num">5</span> <span class="op">&lt;</span> <span class="num">0</span> <span class="op">||</span> <span class="num">10</span> <span class="op">&lt;</span> <span class="num">0</span> <span class="cm">// false</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>NOT &nbsp;<code style="color:#a8ff78;">!</code></h3>
+      <p><span class="accent">Invierte</span> el valor booleano. <code>true</code> → <code>false</code> y viceversa.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="op">!</span>(<span class="num">5</span> <span class="op">&gt;</span> <span class="num">0</span>) <span class="cm">// false</span><br>
+        <span class="op">!</span>(<span class="num">10</span> <span class="op">&lt;</span> <span class="num">0</span>) <span class="cm">// true</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DESCANSO ══ -->
+
+<!-- SLIDE 17 – DESCANSO -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div class="emoji-big">☕</div>
+    <h1 class="mt20" style="color:var(--dark);">DESCANSO</h1>
+    <p style="font-size:2rem;color:var(--dark);opacity:0.8;margin-top:15px;">30 minutos · ¡Recarga energías!</p>
+    <p style="font-size:1.3rem;color:var(--dark);opacity:0.6;margin-top:10px;">Levántate, estírate y despeja la mente 🧘</p>
+  </div>
+</div>
+
+<!-- ══ BLOQUE 3 – CONDICIONALES ══ -->
+
+<!-- SLIDE 18 – TÍTULO BLOQUE 3 -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔀</div>
+  <h1 class="sm mt20">Estructuras<br><span class="js-yellow">Condicionales</span></h1>
+  <p class="subtitle">if · else if · else · switch · ternario</p>
+</div>
+
+<!-- SLIDE 19 – IF / ELSE -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Condicionales</span>
+  <h2>Sentencia if · else if · else</h2>
+  <div class="code-block">
+    <span class="kw">let</span> <span class="var">hora</span> = <span class="num">13</span>;<br><br>
+    <span class="kw">if</span> (<span class="var">hora</span> <span class="op">&lt;</span> <span class="num">12</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenos días"</span>);<br>
+    } <span class="kw">else if</span> (<span class="var">hora</span> <span class="op">&lt;</span> <span class="num">18</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenas tardes"</span>);<br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenas noches"</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">La condición dentro de <span class="js-yellow">if ( )</span> debe evaluarse a <span class="js-yellow">true</span> o <span class="js-yellow">false</span>. Solo se ejecuta el primer bloque cuya condición sea verdadera.</div>
+</div>
+
+<!-- SLIDE 20 – CONDICIONALES CON OPERADORES LÓGICOS -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · Condicionales + Lógicos</span>
+  <h2>Combinando Condiciones</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>Con AND &&</h3>
+      <div class="code-block" style="font-size:0.88rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">edad</span> = <span class="num">25</span>;<br>
+        <span class="kw">let</span> <span class="var">tieneLicencia</span> = <span class="kw">true</span>;<br><br>
+        <span class="kw">if</span> (<span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span> <span class="op">&&</span> <span class="var">tieneLicencia</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Podés conducir"</span>);<br>
+        } <span class="kw">else</span> {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"No podés conducir"</span>);<br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3>Con OR ||</h3>
+      <div class="code-block" style="font-size:0.88rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">esEstudiante</span> = <span class="kw">false</span>;<br>
+        <span class="kw">let</span> <span class="var">esEmpleado</span>   = <span class="kw">true</span>;<br><br>
+        <span class="kw">if</span> (<span class="var">esEstudiante</span> <span class="op">||</span> <span class="var">esEmpleado</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Tenés descuento"</span>);<br>
+        } <span class="kw">else</span> {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Sin descuento"</span>);<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 21 – SWITCH -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Switch</span>
+  <h2>Sentencia Switch</h2>
+  <div class="code-block">
+    <span class="kw">let</span> <span class="var">dia</span> = <span class="num">3</span>;<br><br>
+    <span class="kw">switch</span> (<span class="var">dia</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">1</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Lunes"</span>); <span class="kw">break</span>;<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">2</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Martes"</span>); <span class="kw">break</span>;<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">3</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Miércoles"</span>); <span class="kw">break</span>;<br>
+    &nbsp;&nbsp;<span class="kw">default</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Otro día"</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">El <span class="js-yellow">break</span> es obligatorio para salir del switch. Sin él, el código sigue ejecutando los casos siguientes (<em>fall-through</em>).</div>
+</div>
+
+<!-- SLIDE 22 – OPERADOR TERNARIO -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Ternario</span>
+  <h2>Operador Ternario</h2>
+  <div class="highlight" style="font-size:1.5rem;font-family:'Courier New',monospace;max-width:800px;">
+    <span class="js-yellow">condición</span> <span style="color:#fff;">?</span> <span style="color:#a8ff78;">expresión_si_true</span> <span style="color:#fff;">:</span> <span style="color:#FF6B6B;">expresión_si_false</span>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;">
+    <span class="cm">// if/else clásico:</span><br>
+    <span class="kw">let</span> <span class="var">rta</span>;<br>
+    <span class="kw">if</span> (<span class="var">num1</span> <span class="op">&gt;</span> <span class="var">num2</span>) { <span class="var">rta</span> = <span class="str">"el 1"</span>; } <span class="kw">else</span> { <span class="var">rta</span> = <span class="str">"el 2"</span>; }<br><br>
+    <span class="cm">// Mismo resultado con ternario (una sola línea):</span><br>
+    <span class="kw">let</span> <span class="var">rta</span> = <span class="var">num1</span> <span class="op">&gt;</span> <span class="var">num2</span> <span class="op">?</span> <span class="str">"el 1"</span> <span class="op">:</span> <span class="str">"el 2"</span>;<br><br>
+    <span class="cm">// Otro ejemplo práctico:</span><br>
+    <span class="kw">const</span> <span class="var">acceso</span> = <span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span> <span class="op">?</span> <span class="str">"Permitido"</span> <span class="op">:</span> <span class="str">"Denegado"</span>;
+  </div>
+</div>
+
+<!-- SLIDE 23 – LIVE CODING 2: OPERADORES Y CONDICIONALES -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 10 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🧮</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Calculadora con Condicionales</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Pedir dos números con <code>prompt()</code> y convertirlos con <code>parseFloat()</code></li>
+        <li>2️⃣ Aplicar las 5 operaciones y mostrar resultados</li>
+        <li>3️⃣ Verificar condiciones: ¿son positivos? ¿par/impar? ¿múltiplos?</li>
+        <li>4️⃣ Comparar con if/else: ¿cuál es mayor?</li>
+        <li>5️⃣ Menú con switch: el usuario elige la operación</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – EJERCICIO 1 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔐</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Login Simple</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Sistema de inicio de sesión con <code>if/else</code>:<br>
+        ✅ Declarar <code>usuarioValido</code> y <code>contrasenaValida</code><br>
+        ✅ Pedir credenciales con <code>prompt()</code><br>
+        ✅ Verificar con <code>if</code> y mostrar mensaje en consola<br>
+        ✅ Guardar el código en <code>login.js</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BLOQUE 4 – FUNCIONES, DOM, EVENTOS ══ -->
+
+<!-- SLIDE 25 – TÍTULO BLOQUE 4 -->
+<div class="slide js-bg">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">⚙️</div>
+  <h1 class="sm mt20">Funciones · DOM<br><span class="js-yellow">y Eventos</span></h1>
+  <p class="subtitle">La base de la programación interactiva</p>
+</div>
+
+<!-- SLIDE 26 – FUNCIONES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Funciones</span>
+  <h2>Funciones en JavaScript</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📌 Declaración clásica</h3>
+      <div class="code-block" style="font-size:0.88rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">saludar</span>(<span class="var">nombre</span>, <span class="var">edad</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">`¡Hola, ${<span class="var">nombre</span>}! Tenés ${<span class="var">edad</span>} años.`</span><br>
+        &nbsp;&nbsp;);<br>
+        }<br>
+        <span class="fn">saludar</span>(<span class="str">"Juan"</span>, <span class="num">30</span>);
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚡ Función flecha (ES6)</h3>
+      <div class="code-block" style="font-size:0.88rem;margin-top:10px;">
+        <span class="cm">// Con cuerpo</span><br>
+        <span class="kw">const</span> <span class="fn">suma</span> = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> { <span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>; };<br><br>
+        <span class="cm">// Una línea (return implícito)</span><br>
+        <span class="kw">const</span> <span class="fn">resta</span> = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> <span class="var">a</span> <span class="op">-</span> <span class="var">b</span>;<br><br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">suma</span>(<span class="num">15</span>, <span class="num">20</span>));  <span class="cm">// 35</span><br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">resta</span>(<span class="num">20</span>, <span class="num">5</span>));   <span class="cm">// 15</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Las funciones flecha <span class="js-yellow">=&gt;</span> son la sintaxis moderna. Úsalas para funciones cortas y callbacks.</div>
+</div>
+
+<!-- SLIDE 27 – SCOPE -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 4 · Scope</span>
+  <h2>Scope (Ámbito de Variables)</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌍 Global</h3>
+      <p>Declarada fuera de funciones. Accesible desde cualquier parte del código.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nombre</span> = <span class="str">"Juan"</span>; <span class="cm">// global</span><br>
+        <span class="kw">function</span> <span class="fn">saludar</span>() {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">nombre</span>); <span class="cm">// ✅</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">nombre</span>); <span class="cm">// ✅</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏠 Local</h3>
+      <p>Declarada dentro de una función. Solo existe dentro de ese bloque.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">saludar</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">let</span> <span class="var">msg</span> = <span class="str">"Hola"</span>; <span class="cm">// local</span><br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">msg</span>); <span class="cm">// ✅</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">msg</span>); <span class="cm">// ❌ Error!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28 – EL DOM -->
+<div class="slide dom-bg">
+  <span class="section-label">Bloque 4 · DOM</span>
+  <h2>¿Qué es el DOM?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌳 Document Object Model</h3>
+      <p>Representación en memoria del HTML. JavaScript puede leer y <span class="accent">modificar</span> cualquier elemento en tiempo real.</p>
+    </div>
+    <div class="card">
+      <h3>🔑 Objeto document</h3>
+      <p>Punto de entrada al DOM. Desde él se acceden todos los métodos para manipular la página.</p>
+      <div class="code-block" style="font-size:0.85rem;margin-top:10px;">
+        <span class="fn">console</span>.<span class="fn">dir</span>(document);<br>
+        <span class="fn">console</span>.<span class="fn">dir</span>(document.body);
+      </div>
+    </div>
+  </div>
+  <div class="steps mt20">
+    <div class="step"><div class="step-num" style="font-size:0.7rem;background:#79c0ff;color:#000;">GET</div><h3>Seleccionar</h3><p>Acceder a elementos existentes.</p></div>
+    <div class="step"><div class="step-num" style="font-size:0.7rem;background:#a8ff78;color:#000;">MOD</div><h3>Modificar</h3><p>Cambiar texto, clases o estilos.</p></div>
+    <div class="step"><div class="step-num" style="font-size:0.7rem;background:#f0883e;color:#000;">ADD</div><h3>Crear</h3><p>Agregar nuevos elementos al HTML.</p></div>
+    <div class="step"><div class="step-num" style="font-size:0.7rem;background:#FF6B6B;color:#000;">DEL</div><h3>Eliminar</h3><p>Quitar elementos del árbol DOM.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – SELECTORES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · DOM · Selectores</span>
+  <h2>Selectores del DOM</h2>
+  <div class="code-block sm">
+    <span class="cm">// Por ID (devuelve un elemento)</span><br>
+    <span class="kw">const</span> <span class="var">elem</span> = document.<span class="fn">getElementById</span>(<span class="str">'mi-id'</span>);<br><br>
+    <span class="cm">// Por etiqueta (devuelve colección)</span><br>
+    <span class="kw">const</span> <span class="var">parrafos</span> = document.<span class="fn">getElementsByTagName</span>(<span class="str">'p'</span>);<br><br>
+    <span class="cm">// Por clase CSS (devuelve colección)</span><br>
+    <span class="kw">const</span> <span class="var">cards</span> = document.<span class="fn">getElementsByClassName</span>(<span class="str">'card'</span>);<br><br>
+    <span class="cm">// querySelector: el primero que coincida (CSS selector)</span><br>
+    <span class="kw">const</span> <span class="var">primero</span> = document.<span class="fn">querySelector</span>(<span class="str">'#mi-id .clase1'</span>);<br><br>
+    <span class="cm">// querySelectorAll: todos los que coincidan</span><br>
+    <span class="kw">const</span> <span class="var">todos</span> = document.<span class="fn">querySelectorAll</span>(<span class="str">'ul li'</span>);<br>
+    <span class="var">todos</span>.<span class="fn">forEach</span>(<span class="var">el</span> <span class="op">=&gt;</span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">el</span>.textContent));
+  </div>
+  <div class="highlight mt20">Preferí siempre <span class="js-yellow">querySelector / querySelectorAll</span>: aceptan cualquier selector CSS y son los más modernos.</div>
+</div>
+
+<!-- SLIDE 30 – MANIPULAR ELEMENTOS -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 4 · DOM · Manipulación</span>
+  <h2>Modificar · Crear · Eliminar</h2>
+  <div class="code-block sm">
+    <span class="cm">// Modificar texto</span><br>
+    <span class="var">elem</span>.innerText = <span class="str">'Nuevo texto'</span>;<br>
+    <span class="var">elem</span>.innerHTML = <span class="str">'&lt;strong&gt;Negrita&lt;/strong&gt;'</span>;<br><br>
+    <span class="cm">// Cambiar clases CSS</span><br>
+    <span class="var">elem</span>.className = <span class="str">'clase-nueva'</span>;       <span class="cm">// reemplaza todas</span><br>
+    <span class="var">elem</span>.className += <span class="str">' otra-clase'</span>;     <span class="cm">// agrega una más</span><br><br>
+    <span class="cm">// Crear y agregar un elemento</span><br>
+    <span class="kw">const</span> <span class="var">p</span> = document.<span class="fn">createElement</span>(<span class="str">'p'</span>);<br>
+    <span class="var">p</span>.textContent = <span class="str">'Nuevo párrafo'</span>;<br>
+    document.<span class="fn">getElementById</span>(<span class="str">'contenedor'</span>).<span class="fn">appendChild</span>(<span class="var">p</span>);<br><br>
+    <span class="cm">// Eliminar un elemento</span><br>
+    document.<span class="fn">getElementById</span>(<span class="str">'mi-nodo'</span>).<span class="fn">remove</span>();
+  </div>
+</div>
+
+<!-- SLIDE 31 – OBTENER VALORES DE INPUTS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · DOM · Inputs</span>
+  <h2>Obtener Datos de Formularios</h2>
+  <div class="code-block sm" style="max-width:1000px;">
+    <span class="cm">&lt;!-- HTML --&gt;</span><br>
+    <span class="op">&lt;input</span> <span class="var">type</span>=<span class="str">"text"</span>  <span class="var">id</span>=<span class="str">"nombre"</span><span class="op">&gt;</span><br>
+    <span class="op">&lt;input</span> <span class="var">type</span>=<span class="str">"email"</span> <span class="var">id</span>=<span class="str">"email"</span><span class="op">&gt;</span><br>
+    <span class="op">&lt;button</span> <span class="var">onclick</span>=<span class="str">"mostrarDatos()"</span><span class="op">&gt;</span>Ver datos<span class="op">&lt;/button&gt;</span><br><br>
+    <span class="cm">// JS</span><br>
+    <span class="kw">function</span> <span class="fn">mostrarDatos</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">nombre</span> = document.<span class="fn">getElementById</span>(<span class="str">'nombre'</span>).value;<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">email</span>  = document.<span class="fn">getElementById</span>(<span class="str">'email'</span>).value;<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Nombre: ${<span class="var">nombre</span>} — Email: ${<span class="var">email</span>}`</span>);<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 32 – EVENTOS -->
+<div class="slide dom-bg">
+  <span class="section-label">Bloque 4 · Eventos</span>
+  <h2>Eventos en JavaScript</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🖱️ Mouse</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><code style="color:#a8ff78;">click</code> → clic simple</li>
+        <li><code style="color:#a8ff78;">dblclick</code> → doble clic</li>
+        <li><code style="color:#a8ff78;">mouseover</code> → pasa el cursor</li>
+        <li><code style="color:#a8ff78;">mouseout</code> → sale el cursor</li>
+        <li><code style="color:#a8ff78;">mousemove</code> → mueve el cursor</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⌨️ Teclado y Formulario</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><code style="color:#a8ff78;">keydown</code> → tecla presionada</li>
+        <li><code style="color:#a8ff78;">keyup</code> → tecla liberada</li>
+        <li><code style="color:#a8ff78;">input</code> → cambio en tiempo real</li>
+        <li><code style="color:#a8ff78;">change</code> → cambio confirmado</li>
+        <li><code style="color:#a8ff78;">submit</code> → envío de formulario</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 33 – addEventListener -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 4 · Eventos · addEventListener</span>
+  <h2>addEventListener</h2>
+  <div class="code-block sm" style="max-width:1000px;">
+    <span class="cm">// Sintaxis: elemento.addEventListener('evento', función)</span><br><br>
+    <span class="kw">const</span> <span class="var">boton</span> = document.<span class="fn">getElementById</span>(<span class="str">'mi-boton'</span>);<br><br>
+    <span class="cm">// Función anónima</span><br>
+    <span class="var">boton</span>.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'¡Hola, mundo!'</span>);<br>
+    });<br><br>
+    <span class="cm">// Función flecha (más moderno)</span><br>
+    <span class="var">boton</span>.<span class="fn">addEventListener</span>(<span class="str">'dblclick'</span>, () <span class="op">=&gt;</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'¡Doble clic!'</span>);<br>
+    });<br><br>
+    <span class="cm">// Evento submit con preventDefault</span><br>
+    <span class="var">form</span>.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="var">event</span>) <span class="op">=&gt;</span> {<br>
+    &nbsp;&nbsp;<span class="var">event</span>.<span class="fn">preventDefault</span>(); <span class="cm">// evitar recarga</span><br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">val</span> = document.<span class="fn">getElementById</span>(<span class="str">'name'</span>).value;<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Enviado: ${<span class="var">val</span>}`</span>);<br>
+    });
+  </div>
+</div>
+
+<!-- SLIDE 34 – LIVE CODING 3: getElementById -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌳</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Manipulación del DOM</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear página HTML con párrafo, encabezado y botón (con IDs únicos)</li>
+        <li>2️⃣ Seleccionar elementos con <code>getElementById</code></li>
+        <li>3️⃣ Mostrar en consola: contenido HTML y de texto</li>
+        <li>4️⃣ Modificar contenido y estilo en tiempo real</li>
+        <li>5️⃣ Reflejar los cambios visualmente en la página</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 35 – LIVE CODING 4: DEPURACIÓN -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔍</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Depuración con la Consola</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear <code>depuracion.js</code> con función con error intencional</li>
+        <li>2️⃣ Usar <code>console.trace()</code> para ver la pila de llamadas</li>
+        <li>3️⃣ Insertar <code>debugger;</code> y explorar en DevTools</li>
+        <li>4️⃣ Capturar error con <code>console.error()</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 36 – EJERCICIO 2: LOGIN CON FUNCIÓN -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔑</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Función Login</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Función <code>iniciarSesion(usuario, contrasena)</code>:<br>
+        ✅ Comparar con valores predeterminados<br>
+        ✅ Retornar mensaje de éxito o error<br>
+        ✅ Llamar con <code>prompt()</code> y mostrar con <code>console.log()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 37 – EJERCICIO 3: MANIPULACIÓN DOM -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌳</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Manipulación del DOM</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Página HTML con al menos un elemento:<br>
+        ✅ Seleccionar con <code>getElementById</code><br>
+        ✅ Usar <code>innerHTML</code> para cambiar contenido<br>
+        ✅ Agregar, modificar o eliminar contenido HTML<br>
+        ✅ Escuchar <code>DOMContentLoaded</code> antes de manipular
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CIERRE ══ -->
+
+<!-- SLIDE 38 – RESUMEN GLOBAL -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Aprendimos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>📜 Parte I — Fundamentos</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Historia y relevancia de JavaScript</li>
+        <li>Variables: <code>var</code>, <code>let</code>, <code>const</code></li>
+        <li>Funciones nativas: console, alert, prompt</li>
+        <li>Concatenación y template literals</li>
+        <li>Operadores aritméticos y de asignación</li>
+        <li>Operadores de comparación y lógicos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚙️ Parte II — Interactividad</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Condicionales: if, else if, else</li>
+        <li>Switch y operador ternario</li>
+        <li>Funciones declaradas y flecha</li>
+        <li>Scope global vs local</li>
+        <li>Selectores del DOM</li>
+        <li>Modificar, crear y eliminar nodos</li>
+        <li>Eventos con <code>addEventListener</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 39 – CIERRE FINAL -->
+<div class="slide js-bg">
+  <div style="font-size:7rem;line-height:1;" class="float glow">JS</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya tenés las bases para construir aplicaciones web interactivas con JavaScript.</p>
+  <div class="mt20" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Variables ✅</span>
+    <span class="pill">Operadores ✅</span>
+    <span class="pill">Condicionales ✅</span>
+    <span class="pill">Funciones ✅</span>
+    <span class="pill">DOM ✅</span>
+    <span class="pill gold">Eventos ✅</span>
+  </div>
+  <div class="highlight mt20">Próximo paso: <span class="js-yellow">jQuery</span> — manipulación del DOM simplificada y efectos visuales.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+</script>
+</body>
+</html>
