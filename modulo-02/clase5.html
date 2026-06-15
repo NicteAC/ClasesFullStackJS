@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jQuery & Git/GitHub – Clase 4 horas</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B; --success: #4CAF50;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --jq-blue: #0769ad; --jq-light: #78cef7;
+    --git-orange: #f05032; --git-dark: #3d1f00;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.jq-bg     { background:linear-gradient(135deg,#0769ad 0%,#1565c0 100%); }
+  .slide.git-bg    { background:linear-gradient(135deg,#f05032 0%,#b71c1c 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.teal-bg   { background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); }
+
+  #counter {
+    position:fixed; top:30px; right:30px;
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.2); border-radius:20px;
+    padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px;
+  }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn {
+    background:rgba(0,0,0,0.5); backdrop-filter:blur(10px);
+    border:2px solid rgba(255,255,255,0.3); color:#fff;
+    border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s;
+  }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--accent); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:26px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.35rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .jq-color { color:var(--jq-light); }
+  .git-color { color:#ffab91; }
+  .bold { font-weight:700; }
+
+  .code-block {
+    background:#0d1117; border:1px solid rgba(255,255,255,0.12);
+    border-radius:14px; padding:18px 24px;
+    font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85;
+    width:100%; max-width:1100px;
+  }
+  .code-block.sm { font-size:.86rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+  .tag { color:#f0883e; }
+  .cls { color:#FFD700; }
+  .cmd { color:#79c0ff; }
+  .flag { color:#a8ff78; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 28px; list-style:none; }
+  .two-col li { padding:5px 0; }
+  .two-col li::before { content:"▸ "; color:var(--accent); }
+  .steps { display:flex; gap:15px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--accent); color:var(--dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:6px; }
+  .step p  { font-size:.88rem; opacity:.9; line-height:1.5; }
+  .emoji-big { font-size:6rem; line-height:1; }
+  .emoji-md  { font-size:2.6rem; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(255,215,0,0.15); border:2px solid var(--accent); border-radius:15px; padding:15px 25px; margin-top:15px; font-size:1.15rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:5px 14px; font-size:.9rem; margin:4px; }
+  .pill.gold { background:rgba(255,215,0,0.2); border-color:var(--accent); color:var(--accent); }
+  .pill.jq   { background:rgba(7,105,173,0.35); border-color:var(--jq-light); color:var(--jq-light); }
+  .pill.git  { background:rgba(240,80,50,0.3); border-color:#ffab91; color:#ffab91; }
+  .sched-row { display:flex; gap:13px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(255,215,0,0.15); border:1px solid var(--accent); border-radius:10px; padding:7px 14px; font-size:.93rem; white-space:nowrap; color:var(--accent); font-weight:700; min-width:120px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* git flow */
+  .git-flow { display:flex; align-items:center; gap:0; max-width:1000px; width:100%; }
+  .git-node { background:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.25); border-radius:12px; padding:10px 16px; font-family:'Courier New',monospace; font-size:1rem; text-align:center; white-space:nowrap; }
+  .git-arrow { color:var(--accent); font-size:1.6rem; padding:0 8px; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--accent)} 50%{text-shadow:0 0 30px var(--accent),0 0 60px var(--accent)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(5) { animation-delay:.32s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 44</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active">
+  <div style="display:flex;gap:30px;font-size:5rem;line-height:1;" class="float">💡🌿</div>
+  <h1 class="mt20">jQuery <span style="opacity:.5">&amp;</span> Git / GitHub</h1>
+  <p class="subtitle mt20">Clase intensiva de 4 horas · Librería jQuery + Control de Versiones</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill jq">DOM jQuery</span>
+    <span class="pill jq">Efectos</span>
+    <span class="pill jq">Plugins</span>
+    <span class="pill git">Git local</span>
+    <span class="pill git">GitHub</span>
+    <span class="pill gold">4 Horas</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#0769ad"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">💡 <strong>Bloque 1</strong> · jQuery: fundamentos, DOM, efectos y animaciones</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#0769ad"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🧩 <strong>Bloque 2</strong> · jQuery: eventos avanzados y plugins Bootstrap</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#f05032"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🌿 <strong>Bloque 3</strong> · Git: commits, ramas, tags</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#f05032"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">🐙 <strong>Bloque 4</strong> · GitHub: push, pull, Pull Requests, Markdown</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – JQUERY FUNDAMENTOS ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide jq-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">💡</div>
+  <h1 class="sm mt20">Librería jQuery</h1>
+  <p class="subtitle">Fundamentos · DOM · Efectos · Animaciones</p>
+  <div class="highlight mt20" style="border-color:var(--jq-light);background:rgba(120,206,247,0.1);">
+    ⚠️ Usamos <span class="jq-color bold">Bootstrap 4</span> — en BS5 la API jQuery ya no existe.
+  </div>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES JQUERY? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · jQuery</span>
+  <h2>¿Qué es jQuery?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📚 Definición</h3>
+      <p>Biblioteca de JavaScript que simplifica la <span class="accent">manipulación del DOM</span>, el manejo de eventos y la implementación de efectos. Lema: <em>"Write less, do more"</em>.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 ¿Por qué aprenderla?</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Gran parte del ecosistema legado la usa</li>
+        <li>Plugins y plantillas todavía dependen de ella</li>
+        <li>Bootstrap 4 la requiere para sus componentes JS</li>
+        <li>Permite mantener y migrar proyectos existentes</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">Con jQuery lo que en JS vanilla tomaría 5 líneas, se hace en <span class="accent">1 línea</span>.</div>
+</div>
+
+<!-- SLIDE 5 – INCLUIR JQUERY -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 1 · Instalación</span>
+  <h2>Incluir jQuery + Bootstrap 4</h2>
+  <div class="code-block">
+    <span class="cm">&lt;!-- Bootstrap 4 CSS --&gt;</span><br>
+    <span class="tag">&lt;link</span> <span class="var">rel</span>=<span class="str">"stylesheet"</span> <span class="var">href</span>=<span class="str">"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"</span><span class="tag">&gt;</span><br><br>
+    <span class="cm">&lt;!-- Al final del body: jQuery → Popper → Bootstrap JS --&gt;</span><br>
+    <span class="tag">&lt;script</span> <span class="var">src</span>=<span class="str">"https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    <span class="tag">&lt;script</span> <span class="var">src</span>=<span class="str">"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    <span class="tag">&lt;script</span> <span class="var">src</span>=<span class="str">"https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+  </div>
+  <div class="highlight mt20">El orden importa: <span class="accent">jQuery → Popper → Bootstrap</span>. Sin jQuery antes, Bootstrap 4 no funciona.</div>
+</div>
+
+<!-- SLIDE 6 – SINTAXIS JQUERY -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Sintaxis</span>
+  <h2>Sintaxis Fundamental de jQuery</h2>
+  <div class="code-block" style="max-width:900px;">
+    <span class="cm">// Selector jQuery → Acción</span><br>
+    <span class="fn">$</span>(<span class="str">"selector"</span>).<span class="fn">accion</span>();<br><br>
+    <span class="cm">// Ejemplos de selectores (mismos que CSS)</span><br>
+    <span class="fn">$</span>(<span class="str">"p"</span>)          <span class="cm">// todos los párrafos</span><br>
+    <span class="fn">$</span>(<span class="str">"#mi-id"</span>)    <span class="cm">// elemento por ID</span><br>
+    <span class="fn">$</span>(<span class="str">".mi-clase"</span>)  <span class="cm">// elementos por clase</span><br>
+    <span class="fn">$</span>(<span class="str">"p.texto"</span>)   <span class="cm">// párrafos con clase .texto</span><br><br>
+    <span class="cm">// Esperar que el DOM esté listo</span><br>
+    <span class="fn">$</span>(document).<span class="fn">ready</span>(<span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;<span class="cm">// todo el código jQuery va aquí</span><br>
+    });<br>
+    <span class="cm">// Forma abreviada:</span><br>
+    <span class="fn">$</span>(<span class="kw">function</span>() { <span class="cm">/* código aquí */</span> });
+  </div>
+</div>
+
+<!-- SLIDE 7 – SHOW / HIDE / TOGGLE -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Visibilidad</span>
+  <h2>Show · Hide · Toggle</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>👁️ .show()</h3>
+      <p>Muestra un elemento que estaba oculto (<code>display:none</code>).</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">$</span>(<span class="str">"button"</span>).<span class="fn">on</span>(<span class="str">"click"</span>, <span class="kw">function</span>(){<br>
+        &nbsp;&nbsp;<span class="fn">$</span>(<span class="str">"p.texto"</span>).<span class="fn">show</span>();<br>
+        });
+      </div>
+    </div>
+    <div class="card">
+      <h3>🙈 .hide()</h3>
+      <p>Oculta un elemento visible.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">$</span>(<span class="str">"button"</span>).<span class="fn">on</span>(<span class="str">"click"</span>, <span class="kw">function</span>(){<br>
+        &nbsp;&nbsp;<span class="fn">$</span>(<span class="str">"p.texto"</span>).<span class="fn">hide</span>();<br>
+        });
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 .toggle()</h3>
+      <p>Alterna entre mostrar y ocultar según el estado actual.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">$</span>(<span class="str">"button"</span>).<span class="fn">click</span>(<span class="kw">function</span>(){<br>
+        &nbsp;&nbsp;<span class="fn">$</span>(<span class="str">"p.texto"</span>).<span class="fn">toggle</span>();<br>
+        });
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 – FADE / SLIDE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Animaciones</span>
+  <h2>Efectos: Fade y Slide</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌫️ Fade (con transición suave)</h3>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">fadeIn</span>(<span class="str">"slow"</span>);   <span class="cm">// aparece</span><br>
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">fadeOut</span>(<span class="num">2000</span>); <span class="cm">// desaparece</span><br><br>
+        <span class="cm">// Con callback al terminar:</span><br>
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">fadeOut</span>(<span class="num">2000</span>, <span class="kw">function</span>(){<br>
+        &nbsp;&nbsp;<span class="fn">alert</span>(<span class="str">"¡Terminó!"</span>);<br>
+        });
+      </div>
+    </div>
+    <div class="card">
+      <h3>📦 Slide (desplazamiento)</h3>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">slideDown</span>(<span class="num">1000</span>); <span class="cm">// baja</span><br>
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">slideUp</span>(<span class="num">1000</span>);   <span class="cm">// sube</span><br>
+        <span class="fn">$</span>(<span class="str">"p"</span>).<span class="fn">slideToggle</span>(); <span class="cm">// alterna</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Parámetros de velocidad: <span class="accent">"slow"</span>, <span class="accent">"fast"</span> o un número en <span class="accent">milisegundos</span>. El segundo parámetro es un <span class="accent">callback</span>.</div>
+</div>
+
+<!-- SLIDE 9 – SCROLL ANIMADO -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 1 · Scroll</span>
+  <h2>Scroll Animado a una Sección</h2>
+  <div class="code-block">
+    <span class="cm">&lt;!-- HTML: anchor y sección destino --&gt;</span><br>
+    <span class="tag">&lt;a</span> <span class="var">id</span>=<span class="str">"ir-contacto"</span> <span class="var">href</span>=<span class="str">"#"</span><span class="tag">&gt;</span>Ir a Contacto<span class="tag">&lt;/a&gt;</span><br>
+    <span class="tag">&lt;div</span> <span class="var">id</span>=<span class="str">"seccionContacto"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span><br><br>
+    <span class="cm">// jQuery: animar el scroll</span><br>
+    <span class="fn">$</span>(<span class="str">"#ir-contacto"</span>).<span class="fn">click</span>(<span class="kw">function</span>(<span class="var">e</span>) {<br>
+    &nbsp;&nbsp;<span class="var">e</span>.<span class="fn">preventDefault</span>();<br>
+    &nbsp;&nbsp;<span class="fn">$</span>(<span class="str">"html, body"</span>).<span class="fn">animate</span>({<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">scrollTop</span>: <span class="fn">$</span>(<span class="str">"#seccionContacto"</span>).<span class="fn">offset</span>().<span class="var">top</span><br>
+    &nbsp;&nbsp;}, <span class="num">2000</span>);<br>
+    });
+  </div>
+  <div class="highlight mt20">Muy usado en <span class="accent">landing pages</span>: el usuario navega haciendo clic en el menú y se desplaza suavemente entre secciones.</div>
+</div>
+
+<!-- SLIDE 10 – LIVE CODING 1: CAMBIAR TEXTO -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💡</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 1:<br>Modificar DOM con jQuery</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Crear <code>index.html</code> con <code>&lt;h1&gt;</code> "Texto original" y botón "Cambiar texto"</li>
+        <li>2️⃣ Incluir jQuery vía CDN de Google</li>
+        <li>3️⃣ Al clic en el botón: cambiar el texto del h1 con jQuery</li>
+        <li>4️⃣ Agregar show/hide y fadeIn/fadeOut a un párrafo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11 – LIVE CODING 2: CALCULADORA PRÉSTAMOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🏦</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 2:<br>Calculadora de Préstamos</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ HTML con campos: monto, tasa de interés, plazo en meses</li>
+        <li>2️⃣ Botón "Calcular" — detectar clic con jQuery</li>
+        <li>3️⃣ Obtener valores con <code>.val()</code></li>
+        <li>4️⃣ Calcular cuota mensual y mostrar resultado en la página</li>
+        <li>5️⃣ Estilos con Bootstrap 4 · Archivo <code>app.js</code> externo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 2 – EVENTOS Y PLUGINS ═══════ -->
+
+<!-- SLIDE 12 – TÍTULO BLOQUE 2 -->
+<div class="slide jq-bg">
+  <span class="section-label">Bloque 2 · 1:00 – 1:20</span>
+  <div class="emoji-big float">🧩</div>
+  <h1 class="sm mt20">Eventos y Plugins<br>con jQuery</h1>
+  <p class="subtitle">Tipos de eventos · Plugins Bootstrap 4</p>
+</div>
+
+<!-- SLIDE 13 – TIPOS DE EVENTOS JQUERY -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Eventos</span>
+  <h2>Tipos de Eventos en jQuery</h2>
+  <div class="grid-4">
+    <div class="card center">
+      <div class="emoji-md">🖱️</div>
+      <h3 style="font-size:1.1rem;">Mouse</h3>
+      <ul class="list-clean" style="font-size:.9rem;">
+        <li>click</li><li>dblclick</li>
+        <li>mouseenter</li><li>mouseleave</li>
+      </ul>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">⌨️</div>
+      <h3 style="font-size:1.1rem;">Teclado</h3>
+      <ul class="list-clean" style="font-size:.9rem;">
+        <li>keydown</li><li>keyup</li><li>keypress</li>
+      </ul>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">📋</div>
+      <h3 style="font-size:1.1rem;">Formulario</h3>
+      <ul class="list-clean" style="font-size:.9rem;">
+        <li>submit</li><li>change</li><li>input</li>
+      </ul>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">📄</div>
+      <h3 style="font-size:1.1rem;">Documento</h3>
+      <ul class="list-clean" style="font-size:.9rem;">
+        <li>ready</li><li>load</li><li>resize</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.9rem;">
+    <span class="fn">$</span>(<span class="str">"#btn"</span>).<span class="fn">click</span>(<span class="kw">function</span>() { <span class="fn">alert</span>(<span class="str">"¡Clic!"</span>); });<br>
+    <span class="fn">$</span>(<span class="str">"#btn"</span>).<span class="fn">dblclick</span>(<span class="kw">function</span>() { <span class="fn">$</span>(<span class="kw">this</span>).css(<span class="str">"color"</span>, <span class="str">"red"</span>); });<br>
+    <span class="fn">$</span>(<span class="str">"#btn"</span>).<span class="fn">on</span>(<span class="str">"mouseenter"</span>, <span class="kw">function</span>() { <span class="fn">$</span>(<span class="kw">this</span>).addClass(<span class="str">"activo"</span>); });
+  </div>
+</div>
+
+<!-- SLIDE 14 – PLUGINS Y CARRUSEL -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Plugins</span>
+  <h2>Plugins Bootstrap 4 + jQuery</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🧩 ¿Qué es un plugin?</h3>
+      <p>Código que extiende Bootstrap/jQuery con funcionalidades extra: carruseles, modales, acordeones, datepickers. <span class="accent">Sin escribir todo desde cero.</span></p>
+    </div>
+    <div class="card">
+      <h3>🎠 Carrusel BS4</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Clase <code>.carousel</code> + <code>data-ride="carousel"</code></li>
+        <li>Items con <code>.carousel-item</code></li>
+        <li>Controles prev/next con <code>data-slide</code></li>
+        <li>jQuery para inicializar y personalizar</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20 sm">
+    <span class="cm">// Inicializar carrusel con jQuery y opciones</span><br>
+    <span class="fn">$</span>(<span class="str">'#miCarrusel'</span>).<span class="fn">carousel</span>({<br>
+    &nbsp;&nbsp;<span class="var">interval</span>: <span class="num">3000</span>,   <span class="cm">// ms entre slides</span><br>
+    &nbsp;&nbsp;<span class="var">pause</span>: <span class="str">'hover'</span>  <span class="cm">// pausa al pasar el cursor</span><br>
+    });<br>
+    <span class="cm">// Pausar con mouseenter</span><br>
+    <span class="fn">$</span>(<span class="str">'#miCarrusel'</span>).<span class="fn">on</span>(<span class="str">'mouseenter'</span>, <span class="kw">function</span>(){ <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">carousel</span>(<span class="str">'pause'</span>); });
+  </div>
+</div>
+
+<!-- SLIDE 15 – EJERCICIO JQUERY (TAREAS) -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">✅</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Gestión de Tareas</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Sistema para gestionar tareas con jQuery:<br>
+        ✅ Input + botón "Agregar tarea"<br>
+        ✅ Lista <code>&lt;ul&gt;</code> donde aparecen como <code>&lt;li&gt;</code><br>
+        ✅ Clic en el <code>&lt;li&gt;</code> → eliminar la tarea<br>
+        ✅ Incluir jQuery vía CDN de Google
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ DESCANSO ═══════ -->
+
+<!-- SLIDE 16 – DESCANSO -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div class="emoji-big">☕</div>
+    <h1 class="mt20" style="color:var(--dark);">DESCANSO</h1>
+    <p style="font-size:2rem;color:var(--dark);opacity:.8;margin-top:15px;">30 minutos · ¡Recarga energías!</p>
+    <p style="font-size:1.3rem;color:var(--dark);opacity:.6;margin-top:10px;">A las 1:50 arrancamos con Git 🌿</p>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – GIT FUNDAMENTOS ═══════ -->
+
+<!-- SLIDE 17 – TÍTULO BLOQUE 3 -->
+<div class="slide git-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🌿</div>
+  <h1 class="sm mt20">Fundamentos de Git</h1>
+  <p class="subtitle">Control de versiones local · Commits · Ramas · Tags</p>
+</div>
+
+<!-- SLIDE 18 – ¿QUÉ ES GIT? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Git</span>
+  <h2>¿Qué es Git?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌿 Sistema de control de versiones</h3>
+      <p>Permite gestionar y colaborar en proyectos manteniendo un <span class="accent">historial completo</span> de todos los cambios realizados en los archivos.</p>
+    </div>
+    <div class="card">
+      <h3>🐙 GitHub, GitLab, Bitbucket</h3>
+      <p>Plataformas que aprovechan Git para alojar repositorios y agregar herramientas de <span class="accent">colaboración, CI/CD y despliegue</span>.</p>
+    </div>
+  </div>
+  <div class="steps mt20">
+    <div class="step"><div class="step-num">📁</div><h3>Working Directory</h3><p>Archivos locales en tu PC</p></div>
+    <div class="step"><div class="step-num" style="font-size:.7rem;">STAGE</div><h3>Staging Area</h3><p>Cambios listos para commit</p></div>
+    <div class="step"><div class="step-num">📸</div><h3>Repository</h3><p>Historial de commits locales</p></div>
+    <div class="step"><div class="step-num">☁️</div><h3>Remote</h3><p>GitHub / GitLab / Bitbucket</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 19 – INSTALACIÓN Y CONFIGURACIÓN -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · Instalación</span>
+  <h2>Instalar y Configurar Git</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⬇️ Instalación</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Descargar desde <code>git-scm.com</code></li>
+        <li>Seleccionar "Git Bash Here" en la instalación</li>
+        <li>Agregar Git al PATH del sistema</li>
+        <li>Verificar: <code style="color:#a8ff78;">git --version</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚙️ Configuración inicial</h3>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="cm"># Nombre y email (una sola vez)</span><br>
+        <span class="cmd">git</span> <span class="flag">config</span> <span class="flag">--global</span> user.name <span class="str">"Tu Nombre"</span><br>
+        <span class="cmd">git</span> <span class="flag">config</span> <span class="flag">--global</span> user.email <span class="str">"tu@email.com"</span><br><br>
+        <span class="cm"># Verificar configuración</span><br>
+        <span class="cmd">git</span> <span class="flag">config</span> <span class="flag">--list</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20 – COMANDOS BÁSICOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Comandos</span>
+  <h2>Comandos Fundamentales</h2>
+  <div class="code-block">
+    <span class="cm"># Crear repositorio nuevo</span><br>
+    <span class="cmd">git init</span><br><br>
+    <span class="cm"># Clonar repositorio existente</span><br>
+    <span class="cmd">git clone</span> https://github.com/usuario/repo.git<br><br>
+    <span class="cm"># Ver estado de los archivos</span><br>
+    <span class="cmd">git status</span><br><br>
+    <span class="cm"># Agregar archivos al staging area</span><br>
+    <span class="cmd">git add</span> nombre_archivo     <span class="cm"># archivo específico</span><br>
+    <span class="cmd">git add</span> <span class="flag">.</span>                    <span class="cm"># todos los cambios</span><br><br>
+    <span class="cm"># Guardar commit con mensaje</span><br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Descripción del cambio"</span>
+  </div>
+</div>
+
+<!-- SLIDE 21 – COMMITS Y RESTAURACIÓN -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · Commits</span>
+  <h2>Restaurar · Revertir · Renombrar</h2>
+  <div class="code-block sm">
+    <span class="cm"># Deshacer cambios en working directory</span><br>
+    <span class="cmd">git checkout</span> <span class="flag">--</span> nombre_archivo<br><br>
+    <span class="cm"># Quitar archivo del staging (sin borrar cambios)</span><br>
+    <span class="cmd">git reset HEAD</span> nombre_archivo<br><br>
+    <span class="cm"># Revertir un commit anterior (crea nuevo commit que lo deshace)</span><br>
+    <span class="cmd">git revert</span> hash_del_commit<br><br>
+    <span class="cm"># Renombrar un archivo (Git lo trackea correctamente)</span><br>
+    <span class="cmd">git mv</span> archivo_antiguo.txt archivo_nuevo.txt<br>
+    <span class="cmd">git add</span> <span class="flag">.</span><br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Renombrado archivo"</span><br><br>
+    <span class="cm"># Ver historial de commits</span><br>
+    <span class="cmd">git log</span> <span class="flag">--oneline</span>
+  </div>
+</div>
+
+<!-- SLIDE 22 – .GITIGNORE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · .gitignore</span>
+  <h2>Ignorar Archivos con .gitignore</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📄 ¿Qué es?</h3>
+      <p>Archivo en la raíz del proyecto que lista patrones de archivos que Git debe <span class="accent">no rastrear</span>: dependencias, credenciales, builds.</p>
+    </div>
+    <div class="card">
+      <h3>✍️ Ejemplos de patrones</h3>
+      <div class="code-block" style="font-size:.9rem;margin-top:10px;">
+        <span class="cm"># Extensiones</span><br>
+        *.txt<br>
+        *.log<br><br>
+        <span class="cm"># Carpetas</span><br>
+        node_modules/<br>
+        .env<br>
+        dist/
+      </div>
+    </div>
+  </div>
+  <div class="code-block mt20" style="font-size:.9rem;max-width:900px;">
+    <span class="cm"># Crear y commitear .gitignore</span><br>
+    <span class="cmd">git add</span> .gitignore<br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Agregado .gitignore"</span>
+  </div>
+</div>
+
+<!-- SLIDE 23 – RAMAS -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Ramas</span>
+  <h2>Ramas (Branches)</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="cm"># Crear y cambiar a nueva rama</span><br>
+    <span class="cmd">git branch</span> nueva-feature<br>
+    <span class="cmd">git checkout</span> nueva-feature<br>
+    <span class="cm"># O en un solo comando:</span><br>
+    <span class="cmd">git checkout</span> <span class="flag">-b</span> nueva-feature<br><br>
+    <span class="cm"># Hacer cambios y commitear en la nueva rama</span><br>
+    <span class="cmd">git add</span> <span class="flag">.</span><br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Nueva funcionalidad"</span><br><br>
+    <span class="cm"># Volver a main y fusionar</span><br>
+    <span class="cmd">git checkout</span> master<br>
+    <span class="cmd">git merge</span> nueva-feature
+  </div>
+  <div class="highlight mt20">Las ramas permiten trabajar en <span class="accent">features o fixes</span> sin tocar la rama principal hasta que esté listo.</div>
+</div>
+
+<!-- SLIDE 24 – TAGS -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · Tags</span>
+  <h2>Etiquetas (Tags)</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="cm"># Ver historial para encontrar el hash del commit</span><br>
+    <span class="cmd">git log</span> <span class="flag">--oneline</span><br><br>
+    <span class="cm"># Crear tag en un commit específico</span><br>
+    <span class="cmd">git tag</span> v1.0 abcdef123456<br><br>
+    <span class="cm"># Tag anotado (recomendado, con mensaje)</span><br>
+    <span class="cmd">git tag</span> <span class="flag">-a</span> v1.0 <span class="flag">-m</span> <span class="str">"Versión 1.0 estable"</span><br><br>
+    <span class="cm"># Ver todos los tags</span><br>
+    <span class="cmd">git tag</span><br><br>
+    <span class="cm"># Subir tags al repositorio remoto</span><br>
+    <span class="cmd">git push origin</span> <span class="flag">--tags</span>
+  </div>
+  <div class="highlight mt20">Los tags marcan <span class="accent">versiones estables</span> del proyecto. Son punteros inmutables a un commit específico.</div>
+</div>
+
+<!-- SLIDE 25 – LIVE CODING 3: PRIMER REPOSITORIO -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌿</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 3:<br>Primer Repositorio Git</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ <code>git --version</code> — verificar instalación</li>
+        <li>2️⃣ Configurar nombre y email globales</li>
+        <li>3️⃣ <code>git init</code> — inicializar repositorio</li>
+        <li>4️⃣ Crear <code>index.html</code> con estructura básica</li>
+        <li>5️⃣ <code>git add .</code> y <code>git commit -m "Primer commit"</code></li>
+        <li>6️⃣ Crear rama, hacer cambio, merge y <code>git push</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – EJERCICIO GIT LOCAL -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💳</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Control de Versiones<br>Wallet Digital</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Aplicar Git al proyecto wallet:<br>
+        ✅ Commit inicial del estado actual<br>
+        ✅ Crear rama de desarrollo para nueva feature<br>
+        ✅ Commitear cambios regularmente con mensajes descriptivos<br>
+        ✅ Crear tag <code>v1.0</code> para la versión estable<br>
+        ✅ Agregar <code>.gitignore</code> apropiado
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 4 – GITHUB ═══════ -->
+
+<!-- SLIDE 27 – TÍTULO BLOQUE 4 -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">🐙</div>
+  <h1 class="sm mt20">GitHub &amp; Colaboración</h1>
+  <p class="subtitle">Push · Pull · Fetch · Pull Requests · Markdown</p>
+</div>
+
+<!-- SLIDE 28 – REPOSITORIOS REMOTOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Remoto</span>
+  <h2>Repositorios Remotos</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>☁️ ¿Qué es un remoto?</h3>
+      <p>Copia del repositorio en un servidor como <span class="accent">GitHub</span>. Permite colaborar, compartir código y tener respaldo centralizado.</p>
+    </div>
+    <div class="card">
+      <h3>📥 Clonar</h3>
+      <p>Traer una copia completa del repositorio remoto a tu máquina local, incluyendo todo el historial.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="cmd">git clone</span> https://github.com/usuario/repo.git
+      </div>
+    </div>
+  </div>
+  <div class="git-flow mt20">
+    <div class="git-node">📁 Local</div>
+    <div class="git-arrow">⟶ push ⟶</div>
+    <div class="git-node">🐙 GitHub</div>
+    <div class="git-arrow">⟶ pull ⟶</div>
+    <div class="git-node">📁 Colaborador</div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – PUSH -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 4 · Push</span>
+  <h2>git push — Subir Cambios</h2>
+  <div class="code-block">
+    <span class="cm"># Flujo completo: modificar → agregar → commitear → subir</span><br><br>
+    <span class="cm"># 1. Ver estado</span><br>
+    <span class="cmd">git status</span><br><br>
+    <span class="cm"># 2. Agregar al staging</span><br>
+    <span class="cmd">git add</span> nombre_archivo<br><br>
+    <span class="cm"># 3. Commitear</span><br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Descripción del cambio"</span><br><br>
+    <span class="cm"># 4. Subir al remoto</span><br>
+    <span class="cmd">git push origin master</span><br><br>
+    <span class="cm"># Primera vez: establecer rama upstream</span><br>
+    <span class="cmd">git push</span> <span class="flag">-u</span> origin master
+  </div>
+</div>
+
+<!-- SLIDE 30 – PULL -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Pull</span>
+  <h2>git pull — Traer Cambios</h2>
+  <div class="code-block" style="max-width:900px;">
+    <span class="cm"># Verificar estado local antes de pull</span><br>
+    <span class="cmd">git status</span><br><br>
+    <span class="cm"># Traer y fusionar cambios del remoto</span><br>
+    <span class="cmd">git pull origin master</span><br><br>
+    <span class="cm"># Si hay conflictos: editar los archivos, luego:</span><br>
+    <span class="cmd">git add</span> <span class="flag">.</span><br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="str">"Resueltos conflictos"</span>
+  </div>
+  <div class="highlight mt20"><code>git pull</code> = <code>git fetch</code> + <code>git merge</code> en un solo paso.</div>
+</div>
+
+<!-- SLIDE 31 – FETCH vs PULL -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Fetch vs Pull</span>
+  <h2>fetch vs pull</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔍 git fetch</h3>
+      <p>Descarga los cambios del remoto <span class="accent">sin fusionarlos</span> automáticamente. Podés inspeccionar antes de aplicar.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="cmd">git fetch origin</span><br>
+        <span class="cm"># Revisar cambios</span><br>
+        <span class="cmd">git diff</span> origin/master<br>
+        <span class="cm"># Fusionar cuando esté listo</span><br>
+        <span class="cmd">git merge</span> origin/master
+      </div>
+    </div>
+    <div class="card">
+      <h3>⬇️ git pull</h3>
+      <p>Descarga <span class="accent">y fusiona</span> automáticamente. Más conveniente para uso diario cuando confiás en los cambios.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="cm"># fetch + merge en un paso</span><br>
+        <span class="cmd">git pull origin master</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Usá <span class="accent">fetch</span> en equipos para revisar antes de fusionar. Usá <span class="accent">pull</span> cuando trabajás solo o en ramas propias.</div>
+</div>
+
+<!-- SLIDE 32 – PULL REQUESTS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Pull Requests</span>
+  <h2>Pull Requests en GitHub</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h3>Crear rama</h3><p>Trabajar en feature/fix en rama separada.</p></div>
+    <div class="step"><div class="step-num">2</div><h3>Commitear</h3><p>Hacer commits en la nueva rama con cambios.</p></div>
+    <div class="step"><div class="step-num">3</div><h3>Push</h3><p>Subir la rama al remoto en GitHub.</p></div>
+    <div class="step"><div class="step-num">4</div><h3>PR</h3><p>Abrir Pull Request en GitHub con descripción.</p></div>
+    <div class="step"><div class="step-num">5</div><h3>Review</h3><p>Revisión y comentarios del equipo.</p></div>
+    <div class="step"><div class="step-num">6</div><h3>Merge</h3><p>Fusionar en main tras aprobación.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 33 – MARKDOWN -->
+<div class="slide teal-bg">
+  <span class="section-label">Bloque 4 · Markdown</span>
+  <h2>Markdown para README.md</h2>
+  <div class="code-block sm" style="max-width:950px;">
+    <span class="cm"># Título nivel 1</span><br>
+    <span class="cm">## Título nivel 2</span><br>
+    <span class="cm">### Título nivel 3</span><br><br>
+    <span class="kw">**negrita**</span> &nbsp; <span class="fn">*cursiva*</span> &nbsp; <span class="str">`código inline`</span><br><br>
+    <span class="cm">- Ítem de lista</span><br>
+    <span class="cm">- Otro ítem</span><br><br>
+    <span class="cm">1. Lista numerada</span><br>
+    <span class="cm">2. Segundo ítem</span><br><br>
+    [Texto del enlace](https://url.com)<br>
+    ![Alt de imagen](ruta/imagen.png)<br><br>
+    <span class="cm">&gt; Cita o blockquote</span><br><br>
+    ```javascript<br>
+    <span class="cm">// Bloque de código</span><br>
+    ```
+  </div>
+</div>
+
+<!-- SLIDE 34 – LIVE CODING 4: PUSH/PULL/PR -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🐙</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 4:<br>Push · Pull · Pull Request</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear repositorio en GitHub</li>
+        <li>2️⃣ <code>git clone</code> → editar → <code>git push</code></li>
+        <li>3️⃣ Crear rama nueva → cambios → <code>git push origin nueva-rama</code></li>
+        <li>4️⃣ Crear Pull Request en GitHub</li>
+        <li>5️⃣ Crear <code>README.md</code> con Markdown y fusionar el PR</li>
+        <li>6️⃣ <code>git pull</code> para sincronizar local</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 35 – EJERCICIO FINAL: PUSH Y PULL -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio Final · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🤝</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Push, Pull<br>y Colaboración</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Clonar repositorio desde GitHub<br>
+        ✅ Crear rama nueva y hacer al menos 2 commits<br>
+        ✅ Fusionar rama con main local y hacer <code>push</code><br>
+        ✅ Crear Pull Request en GitHub<br>
+        ✅ Simulación: compañero hace cambios → <code>pull</code> y resolver conflictos<br>
+        ✅ Verificar sincronización final
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CIERRE ═══════ -->
+
+<!-- SLIDE 36 – RESUMEN GLOBAL -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Aprendimos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>💡 jQuery</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Sintaxis básica: <code>$(selector).accion()</code></li>
+        <li>show(), hide(), toggle()</li>
+        <li>fadeIn(), fadeOut(), slide*</li>
+        <li>Scroll animado con <code>.animate()</code></li>
+        <li>Tipos de eventos y <code>.on()</code></li>
+        <li>Plugins Bootstrap 4: carrusel</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🌿 Git &amp; GitHub</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>init, clone, status, add, commit</li>
+        <li>Revertir y renombrar archivos</li>
+        <li>.gitignore para ignorar archivos</li>
+        <li>Ramas: branch, checkout, merge</li>
+        <li>Tags para marcar versiones</li>
+        <li>push, pull, fetch y Pull Requests</li>
+        <li>README.md con Markdown</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 37 – CIERRE FINAL -->
+<div class="slide">
+  <div style="display:flex;gap:20px;font-size:6rem;line-height:1;" class="float glow">💡🌿</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya podés interactuar con el DOM usando jQuery y gestionar tu código con Git y GitHub.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill jq">jQuery DOM ✅</span>
+    <span class="pill jq">Efectos ✅</span>
+    <span class="pill jq">Plugins ✅</span>
+    <span class="pill git">Git commits ✅</span>
+    <span class="pill git">Ramas ✅</span>
+    <span class="pill gold">Pull Requests ✅</span>
+  </div>
+  <div class="highlight mt20">Próximo paso: integrar todo en un proyecto completo con Git desde el inicio.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+</script>
+</body>
+</html>
