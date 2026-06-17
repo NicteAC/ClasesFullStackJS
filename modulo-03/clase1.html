@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introducción a JavaScript – Clase</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B; --success: #4CAF50;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--dark); color: #fff;
+  }
+
+  .slider { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 55px 60px;
+    opacity: 0; transform: translateX(100%);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    background: var(--grad); overflow: hidden;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); }
+  .slide.prev   { opacity: 0; transform: translateX(-100%); }
+
+  .slide.dark-bg   { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+  .slide.js-bg     { background: linear-gradient(135deg, #323330 0%, #1a1900 100%); }
+  .slide.code-bg   { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); }
+  .slide.orange-bg { background: linear-gradient(135deg, #f46b45 0%, #eea849 100%); }
+  .slide.teal-bg   { background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); }
+  .slide.green-bg  { background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); }
+  .slide.break-bg  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+
+  #counter {
+    position: fixed; top: 30px; right: 30px;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+    padding: 8px 18px; font-size: .9rem; color: #fff; z-index: 100; letter-spacing: 1px;
+  }
+  .nav-btns { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 12px; z-index: 100; }
+  .nav-btn {
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3); color: #fff;
+    border-radius: 50px; padding: 12px 24px; font-size: 1rem; cursor: pointer; transition: all .3s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-3px); }
+  .progress-bar { position: fixed; bottom: 0; left: 0; height: 4px; background: var(--js-yellow); transition: width .5s ease; z-index: 200; }
+  .section-label { position: absolute; top: 25px; left: 40px; font-size: .75rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+  h1 { font-size: 3.8rem; line-height: 1.15; text-align: center; text-shadow: 2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size: 3rem; }
+  h2 { font-size: 2.3rem; text-align: center; margin-bottom: 26px; text-shadow: 2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size: 1.55rem; margin-bottom: 10px; }
+  p, li { font-size: 1.2rem; line-height: 1.8; }
+  .subtitle { font-size: 1.35rem; opacity: .85; text-align: center; margin-top: 14px; }
+  .accent { color: var(--accent); }
+  .js-yellow { color: var(--js-yellow); }
+  .bold { font-weight: 700; }
+  .center { text-align: center; }
+
+  .code-block {
+    background: #0d1117; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; padding: 20px 26px;
+    font-family: 'Courier New', monospace; font-size: 1rem; line-height: 1.85;
+    width: 100%; max-width: 1100px;
+  }
+  .code-block.sm { font-size: .88rem; line-height: 1.7; }
+  .kw  { color: #ff7b72; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a8ff78; }
+  .num { color: #79c0ff; }
+  .cm  { color: #8b949e; }
+  .op  { color: #f0883e; }
+  .var { color: #ffa657; }
+  .tag { color: #f0883e; }
+  .attr { color: #79c0ff; }
+
+  .card { background: var(--card-bg); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 26px 24px; transition: all .3s; }
+  .card:hover { background: var(--card-hover); transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color: var(--accent); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 1200px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; max-width: 1200px; }
+
+  .list-clean { list-style: none; }
+  .list-clean li { padding: 5px 0; }
+  .list-clean li::before { content: "▸ "; color: var(--accent); }
+
+  .steps { display: flex; gap: 15px; width: 100%; max-width: 1200px; }
+  .step { flex: 1; background: var(--card-bg); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px 15px; text-align: center; border: 1px solid rgba(255,255,255,0.15); transition: all .3s; }
+  .step:hover { transform: translateY(-7px); }
+  .step-num { width: 42px; height: 42px; border-radius: 50%; background: var(--js-yellow); color: var(--js-dark); font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+  .step h3 { font-size: .95rem; color: var(--accent); margin-bottom: 6px; }
+  .step p  { font-size: .88rem; opacity: .9; line-height: 1.5; }
+
+  .emoji-big { font-size: 6rem; line-height: 1; }
+  .emoji-md  { font-size: 2.6rem; }
+  .mt10 { margin-top: 10px; } .mt20 { margin-top: 20px; }
+  .highlight {
+    background: rgba(247,223,30,0.15); border: 2px solid var(--js-yellow);
+    border-radius: 15px; padding: 16px 26px; margin-top: 16px;
+    font-size: 1.15rem; text-align: center; max-width: 950px;
+  }
+  .pill { display: inline-block; background: rgba(102,126,234,0.4); border: 1px solid rgba(102,126,234,0.6); border-radius: 30px; padding: 5px 15px; font-size: .9rem; margin: 4px; }
+  .pill.gold { background: rgba(247,223,30,0.2); border-color: var(--js-yellow); color: var(--js-yellow); }
+
+  /* console color badges */
+  .badge-log   { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: .95rem; color: #fff; }
+  .badge-warn  { background: rgba(255,193,7,0.2);  border: 1px solid #ffc107; border-radius: 8px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: .95rem; color: #ffc107; }
+  .badge-err   { background: rgba(244,67,54,0.2);  border: 1px solid #f44336; border-radius: 8px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: .95rem; color: #f44336; }
+  .badge-tbl   { background: rgba(33,150,243,0.2); border: 1px solid #2196f3; border-radius: 8px; padding: 4px 12px; font-family: 'Courier New', monospace; font-size: .95rem; color: #90caf9; }
+
+  /* comparison table */
+  table { width: 100%; max-width: 1000px; border-collapse: collapse; font-size: 1.1rem; }
+  th { background: rgba(102,126,234,0.55); padding: 13px 18px; text-align: left; }
+  td { padding: 11px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  tr:hover td { background: rgba(255,255,255,0.05); }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+
+  .float { animation: float 3s ease-in-out infinite; }
+  .glow  { animation: glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation: fadeUp .5s ease both; }
+  .slide.active .step  { animation: fadeUp .5s ease both; }
+  .slide.active h2     { animation: fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay: .08s; }
+  .slide.active .card:nth-child(3) { animation-delay: .16s; }
+  .slide.active .step:nth-child(2) { animation-delay: .08s; }
+  .slide.active .step:nth-child(3) { animation-delay: .16s; }
+  .slide.active .step:nth-child(4) { animation-delay: .24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 30</div>
+<div class="progress-bar" id="progress"></div>
+
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:7rem;line-height:1;font-weight:900;color:var(--js-yellow);font-family:'Courier New',monospace;" class="float">JS</div>
+  <h1 class="mt20">Introducción al<br><span class="js-yellow glow">Lenguaje JavaScript</span></h1>
+  <p class="subtitle mt20">Full Stack JavaScript Trainee V2 · AE3.1</p>
+  <div class="mt20" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Motor JS</span>
+    <span class="pill">DevTools</span>
+    <span class="pill">Consola</span>
+    <span class="pill">Editores</span>
+    <span class="pill gold">Entorno de Desarrollo</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – OBJETIVOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Objetivos</span>
+  <h2>¿Qué Aprenderás Hoy?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🧠 Conceptos</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Qué es JavaScript y su importancia en la web</li>
+        <li>Cómo funciona el motor de JS en el navegador</li>
+        <li>Diferencia entre cliente y servidor</li>
+        <li>Capacidades y límites de JS en el navegador</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🛠️ Herramientas</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Usar DevTools para inspeccionar y depurar</li>
+        <li>Dominar los métodos de la consola</li>
+        <li>Configurar VS Code con extensiones útiles</li>
+        <li>Conectar JavaScript con HTML correctamente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3 – ¿QUÉ ES JS? -->
+<div class="slide">
+  <span class="section-label">Fundamentos · JavaScript</span>
+  <h2>¿Qué es JavaScript?</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="emoji-md">⚡</div>
+      <h3>Ligero y dinámico</h3>
+      <p>Lenguaje interpretado que se ejecuta directamente en el navegador, sin necesidad de compilar.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">🌐</div>
+      <h3>Universal</h3>
+      <p>Compatible con todos los navegadores modernos. También corre en servidores con <span class="accent">Node.js</span>.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">🎯</div>
+      <h3>El trío web</h3>
+      <p><span class="accent">HTML</span> estructura · <span class="accent">CSS</span> diseño · <span class="js-yellow bold">JS</span> interactividad</p>
+    </div>
+  </div>
+  <div class="highlight mt20">JS permite modificar el contenido de una página <span class="js-yellow">en tiempo real</span>, sin recargar.</div>
+</div>
+
+<!-- SLIDE 4 – COMPARATIVA -->
+<div class="slide dark-bg">
+  <span class="section-label">Fundamentos · Comparativa</span>
+  <h2>JavaScript vs Otros Lenguajes</h2>
+  <table>
+    <thead>
+      <tr><th>Característica</th><th>JavaScript</th><th>Python</th><th>PHP</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Ejecución</td><td><span class="js-yellow">Navegador / Servidor</span></td><td>Servidor</td><td>Servidor</td></tr>
+      <tr><td>Interactividad</td><td><span class="accent">Alta</span></td><td>Baja</td><td>Media</td></tr>
+      <tr><td>Tipado</td><td>Débil (dinámico)</td><td>Fuerte</td><td>Débil</td></tr>
+      <tr><td>Uso principal</td><td>Front-end y Full Stack</td><td>Data / Backend</td><td>Backend web</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight mt20">Cada lenguaje tiene su propósito. JS es el <span class="js-yellow">único que corre nativamente en el navegador</span>.</div>
+</div>
+
+<!-- SLIDE 5 – CLIENTE VS SERVIDOR -->
+<div class="slide">
+  <span class="section-label">Fundamentos · Entorno</span>
+  <h2>Cliente vs Servidor</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <div class="emoji-md">🖥️</div>
+      <h3>Lado del Cliente</h3>
+      <p>El código JS corre en el <span class="accent">navegador del usuario</span>. Interactúa con el DOM y la interfaz.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Ejemplo: cambiar el color de un botón al hacer clic, mostrar/ocultar un menú.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">⚙️</div>
+      <h3>Lado del Servidor</h3>
+      <p>Con <span class="accent">Node.js</span>, JS corre en el servidor. Manipula datos e interactúa con bases de datos.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Ejemplo: responder una solicitud HTTP con datos en formato JSON.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">En este curso aprenden <span class="js-yellow">los dos lados</span>: front-end con JS en el navegador y back-end con Node.js.</div>
+</div>
+
+<!-- SLIDE 6 – MOTOR DE JS -->
+<div class="slide dark-bg">
+  <span class="section-label">Fundamentos · Motor</span>
+  <h2>¿Qué es un Motor de JavaScript?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⚙️ ¿Qué hace?</h3>
+      <p>Componente del navegador que <span class="accent">interpreta y ejecuta</span> el código JavaScript, transformándolo en instrucciones que la máquina puede entender.</p>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
+        <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 14px;font-size:.95rem;"><span style="color:#79c0ff;">V8</span> → Chrome · Edge · Node.js</div>
+        <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 14px;font-size:.95rem;"><span style="color:#a8ff78;">SpiderMonkey</span> → Firefox</div>
+        <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 14px;font-size:.95rem;"><span style="color:#ffa657;">JavaScriptCore</span> → Safari</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 Fases de ejecución</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><span class="accent">Parseo</span>: convierte el código en un Árbol de Sintaxis Abstracta (AST)</li>
+        <li><span class="accent">Compilación JIT</span>: optimiza y compila en tiempo de ejecución</li>
+        <li><span class="accent">Ejecución</span>: el código corre e interactúa con el navegador y el DOM</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 – PUEDE / NO PUEDE -->
+<div class="slide">
+  <span class="section-label">Fundamentos · Límites</span>
+  <h2>JavaScript en el Navegador</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card" style="border-color:rgba(76,175,80,0.5);">
+      <h3 style="color:#a8ff78;">✅ Puede</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Ejecutarse en tiempo real y mostrar resultados instantáneos</li>
+        <li>Interactuar con las APIs del navegador</li>
+        <li>Mostrar alertas, registrar en consola</li>
+        <li>Acceder a información básica del dispositivo y navegador</li>
+        <li>Modificar el DOM de la página</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(244,67,54,0.5);">
+      <h3 style="color:#FF6B6B;">🚫 No puede</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Acceder directamente al sistema de archivos del usuario</li>
+        <li>Ejecutar comandos del sistema operativo</li>
+        <li>Acceder a recursos de otros dominios sin permiso (CORS)</li>
+        <li>Realizar acciones maliciosas sin autorización explícita</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 – TÍTULO DEVTOOLS -->
+<div class="slide teal-bg">
+  <span class="section-label">DevTools</span>
+  <div class="emoji-big float">🔧</div>
+  <h1 class="sm mt20">Chrome DevTools</h1>
+  <p class="subtitle">Tu laboratorio de desarrollo en el navegador</p>
+</div>
+
+<!-- SLIDE 9 – QUÉ SON LAS DEVTOOLS -->
+<div class="slide dark-bg">
+  <span class="section-label">DevTools · Introducción</span>
+  <h2>¿Qué son las DevTools?</h2>
+  <div class="grid-3">
+    <div class="card center">
+      <div class="emoji-md">🏗️</div>
+      <h3>Elements</h3>
+      <p style="font-size:1rem;">Inspeccionar y editar HTML y CSS en tiempo real.</p>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">💬</div>
+      <h3>Console</h3>
+      <p style="font-size:1rem;">Escribir JS, ver mensajes, errores y advertencias.</p>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">🌐</div>
+      <h3>Network</h3>
+      <p style="font-size:1rem;">Ver solicitudes al servidor y tiempos de carga.</p>
+    </div>
+  </div>
+  <div class="grid-2 mt20" style="max-width:850px;">
+    <div class="card center">
+      <div class="emoji-md" style="font-size:2rem;">📱</div>
+      <h3 style="font-size:1.1rem;">Device Toolbar</h3>
+      <p style="font-size:.95rem;">Simular distintos dispositivos y resoluciones.</p>
+    </div>
+    <div class="card center">
+      <div class="emoji-md" style="font-size:2rem;">🐛</div>
+      <h3 style="font-size:1.1rem;">Sources</h3>
+      <p style="font-size:.95rem;">Ver archivos JS y poner breakpoints.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – CÓMO ABRIR DEVTOOLS -->
+<div class="slide code-bg">
+  <span class="section-label">DevTools · Atajos</span>
+  <h2>Cómo Abrir las DevTools</h2>
+  <div class="grid-3">
+    <div class="card center">
+      <div class="emoji-md">🪟</div>
+      <h3>Windows / Linux</h3>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;font-size:1rem;">F12</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;font-size:1rem;">Ctrl + Shift + I</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;font-size:1rem;">Ctrl + Shift + J <span style="color:#8b949e;font-size:.85rem;">(consola directa)</span></div>
+      </div>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">🍎</div>
+      <h3>Mac</h3>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;text-align:left;">
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;font-size:1rem;">Cmd + Opt + I</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;font-size:1rem;">Cmd + Opt + J</div>
+      </div>
+    </div>
+    <div class="card center">
+      <div class="emoji-md">🖱️</div>
+      <h3>Clic Derecho</h3>
+      <p style="margin-top:12px;font-size:1rem;">Clic derecho en cualquier elemento de la página → <span class="accent">Inspeccionar</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11 – LIVE CODING 1: DEVTOOLS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔧</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 1:<br>Explorando DevTools</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Abrir una web de uso común y las DevTools con F12</li>
+        <li>2️⃣ Explorar la pestaña <strong>Elements</strong>: inspeccionar y editar HTML/CSS</li>
+        <li>3️⃣ Explorar la pestaña <strong>Console</strong>: ejecutar JS básico</li>
+        <li>4️⃣ Explorar <strong>Network</strong>: ver solicitudes de red</li>
+        <li>5️⃣ Explorar <strong>Sources</strong>: ver archivos JS y usar breakpoints</li>
+        <li>6️⃣ Ejecutar en consola: <code>navigator.userAgent</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12 – CONSOLA -->
+<div class="slide dark-bg">
+  <span class="section-label">Consola</span>
+  <h2>La Consola de JavaScript</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🖨️ Métodos principales</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="badge-log">console.log()</span><span style="font-size:1rem;">Mensajes informativos</span></div>
+        <div style="display:flex;align-items:center;gap:12px;"><span class="badge-warn">console.warn()</span><span style="font-size:1rem;">Advertencias</span></div>
+        <div style="display:flex;align-items:center;gap:12px;"><span class="badge-err">console.error()</span><span style="font-size:1rem;">Errores críticos</span></div>
+        <div style="display:flex;align-items:center;gap:12px;"><span class="badge-tbl">console.table()</span><span style="font-size:1rem;">Arrays/objetos como tabla</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🐛 Depuración</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><code style="color:#a8ff78;">console.group()</code> agrupa mensajes relacionados</li>
+        <li><code style="color:#a8ff78;">console.trace()</code> muestra la pila de llamadas</li>
+        <li><code style="color:#a8ff78;">debugger;</code> pausa la ejecución en ese punto</li>
+        <li><code style="color:#a8ff78;">clear();</code> limpia la consola</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – MÉTODOS CONSOLA: CÓDIGO -->
+<div class="slide code-bg">
+  <span class="section-label">Consola · Código</span>
+  <h2>Métodos de Consola en Acción</h2>
+  <div class="code-block sm">
+    <span class="cm">// Mensajes básicos</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Mensaje informativo"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">"⚠️ Advertencia: revisar este valor"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"❌ Error crítico detectado"</span>);<br><br>
+    <span class="cm">// Tabla para visualizar datos</span><br>
+    <span class="kw">const</span> <span class="var">usuarios</span> = [<br>
+    &nbsp;&nbsp;{ <span class="var">nombre</span>: <span class="str">"Ana"</span>,  <span class="var">rol</span>: <span class="str">"Dev"</span>   },<br>
+    &nbsp;&nbsp;{ <span class="var">nombre</span>: <span class="str">"Luis"</span>, <span class="var">rol</span>: <span class="str">"QA"</span>    }<br>
+    ];<br>
+    <span class="fn">console</span>.<span class="fn">table</span>(<span class="var">usuarios</span>);<br><br>
+    <span class="cm">// Agrupar mensajes relacionados</span><br>
+    <span class="fn">console</span>.<span class="fn">group</span>(<span class="str">"Inicio del proceso"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Paso 1 completado"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Paso 2 completado"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">groupEnd</span>();<br><br>
+    <span class="cm">// Pausar ejecución para depurar</span><br>
+    <span class="kw">debugger</span>; <span class="cm">// detiene aquí si DevTools está abierto</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Después del debugger"</span>);
+  </div>
+</div>
+
+<!-- SLIDE 14 – LIVE CODING 2: DEPURAR EN CONSOLA -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🐛</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding 2:<br>Depurar en la Consola</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Abrir DevTools y la pestaña Console</li>
+        <li>2️⃣ Ejecutar <code>console.log()</code>, <code>warn()</code> y <code>error()</code></li>
+        <li>3️⃣ Usar <code>console.table()</code> con un array de objetos</li>
+        <li>4️⃣ Ejecutar código con <code>debugger;</code> e inspeccionar variables en Sources</li>
+        <li>5️⃣ Observar cómo el <code>debugger</code> pausa la ejecución en un punto específico</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – EJERCICIO 1: USO DE CONSOLA -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💬</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio 1: Uso de Consola</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Abrir la consola del navegador (F12)</li>
+        <li>2️⃣ Ejecutar <code>console.log()</code>, <code>warn()</code> y <code>error()</code> con mensajes propios</li>
+        <li>3️⃣ Crear variables y mostrarlas con <code>console.table()</code></li>
+        <li>4️⃣ Organizar salida con <code>console.group()</code> y <code>groupEnd()</code></li>
+        <li>5️⃣ Extra: probar <code>debugger;</code> antes de un <code>console.log()</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16 – PAUSA -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div class="emoji-big">⏰</div>
+    <h1 class="mt20" style="color:var(--dark);">Time-out!</h1>
+    <p style="font-size:2rem;color:var(--dark);opacity:.8;margin-top:15px;">5 – 10 minutos</p>
+    <p style="font-size:1.3rem;color:var(--dark);opacity:.6;margin-top:10px;">Estirarse y prepararse para editores y entorno de trabajo 🖥️</p>
+  </div>
+</div>
+
+<!-- SLIDE 17 – EDITORES -->
+<div class="slide dark-bg">
+  <span class="section-label">Entorno de Trabajo · Editores</span>
+  <h2>Editores de Código</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="emoji-md">💙</div>
+      <h3>VS Code</h3>
+      <p>Gratuito, open source, enorme ecosistema de extensiones. <span class="accent">El más recomendado</span> para este curso.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">🟠</div>
+      <h3>WebStorm</h3>
+      <p>Editor profesional de JetBrains, muy robusto. De pago, con período de prueba gratuito.</p>
+    </div>
+    <div class="card">
+      <div class="emoji-md">🌑</div>
+      <h3>Sublime Text</h3>
+      <p>Ligero y rápido. La versión completa es de pago, pero se puede usar gratuitamente.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Para este curso: <span class="js-yellow">Visual Studio Code</span> · gratuito · multiplataforma · extensions ecosystem</div>
+</div>
+
+<!-- SLIDE 18 – EXTENSIONES VS CODE -->
+<div class="slide">
+  <span class="section-label">Entorno de Trabajo · Extensiones</span>
+  <h2>Extensiones Esenciales para VS Code</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔍 ESLint</h3>
+      <p>Identifica y corrige errores en el código en tiempo real. Asegura un estilo consistente.</p>
+    </div>
+    <div class="card">
+      <h3>✨ Prettier</h3>
+      <p>Formatea automáticamente el código al guardar. Mantiene una estructura limpia y legible.</p>
+    </div>
+    <div class="card">
+      <h3>🚀 Live Server</h3>
+      <p>Recarga el navegador automáticamente al guardar. Imprescindible para desarrollo front-end.</p>
+    </div>
+    <div class="card">
+      <h3>🐛 Debugger for Chrome</h3>
+      <p>Depura código JS directamente desde VS Code conectándose a Chrome DevTools.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19 – CONECTAR JS CON HTML -->
+<div class="slide dark-bg">
+  <span class="section-label">Entorno de Trabajo · Integración</span>
+  <h2>Conectar JavaScript con HTML</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📄 Script interno</h3>
+      <p>JS directamente dentro del HTML con <code style="color:#f0883e;">&lt;script&gt;</code>. Útil para pruebas rápidas.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="tag">&lt;body&gt;</span><br>
+        &nbsp;&nbsp;<span class="cm">&lt;!-- contenido --&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;script&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hola!"</span>);<br>
+        &nbsp;&nbsp;<span class="tag">&lt;/script&gt;</span><br>
+        <span class="tag">&lt;/body&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📂 Archivo externo ✅</h3>
+      <p>JS en un archivo <code style="color:#f0883e;">.js</code> separado. <span class="accent">Recomendado</span> para proyectos reales.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="tag">&lt;body&gt;</span><br>
+        &nbsp;&nbsp;<span class="cm">&lt;!-- contenido --&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"script.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+        <span class="tag">&lt;/body&gt;</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Siempre colocar el <code style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:6px;">&lt;script&gt;</code> al <span class="js-yellow">final del body</span> para que el HTML cargue antes de ejecutar JS.</div>
+</div>
+
+<!-- SLIDE 20 – ESTRUCTURA HTML + JS -->
+<div class="slide code-bg">
+  <span class="section-label">Entorno de Trabajo · Estructura</span>
+  <h2>Estructura Base HTML + JS</h2>
+  <div class="code-block sm" style="max-width:950px;">
+    <span class="cm">&lt;!-- index.html --&gt;</span><br>
+    <span class="tag">&lt;!DOCTYPE html&gt;</span><br>
+    <span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="str">"es"</span><span class="tag">&gt;</span><br>
+    <span class="tag">&lt;head&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="str">"viewport"</span> <span class="attr">content</span>=<span class="str">"width=device-width, initial-scale=1.0"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;title&gt;</span>Mi Proyecto<span class="tag">&lt;/title&gt;</span><br>
+    <span class="tag">&lt;/head&gt;</span><br>
+    <span class="tag">&lt;body&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;h1&gt;</span>Mi primer proyecto JS<span class="tag">&lt;/h1&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;p</span> <span class="attr">id</span>=<span class="str">"mensaje"</span><span class="tag">&gt;&lt;/p&gt;</span> <span class="cm">&lt;!-- JS lo llenará --&gt;</span><br><br>
+    &nbsp;&nbsp;<span class="cm">&lt;!-- Script al final del body ✅ --&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"script.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    <span class="tag">&lt;/body&gt;</span><br>
+    <span class="tag">&lt;/html&gt;</span>
+  </div>
+</div>
+
+<!-- SLIDE 21 – EJERCICIO 2: MI ENTORNO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🖥️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio 2:<br>Mi Entorno de Trabajo</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear carpeta <code>mi-proyecto</code> con <code>index.html</code> y <code>script.js</code></li>
+        <li>2️⃣ Escribir la estructura HTML con un <code>&lt;p id="mensaje"&gt;</code></li>
+        <li>3️⃣ En <code>script.js</code>: agregar <code>console.log()</code> y modificar el párrafo con JS</li>
+        <li>4️⃣ Abrir en el navegador y verificar en la consola (F12)</li>
+        <li>5️⃣ Confirmar que el mensaje aparece en la página y en la consola</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 22 – PREGUNTAS -->
+<div class="slide dark-bg">
+  <span class="section-label">Momento de Preguntas</span>
+  <div class="emoji-big float">❓</div>
+  <h1 class="sm mt20">¿Preguntas?</h1>
+  <div style="max-width:900px;margin-top:24px;display:flex;flex-direction:column;gap:14px;">
+    <div class="card" style="padding:18px 22px;">
+      <p style="font-size:1.1rem;">¿Cómo podemos usar la consola para depurar errores en JavaScript?</p>
+    </div>
+    <div class="card" style="padding:18px 22px;">
+      <p style="font-size:1.1rem;">¿Qué significa que JavaScript es un lenguaje de ejecución en tiempo real?</p>
+    </div>
+    <div class="card" style="padding:18px 22px;">
+      <p style="font-size:1.1rem;">¿Qué pasaría si quitamos la línea <code style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:6px;">&lt;script src="script.js"&gt;&lt;/script&gt;</code> del HTML?</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23 – RESUMEN -->
+<div class="slide js-bg">
+  <span class="section-label">Resumen</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🧠 Conceptos</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Cómo ejecuta JavaScript el navegador</li>
+        <li>Motores JS: V8, SpiderMonkey, JavaScriptCore</li>
+        <li>Cliente (navegador) vs Servidor (Node.js)</li>
+        <li>Capacidades y límites de JS en el navegador</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🛠️ Herramientas</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>DevTools: Elements, Console, Network, Sources</li>
+        <li>Métodos de consola: log, warn, error, table</li>
+        <li>Depuración con <code>debugger;</code> y breakpoints</li>
+        <li>VS Code + extensiones recomendadas</li>
+        <li>Conectar JS con HTML (interno y externo)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – CIERRE -->
+<div class="slide">
+  <div style="font-size:7rem;font-weight:900;color:var(--js-yellow);font-family:'Courier New',monospace;" class="float glow">JS</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ahora conocés el entorno de desarrollo y las herramientas esenciales para programar en JavaScript.</p>
+  <div class="mt20" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">DevTools ✅</span>
+    <span class="pill">Consola ✅</span>
+    <span class="pill">VS Code ✅</span>
+    <span class="pill gold">HTML + JS ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Variables, expresiones y sentencias condicionales</span> en JavaScript.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+</script>
+</body>
+</html>
