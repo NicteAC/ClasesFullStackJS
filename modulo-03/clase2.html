@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variables, Expresiones y Condicionales – JS AE3.2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg     { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.teal-bg   { background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); }
+  .slide.cond-bg   { background:linear-gradient(135deg,#4527a0 0%,#7b1fa2 100%); }
+  .slide.green-bg  { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:24px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.3rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px 24px; font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.87rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+  .tag { color:#f0883e; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 28px; list-style:none; }
+  .two-col li { padding:5px 0; }
+  .two-col li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:14px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:5px; }
+  .step p  { font-size:.85rem; opacity:.9; line-height:1.5; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .emoji-md  { font-size:2.5rem; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:14px 24px; margin-top:14px; font-size:1.12rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 14px; font-size:.88rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2); border-color:#4CAF50; color:#a8ff78; }
+  .pill.red { background:rgba(244,67,54,0.2); border-color:#f44336; color:#ffab91; }
+
+  .type-badge { display:inline-block; padding:4px 14px; border-radius:8px; font-family:'Courier New',monospace; font-size:.95rem; margin:3px; font-weight:600; }
+  .t-str  { background:rgba(168,255,120,0.15); border:1px solid #a8ff78; color:#a8ff78; }
+  .t-num  { background:rgba(121,192,255,0.15); border:1px solid #79c0ff; color:#79c0ff; }
+  .t-bool { background:rgba(255,167,87,0.15); border:1px solid #ffa657; color:#ffa657; }
+  .t-arr  { background:rgba(210,168,255,0.15); border:1px solid #d2a8ff; color:#d2a8ff; }
+  .t-obj  { background:rgba(255,215,0,0.15);  border:1px solid var(--js-yellow); color:var(--js-yellow); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.92rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* flowchart */
+  .flow-row { display:flex; align-items:center; justify-content:center; gap:0; }
+  .flow-box { background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.3); border-radius:10px; padding:10px 18px; font-size:.95rem; text-align:center; }
+  .flow-diamond { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); transform:rotate(45deg); width:70px; height:70px; display:flex; align-items:center; justify-content:center; }
+  .flow-diamond span { transform:rotate(-45deg); font-size:.75rem; font-weight:600; }
+  .flow-arr { color:var(--accent); font-size:1.6rem; padding:0 6px; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 42</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:7rem;font-weight:900;color:var(--js-yellow);font-family:'Courier New',monospace;" class="float">{ }</div>
+  <h1 class="mt20">Variables, Expresiones<br>y <span class="js-yellow glow">Condicionales</span></h1>
+  <p class="subtitle mt20">AE3.2 · Full Stack JavaScript Trainee V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">let / const</span>
+    <span class="pill">Tipos de datos</span>
+    <span class="pill">Operadores</span>
+    <span class="pill">if / else</span>
+    <span class="pill">switch</span>
+    <span class="pill gold">Lógica de programación</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#667eea"></div><div class="sched-time">0:00 – 1:10</div><div class="sched-label">📦 <strong>Bloque 1</strong> · Variables: declaración, tipos, scope, operadores</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#667eea"></div><div class="sched-time">1:10 – 1:20</div><div class="sched-label">🔤 <strong>Bloque 2</strong> · Strings, concatenación y template literals</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#7b1fa2"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔀 <strong>Bloque 3</strong> · Condicionales: if / else if / switch / ternario</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#2e7d32"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">🧠 <strong>Bloque 4</strong> · Operadores lógicos · Diagramas de flujo · Ejercicios</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – VARIABLES ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">📦</div>
+  <h1 class="sm mt20">Variables y Expresiones</h1>
+  <p class="subtitle">Declaración · Tipos de datos · Scope · Operadores</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES UNA VARIABLE? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Variables</span>
+  <h2>¿Qué es una Variable?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🗃️ Definición</h3>
+      <p>Espacio en la <span class="accent">memoria</span> que almacena un valor. Se identifica con un nombre único y puede cambiar durante la ejecución del programa.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Pensalo como una caja etiquetada donde guardás un dato.</p>
+    </div>
+    <div class="card">
+      <h3>💡 Permiten</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Guardar y reutilizar información</li>
+        <li>Realizar operaciones con datos</li>
+        <li>Interactuar con el usuario</li>
+        <li>Hacer el código más flexible y dinámico</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;">
+    <span class="kw">let</span> <span class="var">nombreUsuario</span> = <span class="str">"Sofía"</span>;   <span class="cm">// variable de texto</span><br>
+    <span class="kw">let</span> <span class="var">edad</span>          = <span class="num">25</span>;        <span class="cm">// variable numérica</span><br>
+    <span class="kw">const</span> <span class="var">PI</span>          = <span class="num">3.1416</span>;    <span class="cm">// constante</span>
+  </div>
+</div>
+
+<!-- SLIDE 5 – REGLAS Y CONVENCIONES -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Variables</span>
+  <h2>Reglas y Convenciones de Nombres</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>✅ Reglas (obligatorias)</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Deben empezar con letra, <code>$</code> o <code>_</code></li>
+        <li>No pueden empezar con un número</li>
+        <li>Sin espacios ni caracteres especiales</li>
+        <li>No pueden ser palabras reservadas (<code>let</code>, <code>if</code>...)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🎨 Convenciones (buenas prácticas)</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <div class="code-block" style="font-size:.9rem;padding:10px 14px;">
+          <span class="cm">// camelCase → variables y funciones</span><br>
+          <span class="kw">let</span> <span class="var">nombreUsuario</span> = <span class="str">"Sofía"</span>;
+        </div>
+        <div class="code-block" style="font-size:.9rem;padding:10px 14px;">
+          <span class="cm">// PascalCase → clases</span><br>
+          <span class="kw">class</span> <span class="fn">UsuarioRegistrado</span> { }
+        </div>
+        <div class="code-block" style="font-size:.9rem;padding:10px 14px;">
+          <span class="cm">// UPPER_CASE → constantes globales</span><br>
+          <span class="kw">const</span> <span class="var">MAX_INTENTOS</span> = <span class="num">3</span>;
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 – LET, CONST, VAR -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Declaración</span>
+  <h2>let · const · var</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:#a8ff78;">let</h3>
+      <p>Variable que <span class="accent">puede cambiar</span> de valor. Alcance de bloque. La opción principal para variables mutables.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">let</span> <span class="var">contador</span> = <span class="num">0</span>;<br>
+        <span class="var">contador</span> = <span class="num">1</span>; <span class="cm">// ✅ OK</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#79c0ff;">const</h3>
+      <p><span class="accent">No puede reasignarse</span>. Alcance de bloque. Usarla por defecto cuando el valor no cambia.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">PI</span> = <span class="num">3.1416</span>;<br>
+        <span class="var">PI</span> = <span class="num">3</span>; <span class="cm">// ❌ Error!</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#FF6B6B;">var</h3>
+      <p>Forma antigua. Alcance de función, no de bloque. <span class="accent">No recomendada</span> en código moderno.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">var</span> <span class="var">nombre</span> = <span class="str">"Ana"</span>;<br>
+        <span class="cm">// ⚠️ Evitar usar var</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Regla de oro: usá <span class="js-yellow">const</span> por defecto. Solo usá <span class="js-yellow">let</span> cuando necesitás reasignar el valor.</div>
+</div>
+
+<!-- SLIDE 7 – TIPOS DE DATOS SIMPLES -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Tipos de datos</span>
+  <h2>Tipos de Datos Simples (Primitivos)</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="type-badge t-str">string</div>
+      <h3 class="mt10">Texto</h3>
+      <p>Secuencia de caracteres entre comillas.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">msj</span> = <span class="str">"Hola"</span>;<br>
+        <span class="kw">let</span> <span class="var">nom</span> = <span class="str">'Sofía'</span>;<br>
+        <span class="kw">let</span> <span class="var">txt</span> = <span class="str">`Mundo`</span>;
+      </div>
+    </div>
+    <div class="card">
+      <div class="type-badge t-num">number</div>
+      <h3 class="mt10">Número</h3>
+      <p>Enteros y decimales. Un solo tipo para ambos.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">edad</span>   = <span class="num">25</span>;<br>
+        <span class="kw">let</span> <span class="var">precio</span> = <span class="num">99.99</span>;<br>
+        <span class="kw">let</span> <span class="var">inf</span>    = <span class="num">Infinity</span>;
+      </div>
+    </div>
+    <div class="card">
+      <div class="type-badge t-bool">boolean</div>
+      <h3 class="mt10">Lógico</h3>
+      <p>Solo dos valores posibles.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">activo</span>     = <span class="kw">true</span>;<br>
+        <span class="kw">let</span> <span class="var">verificado</span> = <span class="kw">false</span>;<br>
+        <span class="cm">// Solo true o false</span>
+      </div>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:700px;font-size:.9rem;">
+    <span class="cm">// typeof → conocer el tipo de una variable</span><br>
+    <span class="fn">typeof</span> <span class="str">"Hola"</span>  <span class="cm">// "string"</span><br>
+    <span class="fn">typeof</span> <span class="num">42</span>      <span class="cm">// "number"</span><br>
+    <span class="fn">typeof</span> <span class="kw">true</span>    <span class="cm">// "boolean"</span>
+  </div>
+</div>
+
+<!-- SLIDE 8 – TIPOS COMPLEJOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Tipos complejos</span>
+  <h2>Tipos de Datos Complejos</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <div class="type-badge t-arr">Array</div>
+      <h3 class="mt10">Colección ordenada</h3>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">frutas</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>];<br>
+        <span class="kw">const</span> <span class="var">nums</span>   = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="num">0</span>]); <span class="cm">// "manzana"</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="type-badge t-obj">Object</div>
+      <h3 class="mt10">Par clave-valor</h3>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">usuario</span> = {<br>
+        &nbsp;&nbsp;<span class="var">nombre</span>: <span class="str">"Sofía"</span>,<br>
+        &nbsp;&nbsp;<span class="var">edad</span>:   <span class="num">25</span><br>
+        };<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">usuario</span>.nombre);
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Los tipos complejos <span class="accent">pueden modificar su contenido</span> aunque sean <code style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:6px;">const</code>. const impide reasignar la referencia, no modificar el objeto.</div>
+</div>
+
+<!-- SLIDE 9 – SCOPE -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Scope</span>
+  <h2>Scope (Ámbito de Variables)</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>🌍 Global</h3>
+      <p>Fuera de funciones. Accesible desde cualquier parte del código.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nombre</span> = <span class="str">"Ana"</span>;<br><br>
+        <span class="kw">function</span> <span class="fn">saludar</span>() {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">nombre</span>);<span class="cm"> // ✅</span><br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏠 Local (función)</h3>
+      <p>Dentro de una función. Solo existe ahí.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">fn</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">let</span> <span class="var">msg</span> = <span class="str">"Hola"</span>;<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">msg</span>); <span class="cm">// ✅</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">msg</span>); <span class="cm">// ❌</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔲 Bloque (let/const)</h3>
+      <p>Dentro de <code>{}</code>. Solo existe dentro de ese bloque.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">if</span> (<span class="kw">true</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">let</span> <span class="var">x</span> = <span class="num">10</span>;<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">x</span>); <span class="cm">// ✅</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">x</span>); <span class="cm">// ❌</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Usá <span class="js-yellow">let</span> y <span class="js-yellow">const</span> en lugar de <code>var</code> para aprovechar el scope de bloque y evitar errores.</div>
+</div>
+
+<!-- SLIDE 10 – OPERADORES ARITMÉTICOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Operadores</span>
+  <h2>Operadores Aritméticos</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="kw">let</span> <span class="var">a</span> = <span class="num">10</span>, <span class="var">b</span> = <span class="num">3</span>;<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">+</span> <span class="var">b</span>);   <span class="cm">// 13  → suma</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">-</span> <span class="var">b</span>);   <span class="cm">// 7   → resta</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">*</span> <span class="var">b</span>);   <span class="cm">// 30  → multiplicación</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">/</span> <span class="var">b</span>);   <span class="cm">// 3.33 → división</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">%</span> <span class="var">b</span>);   <span class="cm">// 1   → módulo (resto)</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">a</span> <span class="op">**</span> <span class="var">b</span>);  <span class="cm">// 1000 → exponente (10³)</span><br><br>
+    <span class="cm">// Incremento y decremento</span><br>
+    <span class="kw">let</span> <span class="var">x</span> = <span class="num">5</span>;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">x</span><span class="op">++</span>); <span class="cm">// 5 → postfijo: devuelve LUEGO incrementa</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="op">++</span><span class="var">x</span>); <span class="cm">// 7 → prefijo:  incrementa LUEGO devuelve</span>
+  </div>
+  <div class="highlight mt20">El <span class="js-yellow">%</span> (módulo) es muy útil: sirve para saber si un número es <span class="accent">par</span> (<code>n % 2 === 0</code>).</div>
+</div>
+
+<!-- SLIDE 11 – PRECEDENCIA -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Precedencia</span>
+  <h2>Precedencia de Operadores</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⚠️ Sin paréntesis</h3>
+      <div class="code-block" style="font-size:.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">r</span> = <span class="num">5</span> <span class="op">+</span> <span class="num">3</span> <span class="op">*</span> <span class="num">2</span>;<br>
+        <span class="cm">// Primero * → 5 + 6 = 11</span><br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>); <span class="cm">// 11</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ Con paréntesis</h3>
+      <div class="code-block" style="font-size:.9rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">r</span> = (<span class="num">5</span> <span class="op">+</span> <span class="num">3</span>) <span class="op">*</span> <span class="num">2</span>;<br>
+        <span class="cm">// Primero () → 8 * 2 = 16</span><br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>); <span class="cm">// 16</span>
+      </div>
+    </div>
+  </div>
+  <div class="steps mt20">
+    <div class="step"><div class="step-num" style="font-size:.75rem;">( )</div><h3>1º Paréntesis</h3><p>Mayor prioridad</p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">**</div><h3>2º Exponente</h3><p></p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">* /</div><h3>3º Mult / Div</h3><p></p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">%</div><h3>4º Módulo</h3><p></p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">+ -</div><h3>5º Suma / Resta</h3><p>Menor prioridad</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 12 – OPERADORES COMPARACIÓN -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Comparación</span>
+  <h2>Operadores de Comparación</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="num">5</span> <span class="op">==</span>  <span class="str">"5"</span>  <span class="cm">// true  → igual valor (sin verificar tipo) ⚠️</span><br>
+    <span class="num">5</span> <span class="op">===</span> <span class="str">"5"</span>  <span class="cm">// false → igual valor Y tipo ✅ usar siempre</span><br>
+    <span class="num">10</span> <span class="op">!=</span>  <span class="num">5</span>    <span class="cm">// true  → diferente valor</span><br>
+    <span class="num">10</span> <span class="op">!==</span> <span class="str">"10"</span> <span class="cm">// true  → diferente valor O tipo</span><br>
+    <span class="num">7</span>  <span class="op">&gt;</span>   <span class="num">5</span>    <span class="cm">// true  → mayor que</span><br>
+    <span class="num">3</span>  <span class="op">&lt;</span>   <span class="num">8</span>    <span class="cm">// true  → menor que</span><br>
+    <span class="num">6</span>  <span class="op">&gt;=</span>  <span class="num">6</span>    <span class="cm">// true  → mayor o igual que</span><br>
+    <span class="num">4</span>  <span class="op">&lt;=</span>  <span class="num">5</span>    <span class="cm">// true  → menor o igual que</span>
+  </div>
+  <div class="highlight mt20">Siempre usá <span class="js-yellow">===</span> en lugar de <code>==</code>. El triple igual evita conversiones de tipo implícitas que generan bugs difíciles de detectar.</div>
+</div>
+
+<!-- SLIDE 13 – STRINGS Y CONCATENACIÓN -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Strings</span>
+  <h2>Strings y Concatenación</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>+ Concatenación clásica</h3>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nom</span>  = <span class="str">"Sofía"</span>;<br>
+        <span class="kw">let</span> <span class="var">edad</span> = <span class="num">25</span>;<br>
+        <span class="kw">let</span> <span class="var">msj</span>  = <span class="str">"Hola, "</span> <span class="op">+</span> <span class="var">nom</span> <span class="op">+</span> <span class="str">". Tenés "</span> <span class="op">+</span> <span class="var">edad</span> <span class="op">+</span> <span class="str">" años."</span>;<br>
+        <span class="cm">// Hola, Sofía. Tenés 25 años.</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✨ Template literals (ES6+)</h3>
+      <div class="code-block" style="font-size:.88rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">nom</span>  = <span class="str">"Sofía"</span>;<br>
+        <span class="kw">let</span> <span class="var">edad</span> = <span class="num">25</span>;<br>
+        <span class="kw">let</span> <span class="var">msj</span>  = <span class="str">`Hola, ${<span class="var">nom</span>}. Tenés ${<span class="var">edad</span>} años.`</span>;<br>
+        <span class="cm">// Hola, Sofía. Tenés 25 años. ✅ Mejor</span>
+      </div>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.9rem;">
+    <span class="cm">// Caracteres especiales dentro de strings</span><br>
+    <span class="kw">let</span> <span class="var">frase</span> = <span class="str">"Ella dijo: \"Hola\""</span>;  <span class="cm">// comillas escapadas</span><br>
+    <span class="kw">let</span> <span class="var">otro</span>  = <span class="str">'It\'s a test'</span>;           <span class="cm">// apostrofe escapado</span>
+  </div>
+</div>
+
+<!-- SLIDE 14 – LIVE CODING: VARIABLES -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Declaración y Uso de Variables</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Declarar variables con <code>let</code>, <code>const</code> y mostrar diferencias</li>
+        <li>2️⃣ Concatenar strings con <code>+</code> y con template literals</li>
+        <li>3️⃣ Operaciones matemáticas y precedencia de operadores</li>
+        <li>4️⃣ Diferencia entre <code>x++</code> (postfijo) y <code>++x</code> (prefijo)</li>
+        <li>5️⃣ Conversión de tipos: coerción implícita y explícita</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – EJERCICIO 1: PERFIL INTERACTIVO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">👤</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Perfil Interactivo</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        Script que solicita y muestra datos de un usuario:<br>
+        ✅ Pedir nombre, edad, ciudad con <code>prompt()</code><br>
+        ✅ Guardar en variables <code>let</code> y <code>const</code><br>
+        ✅ Convertir edad de string a número<br>
+        ✅ Generar saludo con <code>+</code> y con template literals<br>
+        ✅ Mostrar toda la información con <code>console.log()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16 – DESCANSO -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div class="emoji-big">☕</div>
+    <h1 class="mt20" style="color:var(--dark);">DESCANSO</h1>
+    <p style="font-size:2rem;color:var(--dark);opacity:.8;margin-top:15px;">30 minutos · ¡Recargá energías!</p>
+    <p style="font-size:1.3rem;color:var(--dark);opacity:.6;margin-top:10px;">A las 1:50 arrancamos con condicionales 🔀</p>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – CONDICIONALES ═══════ -->
+
+<!-- SLIDE 17 – TÍTULO BLOQUE 3 -->
+<div class="slide cond-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔀</div>
+  <h1 class="sm mt20">Sentencias Condicionales</h1>
+  <p class="subtitle">if · else if · else · switch · ternario</p>
+</div>
+
+<!-- SLIDE 18 – ¿QUÉ SON LAS CONDICIONALES? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Condicionales</span>
+  <h2>¿Qué son las Condicionales?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🎯 Definición</h3>
+      <p>Instrucciones que ejecutan diferentes bloques de código dependiendo de si una condición es <span class="accent">verdadera o falsa</span>.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">Son fundamentales para controlar el flujo del programa y tomar decisiones en el código.</p>
+    </div>
+    <div class="card">
+      <h3>🌧️ Ejemplo de la vida real</h3>
+      <p style="font-size:1.15rem;font-style:italic;">"Si está lloviendo → llevar paraguas.<br>Si no → salir sin paraguas."</p>
+      <p class="mt10" style="font-size:.95rem;opacity:.8;">Cada día tomamos decisiones basadas en condiciones. Las condicionales llevan esa lógica al código.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Permiten <span class="js-yellow">controlar el flujo</span> del programa · Son esenciales en <span class="js-yellow">validaciones</span> y <span class="js-yellow">lógica de negocio</span>.</div>
+</div>
+
+<!-- SLIDE 19 – IF / ELSE -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · if...else</span>
+  <h2>Sentencia if...else</h2>
+  <div class="code-block">
+    <span class="cm">// Estructura básica</span><br>
+    <span class="kw">if</span> (condición) {<br>
+    &nbsp;&nbsp;<span class="cm">// se ejecuta si la condición es true</span><br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="cm">// se ejecuta si la condición es false</span><br>
+    }<br><br>
+    <span class="cm">// Ejemplo: saludo según la hora</span><br>
+    <span class="kw">const</span> <span class="var">hora</span> = <span class="num">14</span>;<br><br>
+    <span class="kw">if</span> (<span class="var">hora</span> <span class="op">&lt;</span> <span class="num">12</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenos días"</span>);<br>
+    } <span class="kw">else if</span> (<span class="var">hora</span> <span class="op">&lt;</span> <span class="num">18</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenas tardes"</span>); <span class="cm">// ← se ejecuta</span><br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Buenas noches"</span>);<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 20 – SWITCH -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · switch</span>
+  <h2>Sentencia switch</h2>
+  <div class="code-block">
+    <span class="kw">const</span> <span class="var">dia</span> = <span class="num">3</span>;<br><br>
+    <span class="kw">switch</span> (<span class="var">dia</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">1</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Lunes"</span>); <span class="kw">break</span>;<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">2</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Martes"</span>); <span class="kw">break</span>;<br>
+    &nbsp;&nbsp;<span class="kw">case</span> <span class="num">3</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Miércoles"</span>); <span class="kw">break</span>; <span class="cm">// ← se ejecuta</span><br>
+    &nbsp;&nbsp;<span class="kw">default</span>:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Otro día"</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">El <span class="js-yellow">break</span> es obligatorio — sin él el código sigue ejecutando los siguientes casos (<em>fall-through</em>).</div>
+</div>
+
+<!-- SLIDE 21 – OPERADOR TERNARIO -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Ternario</span>
+  <h2>Operador Ternario</h2>
+  <div class="highlight" style="font-size:1.5rem;font-family:'Courier New',monospace;max-width:800px;">
+    <span class="js-yellow">condición</span> <span style="color:#fff;">?</span> <span style="color:#a8ff78;">valor_si_true</span> <span style="color:#fff;">:</span> <span style="color:#ff7b72;">valor_si_false</span>
+  </div>
+  <div class="code-block mt20" style="max-width:950px;">
+    <span class="cm">// if/else tradicional:</span><br>
+    <span class="kw">let</span> <span class="var">acceso</span>;<br>
+    <span class="kw">if</span> (<span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span>) { <span class="var">acceso</span> = <span class="str">"Permitido"</span>; } <span class="kw">else</span> { <span class="var">acceso</span> = <span class="str">"Denegado"</span>; }<br><br>
+    <span class="cm">// Ternario — mismo resultado en una línea:</span><br>
+    <span class="kw">const</span> <span class="var">acceso</span> = <span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span> <span class="op">?</span> <span class="str">"Permitido"</span> <span class="op">:</span> <span class="str">"Denegado"</span>;<br><br>
+    <span class="cm">// Ternario encadenado (con moderación):</span><br>
+    <span class="kw">const</span> <span class="var">saludo</span> = <span class="var">hora</span> <span class="op">&lt;</span> <span class="num">12</span> <span class="op">?</span> <span class="str">"Mañana"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span class="var">hora</span> <span class="op">&lt;</span> <span class="num">18</span> <span class="op">?</span> <span class="str">"Tarde"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span class="str">"Noche"</span>;
+  </div>
+</div>
+
+<!-- SLIDE 22 – LIVE CODING: CONDICIONALES -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🗳️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Evaluación de Edad para Votar</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ <code>if/else</code>: verificar si puede votar (18+)</li>
+        <li>2️⃣ <code>else if</code>: caso especial si tiene 17 (pronto podrá)</li>
+        <li>3️⃣ Agregar operadores lógicos para condiciones combinadas</li>
+        <li>4️⃣ Mostrar condición de borde: ¿qué pasa si dividimos por 0?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 4 – LÓGICOS, DIAGRAMAS, EJERCICIOS ═══════ -->
+
+<!-- SLIDE 23 – OPERADORES LÓGICOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Operadores lógicos</span>
+  <h2>Operadores Lógicos</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3><code style="color:#a8ff78;">&amp;&amp;</code> AND</h3>
+      <p><span class="accent">Ambas</span> condiciones deben ser verdaderas.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">true</span>  <span class="op">&amp;&amp;</span> <span class="kw">true</span>  <span class="cm">// true</span><br>
+        <span class="kw">true</span>  <span class="op">&amp;&amp;</span> <span class="kw">false</span> <span class="cm">// false</span><br>
+        <span class="kw">false</span> <span class="op">&amp;&amp;</span> <span class="kw">true</span>  <span class="cm">// false</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3><code style="color:#a8ff78;">||</code> OR</h3>
+      <p><span class="accent">Al menos una</span> condición debe ser verdadera.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">true</span>  <span class="op">||</span> <span class="kw">false</span> <span class="cm">// true</span><br>
+        <span class="kw">false</span> <span class="op">||</span> <span class="kw">false</span> <span class="cm">// false</span><br>
+        <span class="kw">false</span> <span class="op">||</span> <span class="kw">true</span>  <span class="cm">// true</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3><code style="color:#a8ff78;">!</code> NOT</h3>
+      <p><span class="accent">Invierte</span> el valor booleano.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="op">!</span><span class="kw">true</span>  <span class="cm">// false</span><br>
+        <span class="op">!</span><span class="kw">false</span> <span class="cm">// true</span><br>
+        <span class="op">!</span>(<span class="num">5</span> <span class="op">&gt;</span> <span class="num">3</span>) <span class="cm">// false</span>
+      </div>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.9rem;">
+    <span class="cm">// Ejemplo combinado: control de acceso</span><br>
+    <span class="kw">const</span> <span class="var">edad</span> = <span class="num">20</span>; <span class="kw">const</span> <span class="var">tieneLicencia</span> = <span class="kw">true</span>;<br>
+    <span class="kw">if</span> (<span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span> <span class="op">&amp;&amp;</span> <span class="var">tieneLicencia</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Podés conducir"</span>);<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 24 – CONDICIONES DE BORDE -->
+<div class="slide teal-bg">
+  <span class="section-label">Bloque 4 · Buenas prácticas</span>
+  <h2>Condiciones de Borde</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⚠️ ¿Qué son?</h3>
+      <p>Situaciones <span class="accent">extremas o inusuales</span> que pueden hacer que un programa falle si no se manejan correctamente.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Ejemplo: un ascensor de 500 kg. ¿Qué pasa si alguien sube con exactamente 500? ¿Con 501? ¿Con 0?</p>
+    </div>
+    <div class="card">
+      <h3>✅ Buenas prácticas</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Definir valores máximos y mínimos</li>
+        <li>Validar antes de calcular</li>
+        <li>Considerar entradas vacías, <code>null</code>, <code>undefined</code></li>
+        <li>Probar el código con casos extremos</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.9rem;">
+    <span class="cm">// Condición de borde: división por cero</span><br>
+    <span class="kw">const</span> <span class="var">divisor</span> = <span class="num">0</span>;<br>
+    <span class="kw">if</span> (<span class="var">divisor</span> <span class="op">===</span> <span class="num">0</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error: no se puede dividir por cero."</span>);<br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="num">10</span> <span class="op">/</span> <span class="var">divisor</span>);<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 25 – DIAGRAMAS DE FLUJO -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Diagramas de flujo</span>
+  <h2>Diagramas de Flujo</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📊 ¿Qué son?</h3>
+      <p>Representación <span class="accent">gráfica</span> de los pasos para resolver un problema. Permiten planificar el código antes de escribirlo.</p>
+    </div>
+    <div class="card">
+      <h3>🔷 Símbolos principales</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><span class="accent">Óvalos</span> → Inicio y Fin</li>
+        <li><span class="accent">Rectángulos</span> → Procesos / acciones</li>
+        <li><span class="accent">Rombos</span> → Decisiones (sí/no)</li>
+        <li><span class="accent">Flechas</span> → Flujo de ejecución</li>
+        <li><span class="accent">Círculos</span> → Conectores</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">Antes de escribir código → <span class="js-yellow">diseñar el diagrama de flujo</span>. Ahorrás tiempo y evitás errores lógicos.</div>
+</div>
+
+<!-- SLIDE 26 – DESAFÍO 1 -->
+<div class="slide cond-bg">
+  <span class="section-label">Desafío · Predecir salida</span>
+  <h2>⚡ Desafío 1: ¿Qué imprime?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">const</span> <span class="var">usuario</span>   = <span class="str">"admin"</span>;<br>
+    <span class="kw">const</span> <span class="var">contrasena</span> = <span class="str">"1234"</span>;<br><br>
+    <span class="kw">if</span> (<span class="var">usuario</span> <span class="op">===</span> <span class="str">"admin"</span> <span class="op">&amp;&amp;</span> <span class="var">contrasena</span> <span class="op">===</span> <span class="str">"1234"</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Acceso concedido."</span>);<br>
+    } <span class="kw">else if</span> (<span class="var">usuario</span> <span class="op">===</span> <span class="str">"admin"</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Contraseña incorrecta."</span>);<br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Acceso denegado."</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">Opciones: 1️⃣ "Acceso concedido." &nbsp;·&nbsp; 2️⃣ "Contraseña incorrecta." &nbsp;·&nbsp; 3️⃣ "Acceso denegado."</div>
+</div>
+
+<!-- SLIDE 27 – DESAFÍO 2 -->
+<div class="slide cond-bg">
+  <span class="section-label">Desafío · Predecir salida</span>
+  <h2>⚡ Desafío 2: ¿Qué imprime?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">const</span> <span class="var">temperatura</span> = <span class="num">35</span>;<br><br>
+    <span class="kw">if</span> (<span class="var">temperatura</span> <span class="op">&lt;</span> <span class="num">0</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hace mucho frío."</span>);<br>
+    } <span class="kw">else if</span> (<span class="var">temperatura</span> <span class="op">&lt;</span> <span class="num">15</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hace frío."</span>);<br>
+    } <span class="kw">else if</span> (<span class="var">temperatura</span> <span class="op">&lt;</span> <span class="num">28</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Clima agradable."</span>);<br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hace mucho calor."</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">💡 ¿Qué pasaría si <code>temperatura = 20</code>? &nbsp;·&nbsp; Opciones: 1️⃣ Mucho frío &nbsp; 2️⃣ Frío &nbsp; 3️⃣ Agradable &nbsp; 4️⃣ Mucho calor</div>
+</div>
+
+<!-- SLIDE 28 – EJERCICIO 2: TIENDA ONLINE -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛒</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Simulador<br>de Tienda Online</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Crear diagrama de flujo del sistema primero<br>
+        ✅ Pedir precio y cantidad con <code>prompt()</code><br>
+        ✅ Calcular total · Aplicar 10% si supera $100<br>
+        ✅ Simular stock (10 unidades) con <code>--</code><br>
+        ✅ Si no hay stock suficiente → mensaje de error<br>
+        ✅ Mostrar resumen final en <code>console.log()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – EJERCICIO 3: ACCESO AL CLUB -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🎟️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Control de<br>Acceso a un Club</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Crear diagrama de flujo del sistema primero<br>
+        ✅ Condición: 18+ años <strong>Y</strong> (invitación <strong>O</strong> pagó entrada)<br>
+        ✅ Usar <code>if / else if / else</code> y operadores <code>&amp;&amp;</code> / <code>||</code><br>
+        ✅ Probar con distintos valores<br>
+        ⭐ Extra: ¿Cómo impedirías el acceso a menores bajo cualquier circunstancia?
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – EJERCICIO 4: DESCUENTOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💰</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Calculadora<br>de Descuentos</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Reglas: <strong>&lt; $100</strong> → sin descuento &nbsp;·&nbsp; <strong>$100–$199</strong> → 10% &nbsp;·&nbsp; <strong>$200+</strong> → 15%<br>
+        ✅ Crear diagrama de flujo del sistema primero<br>
+        ✅ Variable <code>totalCompra</code> con el monto<br>
+        ✅ <code>if / else if / else</code> para determinar el descuento<br>
+        ✅ Calcular y mostrar monto final<br>
+        ⭐ Extra: ¿Cómo agregarías 5% adicional para clientes VIP?
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 31 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>📦 Parte I · Variables</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Declarar con <code>let</code>, <code>const</code> y diferencias con <code>var</code></li>
+        <li>Reglas y convenciones de nombres (camelCase)</li>
+        <li>Tipos primitivos: string, number, boolean</li>
+        <li>Tipos complejos: array y object</li>
+        <li>Scope global, local y de bloque</li>
+        <li>Operadores aritméticos y precedencia</li>
+        <li>Strings: concatenación y template literals</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔀 Parte II · Condicionales</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Sentencias <code>if / else if / else</code></li>
+        <li>Sentencia <code>switch</code> con <code>break</code></li>
+        <li>Operador ternario <code>? :</code></li>
+        <li>Operadores lógicos <code>&amp;&amp;</code>, <code>||</code>, <code>!</code></li>
+        <li>Condiciones de borde y manejo de errores</li>
+        <li>Diagramas de flujo como herramienta de diseño</li>
+        <li>Ejercicios con problemas reales</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 32 – CIERRE -->
+<div class="slide js-bg">
+  <div style="font-size:7rem;font-weight:900;color:var(--js-yellow);font-family:'Courier New',monospace;" class="float glow">{ }</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya podés escribir programas que toman decisiones y manejan datos dinámicamente.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Variables ✅</span>
+    <span class="pill">Tipos de datos ✅</span>
+    <span class="pill">Operadores ✅</span>
+    <span class="pill">if / else ✅</span>
+    <span class="pill">switch ✅</span>
+    <span class="pill gold">Lógica ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Arreglos y Ciclos</span> en JavaScript.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+</script>
+</body>
+</html>
