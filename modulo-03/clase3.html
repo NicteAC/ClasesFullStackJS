@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arreglos y Ciclos Iterativos – JS AE3.3</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg     { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.teal-bg   { background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); }
+  .slide.arr-bg    { background:linear-gradient(135deg,#1565c0 0%,#0288d1 100%); }
+  .slide.cycle-bg  { background:linear-gradient(135deg,#6a1b9a 0%,#7b1fa2 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:24px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.3rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px 24px; font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.86rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:14px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:42px; height:42px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:5px; }
+  .step p  { font-size:.85rem; opacity:.9; line-height:1.5; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .emoji-md  { font-size:2.5rem; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:14px 24px; margin-top:14px; font-size:1.12rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 14px; font-size:.88rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.92rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:20px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.2rem; color:var(--dark); opacity:.7; text-align:center; margin-top:4px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:6px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.6rem; font-weight:700; color:var(--dark); margin-top:8px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 37</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:6rem;line-height:1;font-family:'Courier New',monospace;color:var(--js-yellow);" class="float">[ ]</div>
+  <h1 class="mt20">Arreglos y Ciclos<br><span class="js-yellow glow">Iterativos</span></h1>
+  <p class="subtitle mt20">AE3.3 · Full Stack JavaScript Trainee V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Arrays</span>
+    <span class="pill">push / pop</span>
+    <span class="pill">filter</span>
+    <span class="pill">for / while</span>
+    <span class="pill">forEach</span>
+    <span class="pill">map</span>
+    <span class="pill gold">Matrices</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#0288d1"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">📦 <strong>Bloque 1</strong> · Arreglos: qué son, declarar, acceder, modificar</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#0288d1"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🧮 <strong>Bloque 2</strong> · Álgebra de arreglos · Matrices · Live Coding · Ejercicios</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#7b1fa2"></div><div class="sched-time">1:50 – 2:30</div><div class="sched-label">🔁 <strong>Bloque 3</strong> · Ciclos: for · while · do/while · break · continue</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#7b1fa2"></div><div class="sched-time">2:30 – 4:00</div><div class="sched-label">⚙️ <strong>Bloque 4</strong> · forEach · map · Ciclos anidados · Buenas prácticas · Ejercicios</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – ARREGLOS ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide arr-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">📦</div>
+  <h1 class="sm mt20">Arreglos en JavaScript</h1>
+  <p class="subtitle">Fundamentos · Declaración · Acceso · Modificación</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES UN ARREGLO? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Arreglos</span>
+  <h2>¿Qué es un Arreglo?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📋 Definición</h3>
+      <p>Estructura de datos que almacena <span class="accent">múltiples valores</span> en una secuencia indexada. Puede contener cualquier tipo de dato.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">usuarios</span> = [<span class="str">"Ana"</span>, <span class="str">"Luis"</span>, <span class="str">"Mía"</span>];<br>
+        <span class="kw">const</span> <span class="var">mixto</span>    = [<span class="num">1</span>, <span class="str">"texto"</span>, <span class="kw">true</span>, <span class="kw">null</span>];
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Características</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Los valores se organizan por <span class="accent">índices</span></li>
+        <li>Los índices comienzan en <span class="accent">0</span></li>
+        <li>Son <span class="accent">mutables</span>: se pueden modificar</li>
+        <li>Son un tipo especializado de <span class="accent">objeto</span></li>
+        <li>Tienen métodos nativos: <code>push</code>, <code>pop</code>, <code>filter</code>…</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">Un arreglo es la estructura ideal para almacenar <span class="js-yellow">colecciones ordenadas</span> de datos.</div>
+</div>
+
+<!-- SLIDE 5 – ARREGLOS VS OBJETOS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Arrays vs Objects</span>
+  <h2>Arreglos vs Objetos</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card" style="border-color:rgba(121,192,255,0.4);">
+      <h3 style="color:#79c0ff;">📦 Arreglo</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Índices <span class="accent">numéricos</span> (0, 1, 2…)</li>
+        <li>Secuencia <span class="accent">ordenada</span></li>
+        <li>Ideal para colecciones de elementos similares</li>
+      </ul>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">arr</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>];<br>
+        <span class="var">arr</span>[<span class="num">0</span>]; <span class="cm">// "manzana"</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,0.4);">
+      <h3 style="color:var(--js-yellow);">🗂️ Objeto</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Claves de <span class="accent">texto</span> (nombre, edad…)</li>
+        <li>Sin orden definido</li>
+        <li>Ideal para información <span class="accent">estructurada</span></li>
+      </ul>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">obj</span> = { <span class="var">nombre</span>: <span class="str">"Ana"</span>, <span class="var">edad</span>: <span class="num">25</span> };<br>
+        <span class="var">obj</span>.nombre; <span class="cm">// "Ana"</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 – DECLARAR ARREGLOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Declaración</span>
+  <h2>Declarar Arreglos</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>✅ Notación literal <code>[]</code></h3>
+      <p>La forma <span class="accent">recomendada</span>. Simple, legible y directa.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">frutas</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>, <span class="str">"uva"</span>];<br>
+        <span class="kw">const</span> <span class="var">nums</span>   = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>];<br>
+        <span class="kw">const</span> <span class="var">vacio</span>  = []; <span class="cm">// arreglo vacío</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚠️ Constructor <code>new Array()</code></h3>
+      <p>Menos común. Útil para crear un arreglo con <span class="accent">tamaño definido</span> pero puede ser confuso.</p>
+      <div class="code-block" style="font-size:.88rem;margin-top:12px;">
+        <span class="kw">const</span> <span class="var">arr</span> = <span class="kw">new</span> <span class="fn">Array</span>(<span class="num">3</span>);<br>
+        <span class="cm">// [empty, empty, empty]</span><br>
+        <span class="kw">new</span> <span class="fn">Array</span>(<span class="str">"a"</span>, <span class="str">"b"</span>); <span class="cm">// ["a", "b"]</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Siempre usar <span class="js-yellow">notación literal []</span> salvo necesidad específica de crear un arreglo con tamaño predefinido.</div>
+</div>
+
+<!-- SLIDE 7 – ACCEDER A ELEMENTOS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Acceso</span>
+  <h2>Acceder a Elementos</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="kw">const</span> <span class="var">frutas</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>, <span class="str">"uva"</span>, <span class="str">"kiwi"</span>];<br><br>
+    <span class="cm">// Acceso por índice (comienza en 0)</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="num">0</span>]);  <span class="cm">// "manzana"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="num">2</span>]);  <span class="cm">// "uva"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="num">10</span>]); <span class="cm">// undefined (índice inexistente)</span><br><br>
+    <span class="cm">// Cantidad de elementos</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>.length);    <span class="cm">// 4</span><br><br>
+    <span class="cm">// Último elemento (sin conocer el índice)</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="var">frutas</span>.length <span class="op">-</span> <span class="num">1</span>]); <span class="cm">// "kiwi"</span>
+  </div>
+  <div class="highlight mt20">Los índices van de <span class="js-yellow">0</span> a <span class="js-yellow">length - 1</span>. Acceder fuera de ese rango devuelve <code>undefined</code>, no un error.</div>
+</div>
+
+<!-- SLIDE 8 – MODIFICAR ARREGLOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Modificación</span>
+  <h2>Modificar Arreglos</h2>
+  <div class="code-block sm">
+    <span class="kw">const</span> <span class="var">frutas</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>, <span class="str">"uva"</span>];<br><br>
+    <span class="cm">// Reasignar por índice</span><br>
+    <span class="var">frutas</span>[<span class="num">1</span>] = <span class="str">"banana"</span>;  <span class="cm">// ["manzana","banana","uva"]</span><br><br>
+    <span class="cm">// push() → agregar al FINAL</span><br>
+    <span class="var">frutas</span>.<span class="fn">push</span>(<span class="str">"kiwi"</span>);     <span class="cm">// ["manzana","banana","uva","kiwi"]</span><br><br>
+    <span class="cm">// pop() → eliminar el ÚLTIMO</span><br>
+    <span class="var">frutas</span>.<span class="fn">pop</span>();             <span class="cm">// ["manzana","banana","uva"]</span><br><br>
+    <span class="cm">// splice(inicio, cantidad) → eliminar en cualquier posición</span><br>
+    <span class="var">frutas</span>.<span class="fn">splice</span>(<span class="num">1</span>, <span class="num">1</span>);       <span class="cm">// elimina 1 elemento desde índice 1 → ["manzana","uva"]</span><br><br>
+    <span class="cm">// splice() para insertar</span><br>
+    <span class="var">frutas</span>.<span class="fn">splice</span>(<span class="num">1</span>, <span class="num">0</span>, <span class="str">"pera"</span>);  <span class="cm">// inserta en índice 1 → ["manzana","pera","uva"]</span>
+  </div>
+</div>
+
+<!-- SLIDE 9 – ITERAR CON FOR -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Iteración</span>
+  <h2>Iterar sobre Arreglos</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔁 Ciclo for</h3>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">frutas</span> = [<span class="str">"manzana"</span>, <span class="str">"pera"</span>, <span class="str">"uva"</span>];<br><br>
+        <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">frutas</span>.length; <span class="var">i</span><span class="op">++</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">frutas</span>[<span class="var">i</span>]);<br>
+        }<br>
+        <span class="cm">// "manzana" → "pera" → "uva"</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>✨ forEach() — más moderno</h3>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="var">frutas</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="var">fruta</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">fruta</span>);<br>
+        });<br><br>
+        <span class="cm">// Con función flecha (más conciso):</span><br>
+        <span class="var">frutas</span>.<span class="fn">forEach</span>(<span class="var">fruta</span> <span class="op">=&gt;</span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">fruta</span>));
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – ÁLGEBRA DE ARREGLOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Álgebra</span>
+  <h2>Álgebra con Arreglos</h2>
+  <div class="code-block sm">
+    <span class="kw">const</span> <span class="var">a</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];<br>
+    <span class="kw">const</span> <span class="var">b</span> = [<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>];<br><br>
+    <span class="cm">// UNIÓN: concat() o spread</span><br>
+    <span class="kw">const</span> <span class="var">union1</span> = <span class="var">a</span>.<span class="fn">concat</span>(<span class="var">b</span>);           <span class="cm">// [1,2,3,3,4,5]</span><br>
+    <span class="kw">const</span> <span class="var">union2</span> = [<span class="op">...</span><span class="var">a</span>, <span class="op">...</span><span class="var">b</span>];           <span class="cm">// [1,2,3,3,4,5] ← preferida</span><br><br>
+    <span class="cm">// INTERSECCIÓN: elementos que están en ambos</span><br>
+    <span class="kw">const</span> <span class="var">inter</span> = <span class="var">a</span>.<span class="fn">filter</span>(<span class="var">x</span> <span class="op">=&gt;</span> <span class="var">b</span>.<span class="fn">includes</span>(<span class="var">x</span>)); <span class="cm">// [3]</span><br><br>
+    <span class="cm">// DIFERENCIA: elementos en a que no están en b</span><br>
+    <span class="kw">const</span> <span class="var">diff</span> = <span class="var">a</span>.<span class="fn">filter</span>(<span class="var">x</span> <span class="op">=&gt;</span> <span class="op">!</span><span class="var">b</span>.<span class="fn">includes</span>(<span class="var">x</span>)); <span class="cm">// [1,2]</span>
+  </div>
+  <div class="highlight mt20">El operador <span class="js-yellow">spread (...)</span> es la forma moderna de combinar arreglos. El método <span class="js-yellow">filter()</span> es fundamental para buscar y filtrar datos.</div>
+</div>
+
+<!-- SLIDE 11 – MATRICES -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Matrices</span>
+  <h2>Matrices (Arreglos de Arreglos)</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="cm">// Arreglo bidimensional (matriz 3x3)</span><br>
+    <span class="kw">const</span> <span class="var">matriz</span> = [<br>
+    &nbsp;&nbsp;[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>],  <span class="cm">// fila 0</span><br>
+    &nbsp;&nbsp;[<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>],  <span class="cm">// fila 1</span><br>
+    &nbsp;&nbsp;[<span class="num">7</span>, <span class="num">8</span>, <span class="num">9</span>]   <span class="cm">// fila 2</span><br>
+    ];<br><br>
+    <span class="cm">// Acceder: matriz[fila][columna]</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">matriz</span>[<span class="num">0</span>][<span class="num">1</span>]); <span class="cm">// 2 (fila 0, columna 1)</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">matriz</span>[<span class="num">2</span>][<span class="num">2</span>]); <span class="cm">// 9 (fila 2, columna 2)</span>
+  </div>
+  <div class="highlight mt20">Las matrices se recorren con <span class="js-yellow">ciclos anidados</span>: el externo recorre filas, el interno recorre columnas.</div>
+</div>
+
+<!-- SLIDE 12 – LIVE CODING: ARREGLOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Crear, Recorrer y Modificar</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.1rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Crear arreglo de nombres <code>["Ana","Carlos","Elena"]</code></li>
+        <li>2️⃣ Recorrer con <code>for</code> e imprimir cada elemento</li>
+        <li>3️⃣ Agregar nombre con <code>push()</code></li>
+        <li>4️⃣ Eliminar "Carlos" con <code>splice()</code></li>
+        <li>5️⃣ Imprimir el arreglo después de cada operación</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 1: CARRITO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛒</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Carrito de Compras</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        ✅ Crear arreglo con productos: "Laptop", "Mouse", "Teclado"…<br>
+        ✅ Recorrer con un ciclo <code>for</code><br>
+        ✅ Imprimir cada producto con <code>console.log()</code><br>
+        ⭐ Extra: agregar un producto con <code>push()</code> y volver a imprimir
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – EJERCICIO 2: FILTRAR PARES -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔢</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Filtrar Números Pares</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.1rem;line-height:1.9;">
+        ✅ Crear arreglo con números del 1 al 8<br>
+        ✅ Usar <code>filter()</code> para obtener solo los pares<br>
+        ✅ Mostrar el arreglo filtrado con <code>console.log()</code><br>
+        ⭐ Extra: también filtrar los impares en otro arreglo
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – DESCANSO CON TIMER -->
+<div class="slide break-bg" id="slide-break">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+
+    <div style="margin-top:14px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – CICLOS ═══════ -->
+
+<!-- SLIDE 16 – TÍTULO BLOQUE 3 -->
+<div class="slide cycle-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:30</span>
+  <div class="emoji-big float">🔁</div>
+  <h1 class="sm mt20">Ciclos de Repetición</h1>
+  <p class="subtitle">for · while · do/while · break · continue</p>
+</div>
+
+<!-- SLIDE 17 – ¿QUÉ ES UN CICLO? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Ciclos</span>
+  <h2>¿Qué es un Ciclo?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔄 Definición</h3>
+      <p>Permite ejecutar un bloque de código <span class="accent">repetidamente</span> hasta que se cumpla una condición. Ideal para tareas repetitivas.</p>
+      <ul class="list-clean" style="font-size:1rem;margin-top:10px;">
+        <li>Recorrer arreglos</li>
+        <li>Realizar cálculos acumulativos</li>
+        <li>Hacer validaciones múltiples</li>
+        <li>Generar secuencias de datos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚠️ Sin condición de salida…</h3>
+      <p>Un ciclo sin condición de parada correcta genera un <span class="accent">bucle infinito</span> que cuelga el navegador.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="cm">// ❌ Bucle infinito (no ejecutar)</span><br>
+        <span class="kw">while</span> (<span class="kw">true</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Cuelga el browser"</span>);<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18 – CICLO FOR -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · for</span>
+  <h2>Ciclo for</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="cm">// Estructura: for (inicio; condición; incremento)</span><br>
+    <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="num">5</span>; <span class="var">i</span><span class="op">++</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Iteración ${<span class="var">i</span>}`</span>);<br>
+    }<br>
+    <span class="cm">// Iteración 0, 1, 2, 3, 4</span><br><br>
+    <span class="cm">// Recorrer un arreglo</span><br>
+    <span class="kw">const</span> <span class="var">colores</span> = [<span class="str">"rojo"</span>, <span class="str">"verde"</span>, <span class="str">"azul"</span>];<br>
+    <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">colores</span>.length; <span class="var">i</span><span class="op">++</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Color ${<span class="var">i</span>}: ${<span class="var">colores</span>[<span class="var">i</span>]}`</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">Ideal cuando conocemos el <span class="js-yellow">número exacto de iteraciones</span> de antemano.</div>
+</div>
+
+<!-- SLIDE 19 – WHILE / DO-WHILE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · while / do-while</span>
+  <h2>while y do...while</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔄 while — condición al inicio</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Verifica la condición <span class="accent">antes</span> de ejecutar. Puede no ejecutarse nunca.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="kw">let</span> <span class="var">n</span> = <span class="num">1</span>;<br>
+        <span class="kw">while</span> (<span class="var">n</span> <span class="op">&lt;=</span> <span class="num">5</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">n</span>);<br>
+        &nbsp;&nbsp;<span class="var">n</span><span class="op">++</span>;<br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔁 do...while — condición al final</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Verifica <span class="accent">después</span> de ejecutar. Siempre corre al menos una vez.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="kw">let</span> <span class="var">n</span> = <span class="num">1</span>;<br>
+        <span class="kw">do</span> {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">n</span>);<br>
+        &nbsp;&nbsp;<span class="var">n</span><span class="op">++</span>;<br>
+        } <span class="kw">while</span> (<span class="var">n</span> <span class="op">&lt;=</span> <span class="num">5</span>);<br>
+        <span class="cm">// Mismo resultado que while</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20"><code>do...while</code> es útil cuando el bloque debe ejecutarse <span class="js-yellow">al menos una vez</span>, por ejemplo para pedir datos al usuario.</div>
+</div>
+
+<!-- SLIDE 20 – BREAK Y CONTINUE -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Control de flujo</span>
+  <h2>break y continue</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🛑 break — detener el ciclo</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Sale del ciclo <span class="accent">completamente</span>, sin importar si quedaban iteraciones.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="num">10</span>; <span class="var">i</span><span class="op">++</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">i</span> <span class="op">===</span> <span class="num">5</span>) <span class="kw">break</span>;<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">i</span>);<br>
+        }<br>
+        <span class="cm">// Imprime 0,1,2,3,4 y para</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>⏭️ continue — saltar iteración</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Salta la iteración actual y continúa con la <span class="accent">siguiente</span>.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="num">6</span>; <span class="var">i</span><span class="op">++</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">i</span> <span class="op">%</span> <span class="num">2</span> <span class="op">===</span> <span class="num">0</span>) <span class="kw">continue</span>;<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">i</span>);<br>
+        }<br>
+        <span class="cm">// Imprime 1,3,5 (salta los pares)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 4 – FOREACH, MAP, ANIDADOS, BP ═══════ -->
+
+<!-- SLIDE 21 – FOREACH -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · forEach</span>
+  <h2>forEach() — Iterar declarativamente</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="kw">const</span> <span class="var">productos</span> = [<span class="str">"Laptop"</span>, <span class="str">"Mouse"</span>, <span class="str">"Teclado"</span>];<br><br>
+    <span class="cm">// forEach(element, index, array)</span><br>
+    <span class="var">productos</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="var">producto</span>, <span class="var">indice</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`${<span class="var">indice</span> + <span class="num">1</span>}. ${<span class="var">producto</span>}`</span>);<br>
+    });<br>
+    <span class="cm">// 1. Laptop   2. Mouse   3. Teclado</span><br><br>
+    <span class="cm">// Con función flecha (más conciso):</span><br>
+    <span class="var">productos</span>.<span class="fn">forEach</span>((<span class="var">p</span>, <span class="var">i</span>) <span class="op">=&gt;</span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`${<span class="var">i</span>+<span class="num">1</span>}. ${<span class="var">p</span>}`</span>));
+  </div>
+  <div class="highlight mt20"><code>forEach()</code> <span class="js-yellow">no devuelve nada</span>. Solo ejecuta una acción por cada elemento. No usar cuando se necesita el resultado.</div>
+</div>
+
+<!-- SLIDE 22 – MAP -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · map</span>
+  <h2>map() — Transformar arreglos</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="kw">const</span> <span class="var">precios</span> = [<span class="num">100</span>, <span class="num">200</span>, <span class="num">300</span>];<br><br>
+    <span class="cm">// map() → retorna un NUEVO arreglo transformado</span><br>
+    <span class="kw">const</span> <span class="var">conDescuento</span> = <span class="var">precios</span>.<span class="fn">map</span>(<span class="var">precio</span> <span class="op">=&gt;</span> <span class="var">precio</span> <span class="op">*</span> <span class="num">0.9</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">conDescuento</span>); <span class="cm">// [90, 180, 270]</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">precios</span>);       <span class="cm">// [100, 200, 300] ← original intacto</span><br><br>
+    <span class="cm">// Transformar textos</span><br>
+    <span class="kw">const</span> <span class="var">nombres</span>  = [<span class="str">"ana"</span>, <span class="str">"luis"</span>, <span class="str">"mía"</span>];<br>
+    <span class="kw">const</span> <span class="var">mayusculas</span> = <span class="var">nombres</span>.<span class="fn">map</span>(<span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span>.<span class="fn">toUpperCase</span>());<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">mayusculas</span>); <span class="cm">// ["ANA","LUIS","MÍA"]</span>
+  </div>
+  <div class="highlight mt20"><code>map()</code> <span class="js-yellow">siempre retorna un nuevo arreglo</span> del mismo tamaño. El arreglo original no se modifica.</div>
+</div>
+
+<!-- SLIDE 23 – FOR vs FOREACH vs MAP -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Comparativa</span>
+  <h2>for vs forEach vs map</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>🔁 for</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>No devuelve nada</li>
+        <li>Muy flexible</li>
+        <li>Puede modificar el original</li>
+        <li>Control total con <code>break</code>/<code>continue</code></li>
+        <li>Más verboso</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>✨ forEach</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>No devuelve nada</li>
+        <li>Más declarativo</li>
+        <li>No usa <code>break</code></li>
+        <li>Ideal para efectos secundarios</li>
+        <li>Más legible con arreglos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🗺️ map</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Devuelve <span class="accent">nuevo arreglo</span></li>
+        <li>No modifica el original</li>
+        <li>Para transformaciones</li>
+        <li>Siempre misma cantidad de items</li>
+        <li>El más funcional</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – CICLOS ANIDADOS -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Anidados</span>
+  <h2>Ciclos Anidados</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="kw">const</span> <span class="var">matriz</span> = [[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>],[<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>],[<span class="num">7</span>,<span class="num">8</span>,<span class="num">9</span>]];<br><br>
+    <span class="kw">for</span> (<span class="kw">let</span> <span class="var">fila</span> = <span class="num">0</span>; <span class="var">fila</span> <span class="op">&lt;</span> <span class="var">matriz</span>.length; <span class="var">fila</span><span class="op">++</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">for</span> (<span class="kw">let</span> <span class="var">col</span> = <span class="num">0</span>; <span class="var">col</span> <span class="op">&lt;</span> <span class="var">matriz</span>[<span class="var">fila</span>].length; <span class="var">col</span><span class="op">++</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`[${<span class="var">fila</span>}][${<span class="var">col</span>}] = ${<span class="var">matriz</span>[<span class="var">fila</span>][<span class="var">col</span>]}`</span>);<br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+  <div class="highlight mt20">⚠️ Los ciclos anidados pueden ser <span class="js-yellow">costosos en rendimiento</span>. Con matrices grandes, la cantidad de iteraciones crece exponencialmente.</div>
+</div>
+
+<!-- SLIDE 25 – BUENAS PRÁCTICAS -->
+<div class="slide teal-bg">
+  <span class="section-label">Bloque 4 · Buenas prácticas</span>
+  <h2>Buenas Prácticas con Ciclos</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>✅ Preferir métodos de arreglo</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="cm">// ❌ Ciclo for para transformar</span><br>
+        <span class="kw">const</span> <span class="var">res</span> = [];<br>
+        <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">nums</span>.length; <span class="var">i</span><span class="op">++</span>)<br>
+        &nbsp;&nbsp;<span class="var">res</span>.<span class="fn">push</span>(<span class="var">nums</span>[<span class="var">i</span>] <span class="op">*</span> <span class="num">2</span>);<br><br>
+        <span class="cm">// ✅ map() es más limpio</span><br>
+        <span class="kw">const</span> <span class="var">res</span> = <span class="var">nums</span>.<span class="fn">map</span>(<span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>);
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ Nombres descriptivos</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="cm">// ❌ i sin contexto</span><br>
+        <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">usuarios</span>.length; <span class="var">i</span><span class="op">++</span>)<br>
+        &nbsp;&nbsp;<span class="fn">procesar</span>(<span class="var">usuarios</span>[<span class="var">i</span>]);<br><br>
+        <span class="cm">// ✅ Nombre descriptivo</span><br>
+        <span class="var">usuarios</span>.<span class="fn">forEach</span>(<span class="var">usuario</span> <span class="op">=&gt;</span> <span class="fn">procesar</span>(<span class="var">usuario</span>));
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ Condición de salida explícita</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="cm">// ✅ Condición clara</span><br>
+        <span class="kw">let</span> <span class="var">intentos</span> = <span class="num">0</span>;<br>
+        <span class="kw">const</span> <span class="var">MAX</span> = <span class="num">3</span>;<br>
+        <span class="kw">while</span> (<span class="var">intentos</span> <span class="op">&lt;</span> <span class="var">MAX</span>) {<br>
+        &nbsp;&nbsp;<span class="var">intentos</span><span class="op">++</span>;<br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3>✅ Evitar anidados innecesarios</h3>
+      <p style="font-size:1rem;">Si podés resolver con <code>map()</code> o <code>reduce()</code>, evitá el ciclo anidado. Mejora la legibilidad y el rendimiento.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – LIVE CODING: CICLOS ANIDADOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🧮</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Ciclo Anidado con Matriz</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear matriz 3×3 con números</li>
+        <li>2️⃣ Recorrer con ciclo anidado e imprimir cada valor</li>
+        <li>3️⃣ Aplicar <code>continue</code>: omitir números mayores a 5</li>
+        <li>4️⃣ Aplicar <code>break</code>: detener si encontramos el número 7</li>
+        <li>5️⃣ Imprimir mensaje final si se encontró el 7</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – EJERCICIO 3: CALCULADORA CON WHILE -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🧮</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Calculadora con while</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Ciclo <code>while</code> que pide dos números y una operación (+, -, *, /)<br>
+        ✅ Ejecutar la operación y mostrar el resultado<br>
+        ✅ Continuar hasta que el usuario escriba "salir"<br>
+        ✅ Al salir, mostrar mensaje de despedida<br>
+        ⭐ Extra: manejar división por cero como condición de borde
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28 – EJERCICIO 4: SUMAR CON CICLOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">➕</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Sumar con Tres Enfoques</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Arreglo: <code>[10, 20, 30, 40, 50]</code><br>
+        ✅ Sumar con ciclo <code>for</code> acumulando en variable<br>
+        ✅ Sumar con <code>forEach()</code><br>
+        ✅ Sumar con <code>map()</code> ← ¿cómo se hace? ¿tiene sentido aquí?<br>
+        ⭐ Extra: usar <code>reduce()</code> como alternativa
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>📦 Parte I · Arreglos</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Qué son y cómo se almacenan</li>
+        <li>Diferencia con objetos</li>
+        <li>Declarar con <code>[]</code> y acceder por índice</li>
+        <li><code>push()</code>, <code>pop()</code>, <code>splice()</code></li>
+        <li>Iterar con <code>for</code> y <code>forEach</code></li>
+        <li>Álgebra: unión, intersección, diferencia</li>
+        <li>Matrices bidimensionales</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔁 Parte II · Ciclos</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><code>for</code>: número conocido de iteraciones</li>
+        <li><code>while</code>: condición de parada variable</li>
+        <li><code>do...while</code>: ejecutar al menos una vez</li>
+        <li><code>break</code> y <code>continue</code> para control de flujo</li>
+        <li><code>forEach()</code>: iterar sin retorno</li>
+        <li><code>map()</code>: transformar y retornar nuevo arreglo</li>
+        <li>Ciclos anidados para matrices</li>
+        <li>Buenas prácticas de legibilidad y rendimiento</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – CIERRE -->
+<div class="slide arr-bg">
+  <div style="font-size:6rem;line-height:1;font-family:'Courier New',monospace;" class="float glow">[ ]</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya podés trabajar con colecciones de datos y repetir operaciones de manera eficiente.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Arrays ✅</span>
+    <span class="pill">push/pop ✅</span>
+    <span class="pill">filter ✅</span>
+    <span class="pill">for/while ✅</span>
+    <span class="pill">forEach ✅</span>
+    <span class="pill">map ✅</span>
+    <span class="pill gold">Matrices ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Funciones en JavaScript</span>.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  /* ── SLIDER ── */
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60; // 30 minutos
+  const circle     = document.getElementById('ring-circle');
+  const display    = document.getElementById('timer-display');
+  const msg        = document.getElementById('timer-msg');
+  const CIRCUMF    = 2 * Math.PI * 80; // r=80 → ~502.65
+  circle.style.strokeDasharray  = CIRCUMF;
+  circle.style.strokeDashoffset = 0;
+
+  let remaining = TOTAL_SECS;
+  let timerInterval = null;
+  let running = false;
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  }
+
+  function updateRing() {
+    const offset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.strokeDashoffset = offset;
+    // change color based on remaining time
+    if (remaining > TOTAL_SECS * 0.5)      circle.style.stroke = '#1e1e1e';
+    else if (remaining > TOTAL_SECS * 0.2) circle.style.stroke = '#e67e22';
+    else                                    circle.style.stroke = '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+
+  function startTimer() {
+    if (running) return;
+    running = true;
+    msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        running = false;
+        msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.';
+        msg.style.animation = 'pulse 1s ease-in-out 5';
+        return;
+      }
+      remaining--;
+      updateRing();
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    if (!running) return;
+    clearInterval(timerInterval);
+    running = false;
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    running = false;
+    remaining = TOTAL_SECS;
+    circle.style.stroke = '#1e1e1e';
+    msg.textContent = '';
+    updateRing();
+  }
+
+  document.getElementById('btn-start').addEventListener('click', startTimer);
+  document.getElementById('btn-pause').addEventListener('click', pauseTimer);
+  document.getElementById('btn-reset').addEventListener('click', resetTimer);
+
+  updateRing();
+</script>
+</body>
+</html>

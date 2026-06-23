@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funciones en JavaScript – AE3.4</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg     { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.fn-bg     { background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.scope-bg  { background:linear-gradient(135deg,#4a148c 0%,#6a1b9a 100%); }
+  .slide.challenge-bg { background:linear-gradient(135deg,#b71c1c 0%,#880e4f 100%); }
+  .slide.teal-bg   { background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:24px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.3rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px 24px; font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.86rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:14px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:42px; height:42px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:5px; }
+  .step p  { font-size:.85rem; opacity:.9; line-height:1.5; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:14px 24px; margin-top:14px; font-size:1.12rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 14px; font-size:.88rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.92rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* comparison table */
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1.05rem; }
+  th { background:rgba(102,126,234,0.55); padding:13px 16px; text-align:left; }
+  td { padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.1); }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:16px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 34</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:6rem;font-family:'Courier New',monospace;color:var(--js-yellow);" class="float">ƒ( )</div>
+  <h1 class="mt20">Funciones en<br><span class="js-yellow glow">JavaScript</span></h1>
+  <p class="subtitle mt20">AE3.4 · Full Stack JavaScript Trainee V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Declaradas</span>
+    <span class="pill">Anónimas</span>
+    <span class="pill">Arrow =></span>
+    <span class="pill">Parámetros</span>
+    <span class="pill">return</span>
+    <span class="pill">Callbacks</span>
+    <span class="pill gold">Scope</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#283593"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">⚙️ <strong>Bloque 1</strong> · Qué es una función · Tipos · Parámetros · return</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#283593"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">💻 <strong>Bloque 2</strong> · Live Coding · Errores comunes · Desafío · Ejercicios 1–2</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#6a1b9a"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔒 <strong>Bloque 3</strong> · Scope · Variables locales/globales · Parámetros avanzados</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#6a1b9a"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">🧩 <strong>Bloque 4</strong> · Callbacks · Funciones anidadas · Desafíos · Ejercicios 3–4</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide fn-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div style="font-size:6rem;font-family:'Courier New',monospace;" class="float">ƒ( )</div>
+  <h1 class="sm mt20">Funciones en JavaScript</h1>
+  <p class="subtitle">Definición · Tipos · Parámetros · Retorno</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES UNA FUNCIÓN? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Fundamentos</span>
+  <h2>¿Qué es una Función?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📦 Definición</h3>
+      <p>Bloque de código <span class="accent">reutilizable</span> que realiza una tarea específica. Se define una vez y se puede llamar cuantas veces sea necesario.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Al definirla no se ejecuta. Se ejecuta cuando la <span class="accent">invocamos</span>.</p>
+    </div>
+    <div class="card">
+      <h3>🍰 Analogía: receta de cocina</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><span class="accent">Ingredientes</span> → parámetros de entrada</li>
+        <li><span class="accent">Pasos</span> → proceso interno de la función</li>
+        <li><span class="accent">Torta</span> → resultado (return)</li>
+      </ul>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">La misma receta (función) puede usarse con distintos ingredientes (argumentos).</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Sin funciones, deberíamos repetir el mismo código en cada lugar donde lo necesitamos. Con funciones, lo escribimos <span class="js-yellow">una vez</span> y lo reutilizamos.</div>
+</div>
+
+<!-- SLIDE 5 – VENTAJAS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Ventajas</span>
+  <h2>¿Por qué usar Funciones?</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">🧩</div><h3>Modularidad</h3><p>Cada función realiza una tarea específica y bien definida.</p></div>
+    <div class="step"><div class="step-num">♻️</div><h3>Reutilización</h3><p>Se pueden llamar múltiples veces desde cualquier parte del código.</p></div>
+    <div class="step"><div class="step-num">🔧</div><h3>Mantenimiento</h3><p>Modificar una función actualiza su comportamiento en todos los lugares donde se usa.</p></div>
+    <div class="step"><div class="step-num">🐛</div><h3>Menos errores</h3><p>Código más estructurado, fácil de testear y depurar.</p></div>
+    <div class="step"><div class="step-num">👁️</div><h3>Legibilidad</h3><p>Nombre descriptivo que comunica qué hace el bloque de código.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 6 – FUNCIONES DECLARADAS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Tipos</span>
+  <h2>Funciones Declaradas</h2>
+  <div class="code-block" style="max-width:950px;">
+    <span class="cm">// Declaración: define la función</span><br>
+    <span class="kw">function</span> <span class="fn">saludar</span>(<span class="var">nombre</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`¡Hola, ${<span class="var">nombre</span>}!`</span>);<br>
+    }<br><br>
+    <span class="cm">// Invocación: ejecuta la función</span><br>
+    <span class="fn">saludar</span>(<span class="str">"Ana"</span>);   <span class="cm">// ¡Hola, Ana!</span><br>
+    <span class="fn">saludar</span>(<span class="str">"Luis"</span>);  <span class="cm">// ¡Hola, Luis!</span><br><br>
+    <span class="cm">// Hoisting: se puede llamar ANTES de declararla</span><br>
+    <span class="fn">despedir</span>(<span class="str">"Mía"</span>);  <span class="cm">// ✅ Funciona gracias al hoisting</span><br><br>
+    <span class="kw">function</span> <span class="fn">despedir</span>(<span class="var">nombre</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Hasta luego, ${<span class="var">nombre</span>}!`</span>);<br>
+    }
+  </div>
+  <div class="highlight mt20">El <span class="js-yellow">hoisting</span> eleva la declaración al inicio del archivo. Permite llamar la función antes de que aparezca en el código.</div>
+</div>
+
+<!-- SLIDE 7 – FUNCIONES ANÓNIMAS Y ARROW -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Tipos</span>
+  <h2>Funciones Anónimas y Arrow</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>👤 Función Anónima</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Sin nombre, asignada a una variable. <span class="accent">No hay hoisting</span>.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="kw">const</span> <span class="var">sumar</span> = <span class="kw">function</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;<br>
+        };<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">sumar</span>(<span class="num">3</span>, <span class="num">4</span>)); <span class="cm">// 7</span><br><br>
+        <span class="cm">// Uso típico: callback en setTimeout</span><br>
+        <span class="fn">setTimeout</span>(<span class="kw">function</span>() {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"3 segundos"</span>);<br>
+        }, <span class="num">3000</span>);
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚡ Arrow Function (ES6)</h3>
+      <p style="font-size:.95rem;margin-bottom:10px;">Sintaxis concisa. Sin <code>this</code> propio. <span class="accent">No hay hoisting</span>.</p>
+      <div class="code-block" style="font-size:.85rem;">
+        <span class="cm">// Con cuerpo</span><br>
+        <span class="kw">const</span> <span class="fn">multiplicar</span> = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> <span class="op">*</span> <span class="var">b</span>;<br>
+        };<br><br>
+        <span class="cm">// Una línea: return implícito</span><br>
+        <span class="kw">const</span> <span class="fn">restar</span> = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> <span class="var">a</span> <span class="op">-</span> <span class="var">b</span>;<br><br>
+        <span class="cm">// Un solo parámetro: sin paréntesis</span><br>
+        <span class="kw">const</span> <span class="fn">doble</span> = <span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>;
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 – COMPARATIVA -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Comparativa</span>
+  <h2>Comparativa de Tipos de Funciones</h2>
+  <table>
+    <thead>
+      <tr><th>Tipo</th><th>¿Hoisting?</th><th>¿Tiene nombre?</th><th>¿<code>this</code> propio?</th><th>Uso común</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>📌 Declarada</td><td><span style="color:#a8ff78;">✅ Sí</span></td><td><span style="color:#a8ff78;">Sí</span></td><td><span style="color:#a8ff78;">Sí</span></td><td>Reutilización frecuente</td></tr>
+      <tr><td>👤 Anónima</td><td><span style="color:#FF6B6B;">❌ No</span></td><td><span style="color:#FF6B6B;">No</span></td><td><span style="color:#a8ff78;">Sí</span></td><td>Callbacks, eventos</td></tr>
+      <tr><td>⚡ Arrow =></td><td><span style="color:#FF6B6B;">❌ No</span></td><td><span style="color:#FF6B6B;">No</span></td><td><span style="color:#FF6B6B;">No</span></td><td>Funciones cortas, map/filter</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight mt20">Usá <span class="js-yellow">declarada</span> para reutilizar · <span class="js-yellow">anónima</span> para callbacks · <span class="js-yellow">arrow =></span> para funciones cortas y métodos de arreglo</div>
+</div>
+
+<!-- SLIDE 9 – PARÁMETROS Y RETURN -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Parámetros y retorno</span>
+  <h2>Parámetros y Valor de Retorno</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📥 Parámetros vs Argumentos</h3>
+      <div class="code-block" style="font-size:.87rem;margin-top:10px;">
+        <span class="cm">// "a" y "b" son PARÁMETROS (en la declaración)</span><br>
+        <span class="kw">function</span> <span class="fn">sumar</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;<br>
+        }<br><br>
+        <span class="cm">// 5 y 3 son ARGUMENTOS (al invocar)</span><br>
+        <span class="fn">sumar</span>(<span class="num">5</span>, <span class="num">3</span>); <span class="cm">// 8</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📤 return — devolver un valor</h3>
+      <div class="code-block" style="font-size:.87rem;margin-top:10px;">
+        <span class="cm">// Sin return: solo ejecuta</span><br>
+        <span class="kw">function</span> <span class="fn">mostrar</span>(<span class="var">n</span>) {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">n</span>); <span class="cm">// muestra, no guarda</span><br>
+        }<br><br>
+        <span class="cm">// Con return: valor reutilizable</span><br>
+        <span class="kw">function</span> <span class="fn">calcular</span>(<span class="var">n</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>; <span class="cm">// devuelve el valor</span><br>
+        }<br>
+        <span class="kw">const</span> <span class="var">resultado</span> = <span class="fn">calcular</span>(<span class="num">5</span>); <span class="cm">// 10</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20"><code>return</code> detiene la ejecución de la función. Todo código después de un <span class="js-yellow">return</span> en la misma función es inalcanzable.</div>
+</div>
+
+<!-- SLIDE 10 – ERRORES COMUNES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Errores</span>
+  <h2>Errores Comunes con Funciones</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:#FF6B6B;">❌ Olvidar paréntesis</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">saludar</span>() {<br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Hola"</span>);<br>
+        }<br><br>
+        <span class="cm">// ❌ No invoca la función</span><br>
+        <span class="fn">saludar</span>;     <span class="cm">// solo referencia</span><br><br>
+        <span class="cm">// ✅ Invoca la función</span><br>
+        <span class="fn">saludar</span>();   <span class="cm">// ejecuta</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#FF6B6B;">❌ Olvidar return</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">doble</span>(<span class="var">n</span>) {<br>
+        &nbsp;&nbsp;<span class="var">n</span> <span class="op">*</span> <span class="num">2</span>; <span class="cm">// ❌ calcula pero no retorna</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">doble</span>(<span class="num">5</span>)); <span class="cm">// undefined</span><br><br>
+        <span class="kw">function</span> <span class="fn">doble</span>(<span class="var">n</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>; <span class="cm">// ✅</span><br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#FF6B6B;">❌ Parámetro sin pasar</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">sumar</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;<br>
+        }<br>
+        <span class="fn">sumar</span>(<span class="num">5</span>); <span class="cm">// b = undefined → NaN</span><br><br>
+        <span class="cm">// ✅ Validar antes de usar</span><br>
+        <span class="kw">if</span> (<span class="var">b</span> <span class="op">===</span> <span class="kw">undefined</span>) ...<br>
+        <span class="cm">// o usar valor por defecto</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11 – LIVE CODING -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Los Tres Tipos de Funciones</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:2;color:#1e1e1e;">
+        <li>1️⃣ Función declarada: declarar e invocar antes y después</li>
+        <li>2️⃣ Función anónima: asignar a variable y usar como callback</li>
+        <li>3️⃣ Arrow function: sintaxis reducida y retorno implícito</li>
+        <li>4️⃣ Explicar <code>this</code> en arrow vs función declarada</li>
+        <li>5️⃣ Comparar las tres con el mismo ejemplo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12 – DESAFÍO 1 -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Predecir salida</span>
+  <h2>⚡ Desafío: ¿Qué sucede?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">const</span> <span class="var">valores</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];<br><br>
+    <span class="kw">function</span> <span class="fn">agregarElemento</span>(<span class="var">arr</span>) {<br>
+    &nbsp;&nbsp;<span class="var">arr</span>.<span class="fn">push</span>(<span class="num">5</span>);<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Dentro:"</span>, <span class="var">arr</span>);<br>
+    }<br><br>
+    <span class="fn">agregarElemento</span>(<span class="var">valores</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Fuera:"</span>, <span class="var">valores</span>);
+  </div>
+  <div class="highlight mt20">
+    A) <code>valores</code> no cambia &nbsp;·&nbsp; B) Se añade 5 al arreglo original &nbsp;·&nbsp; C) Error de tipo &nbsp;·&nbsp; D) El arreglo se duplica
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 1 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">👁️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Contador de Visitas</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Variable global <code>visitas = 0</code><br>
+        ✅ Función <code>incrementarVisitas()</code> que suma 1 y muestra el conteo<br>
+        ✅ Llamar la función varias veces para verificar su funcionamiento<br>
+        ⭐ Extra: mostrar el mensaje "¡Visita número X!"
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – EJERCICIO 2 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌡️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Simulador de Temperatura</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Función anónima <code>obtenerTemperatura()</code>: número aleatorio 0–40 con <code>Math.random()</code><br>
+        ✅ Arrow function <code>clasificarClima(temp)</code>: clasifica en frío / templado / calor<br>
+        ✅ Combinar ambas y mostrar resultado en consola<br>
+        ⭐ Fríos: 0–15°C · Templado: 16–25°C · Calor: +25°C
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – DESCANSO -->
+<div class="slide break-bg" id="slide-break">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 ═══════ -->
+
+<!-- SLIDE 16 – TÍTULO BLOQUE 3 -->
+<div class="slide scope-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔒</div>
+  <h1 class="sm mt20">Scope y Parámetros Avanzados</h1>
+  <p class="subtitle">Variables locales/globales · Defaults · Rest (...)</p>
+</div>
+
+<!-- SLIDE 17 – VARIABLES LOCALES Y GLOBALES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Scope</span>
+  <h2>Variables Locales vs Globales</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌍 Variable Global</h3>
+      <p>Declarada fuera de cualquier función. Accesible desde <span class="accent">cualquier parte</span> del código.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">let</span> <span class="var">contador</span> = <span class="num">0</span>; <span class="cm">// global</span><br><br>
+        <span class="kw">function</span> <span class="fn">incrementar</span>() {<br>
+        &nbsp;&nbsp;<span class="var">contador</span><span class="op">++</span>; <span class="cm">// ✅ accede</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">contador</span>); <span class="cm">// ✅</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏠 Variable Local</h3>
+      <p>Declarada dentro de una función. Solo existe <span class="accent">dentro de esa función</span>.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">calcular</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">let</span> <span class="var">resultado</span> = <span class="num">42</span>; <span class="cm">// local</span><br>
+        &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">resultado</span>); <span class="cm">// ✅</span><br>
+        }<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">resultado</span>); <span class="cm">// ❌ Error</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">⚠️ Variables globales: modificables desde cualquier parte → bugs difíciles de rastrear. Usarlas con cuidado y solo cuando sea necesario.</div>
+</div>
+
+<!-- SLIDE 18 – PARÁMETROS POR DEFECTO -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Parámetros</span>
+  <h2>Parámetros con Valores por Defecto</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="cm">// Sin valor por defecto: undefined si no se pasa</span><br>
+    <span class="kw">function</span> <span class="fn">saludar</span>(<span class="var">nombre</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Hola, ${<span class="var">nombre</span>}!`</span>);<br>
+    }<br>
+    <span class="fn">saludar</span>(); <span class="cm">// "Hola, undefined!" ⚠️</span><br><br>
+    <span class="cm">// Con valor por defecto (ES6)</span><br>
+    <span class="kw">function</span> <span class="fn">saludar</span>(<span class="var">nombre</span> = <span class="str">"invitado"</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Hola, ${<span class="var">nombre</span>}!`</span>);<br>
+    }<br>
+    <span class="fn">saludar</span>();         <span class="cm">// "Hola, invitado!" ✅</span><br>
+    <span class="fn">saludar</span>(<span class="str">"Ana"</span>);    <span class="cm">// "Hola, Ana!"</span><br><br>
+    <span class="cm">// Combinar parámetros obligatorios y opcionales</span><br>
+    <span class="kw">function</span> <span class="fn">descuento</span>(<span class="var">precio</span>, <span class="var">porcentaje</span> = <span class="num">10</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">precio</span> <span class="op">-</span> (<span class="var">precio</span> <span class="op">*</span> <span class="var">porcentaje</span> <span class="op">/</span> <span class="num">100</span>);<br>
+    }<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">descuento</span>(<span class="num">100</span>));      <span class="cm">// 90 (10% por defecto)</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">descuento</span>(<span class="num">100</span>, <span class="num">20</span>)); <span class="cm">// 80</span>
+  </div>
+</div>
+
+<!-- SLIDE 19 – OPERADOR REST -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Operador Rest</span>
+  <h2>Operador Rest <code>(...)</code></h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="cm">// Recibir número indefinido de argumentos como array</span><br>
+    <span class="kw">function</span> <span class="fn">sumarTodo</span>(<span class="op">...</span><span class="var">numeros</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">numeros</span>.<span class="fn">reduce</span>((<span class="var">acc</span>, <span class="var">n</span>) <span class="op">=&gt;</span> <span class="var">acc</span> + <span class="var">n</span>, <span class="num">0</span>);<br>
+    }<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">sumarTodo</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>));          <span class="cm">// 6</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">sumarTodo</span>(<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>));   <span class="cm">// 100</span><br><br>
+    <span class="cm">// Combinando fijos + rest (rest debe ir al final)</span><br>
+    <span class="kw">function</span> <span class="fn">presentar</span>(<span class="var">nombre</span>, <span class="op">...</span><span class="var">hobbies</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`${<span class="var">nombre</span>} disfruta: ${<span class="var">hobbies</span>.<span class="fn">join</span>(<span class="str">", "</span>)}`</span>);<br>
+    }<br>
+    <span class="fn">presentar</span>(<span class="str">"Ana"</span>, <span class="str">"leer"</span>, <span class="str">"correr"</span>, <span class="str">"cocinar"</span>);<br>
+    <span class="cm">// "Ana disfruta: leer, correr, cocinar"</span>
+  </div>
+  <div class="highlight mt20">El operador <span class="js-yellow">rest (...)</span> siempre debe ser el <span class="js-yellow">último parámetro</span> de la función. Captura todos los argumentos restantes en un array.</div>
+</div>
+
+<!-- ═══════ BLOQUE 4 ═══════ -->
+
+<!-- SLIDE 20 – CALLBACKS -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Callbacks</span>
+  <h2>Parámetros como Funciones (Callbacks)</h2>
+  <div class="code-block" style="max-width:1050px;">
+    <span class="cm">// Una función recibe otra función como parámetro</span><br>
+    <span class="kw">function</span> <span class="fn">procesar</span>(<span class="var">numero</span>, <span class="var">operacion</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="fn">operacion</span>(<span class="var">numero</span>); <span class="cm">// llama al callback</span><br>
+    }<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">procesar</span>(<span class="num">5</span>, <span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>));   <span class="cm">// 10</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">procesar</span>(<span class="num">5</span>, <span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">**</span> <span class="num">2</span>));   <span class="cm">// 25</span><br><br>
+    <span class="cm">// Ya los usaron: map() y filter() reciben callbacks</span><br>
+    <span class="kw">const</span> <span class="var">nums</span> = [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>];<br>
+    <span class="kw">const</span> <span class="var">pares</span>  = <span class="var">nums</span>.<span class="fn">filter</span>(<span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">%</span> <span class="num">2</span> <span class="op">===</span> <span class="num">0</span>); <span class="cm">// callback</span><br>
+    <span class="kw">const</span> <span class="var">dobles</span> = <span class="var">nums</span>.<span class="fn">map</span>(<span class="var">n</span> <span class="op">=&gt;</span> <span class="var">n</span> <span class="op">*</span> <span class="num">2</span>);          <span class="cm">// callback</span>
+  </div>
+  <div class="highlight mt20">Los callbacks son la base de la <span class="js-yellow">programación asíncrona</span> en JavaScript: <code>setTimeout</code>, <code>fetch</code>, eventos del DOM.</div>
+</div>
+
+<!-- SLIDE 21 – FUNCIONES ANIDADAS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Funciones anidadas</span>
+  <h2>Funciones Anidadas</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="cm">// Función dentro de otra función</span><br>
+    <span class="kw">function</span> <span class="fn">calcularArea</span>(<span class="var">base</span>, <span class="var">altura</span>) {<br><br>
+    &nbsp;&nbsp;<span class="cm">// Función interna: solo accesible aquí</span><br>
+    &nbsp;&nbsp;<span class="kw">function</span> <span class="fn">validar</span>(<span class="var">valor</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="kw">typeof</span> <span class="var">valor</span> <span class="op">===</span> <span class="str">"number"</span> <span class="op">&amp;&amp;</span> <span class="var">valor</span> <span class="op">&gt;</span> <span class="num">0</span>;<br>
+    &nbsp;&nbsp;}<br><br>
+    &nbsp;&nbsp;<span class="kw">if</span> (!<span class="fn">validar</span>(<span class="var">base</span>) <span class="op">||</span> !<span class="fn">validar</span>(<span class="var">altura</span>)) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"Valores inválidos"</span>;<br>
+    &nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">base</span> <span class="op">*</span> <span class="var">altura</span>;<br>
+    }<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">calcularArea</span>(<span class="num">5</span>, <span class="num">3</span>));   <span class="cm">// 15</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">calcularArea</span>(<span class="op">-</span><span class="num">1</span>, <span class="num">3</span>)); <span class="cm">// "Valores inválidos"</span>
+  </div>
+  <div class="highlight mt20">Las funciones anidadas <span class="js-yellow">encapsulan lógica</span> sin contaminar el scope global. La función interna solo existe dentro de la externa.</div>
+</div>
+
+<!-- SLIDE 22 – DESAFÍO 2 -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Scope</span>
+  <h2>⚡ Desafío: ¿Qué error ocurre?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">function</span> <span class="fn">suma</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">let</span> <span class="var">mensaje</span> = <span class="str">`La suma es ${<span class="var">a</span> + <span class="var">b</span>}`</span>;<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;<br>
+    }<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">suma</span>(<span class="num">3</span>, <span class="num">4</span>));<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">mensaje</span>);
+  </div>
+  <div class="highlight mt20">
+    A) <code>mensaje</code> no está definido fuera de <code>suma()</code> &nbsp;·&nbsp; B) <code>let</code> en lugar de <code>var</code> &nbsp;·&nbsp; C) Inaccesible dentro &nbsp;·&nbsp; D) <code>suma()</code> no retorna
+  </div>
+</div>
+
+<!-- SLIDE 23 – DESAFÍO 3 -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Parámetros</span>
+  <h2>⚡ Desafío: ¿Qué devuelve?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">function</span> <span class="fn">dividir</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> / <span class="var">b</span>;<br>
+    }<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">dividir</span>(<span class="num">10</span>));
+  </div>
+  <div class="highlight mt20">
+    A) Devuelve <code>undefined</code> &nbsp;·&nbsp; B) Error por argumento faltante &nbsp;·&nbsp; C) Devuelve <code>NaN</code> &nbsp;·&nbsp; D) Devuelve <code>0</code>
+  </div>
+</div>
+
+<!-- SLIDE 24 – DESAFÍO 4 (THIS) -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Arrow y this</span>
+  <h2>⚡ Desafío: Arrow y <code>this</code></h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="kw">const</span> <span class="var">persona</span> = {<br>
+    &nbsp;&nbsp;<span class="var">nombre</span>: <span class="str">"Juan"</span>,<br>
+    &nbsp;&nbsp;<span class="fn">saludar</span>: () <span class="op">=&gt;</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Hola, soy ${<span class="kw">this</span>.nombre}`</span>);<br>
+    &nbsp;&nbsp;}<br>
+    };<br><br>
+    <span class="var">persona</span>.<span class="fn">saludar</span>();
+  </div>
+  <div class="highlight mt20">
+    A) "Hola, soy Juan" &nbsp;·&nbsp; B) Error: <code>this</code> no definido &nbsp;·&nbsp; C) "Hola, soy undefined" &nbsp;·&nbsp; D) No se ejecuta
+  </div>
+</div>
+
+<!-- SLIDE 25 – LIVE CODING: FUNCIÓN AVANZADA -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛒</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>calcularTotal con rest (...)</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Función <code>calcularTotal(cliente, descuento, ...precios)</code></li>
+        <li>2️⃣ Sumar precios con <code>reduce()</code></li>
+        <li>3️⃣ Aplicar descuento al total</li>
+        <li>4️⃣ Invocar con distintos clientes y cantidades de productos</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – EJERCICIO 3: SUELDOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💼</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Calculadora de Sueldos</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Función <code>calcularSueldoNeto(nombre, sueldoBase, ...bonificaciones)</code>:<br>
+        ✅ Sumar bonificaciones con <code>reduce()</code><br>
+        ✅ Calcular sueldo bruto = base + bonificaciones<br>
+        ✅ Aplicar descuento del 13% para obtener sueldo neto<br>
+        ✅ Mostrar resumen completo con <code>console.log()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – EJERCICIO 4: ASISTENCIA -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📋</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Registro de Asistencia</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Función <code>registrarAsistencia(materia, totalClases, ...estudiantes)</code>:<br>
+        ✅ Usar <code>...estudiantes</code> para recibir lista variable de nombres<br>
+        ✅ Mostrar estudiantes con <code>join()</code><br>
+        ✅ Calcular porcentaje: <code>presentes / totalClases * 100</code><br>
+        ✅ Mostrar resumen completo en consola
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28 – EJERCICIO EXTRA: CALCULADOR DE EDAD -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio Extra · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🎂</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Calculador de Edad</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Función <code>calcularEdad(anioNacimiento)</code>:<br>
+        ✅ Obtener año actual con <code>new Date().getFullYear()</code><br>
+        ✅ Calcular <code>anioActual - anioNacimiento</code><br>
+        ✅ <code>return</code> el valor y mostrarlo con <code>console.log()</code><br>
+        ⭐ Extra: también calcular cuántos años faltan para jubilarse (65)
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>⚙️ Parte I · Fundamentos</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Qué es una función y para qué sirve</li>
+        <li>Funciones declaradas con hoisting</li>
+        <li>Funciones anónimas asignadas a variables</li>
+        <li>Arrow functions y retorno implícito</li>
+        <li>Parámetros vs argumentos</li>
+        <li><code>return</code> para devolver valores reutilizables</li>
+        <li>Errores comunes y cómo evitarlos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔒 Parte II · Avanzado</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Variables locales vs globales y scope</li>
+        <li>Parámetros con valores por defecto</li>
+        <li>Operador rest <code>...</code> para args variables</li>
+        <li>Callbacks: funciones como parámetros</li>
+        <li>Funciones anidadas para encapsular lógica</li>
+        <li>Comportamiento de <code>this</code> en arrow functions</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – CIERRE -->
+<div class="slide fn-bg">
+  <div style="font-size:6rem;font-family:'Courier New',monospace;" class="float glow">ƒ( )</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Las funciones son el bloque de construcción fundamental de cualquier programa JavaScript profesional.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Declaradas ✅</span>
+    <span class="pill">Arrow ✅</span>
+    <span class="pill">Parámetros ✅</span>
+    <span class="pill">return ✅</span>
+    <span class="pill">Scope ✅</span>
+    <span class="pill">Callbacks ✅</span>
+    <span class="pill gold">Rest (...) ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Conceptos básicos de Objetos en JavaScript</span>.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  /* ── SLIDER ── */
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle     = document.getElementById('ring-circle');
+  const display    = document.getElementById('timer-display');
+  const msg        = document.getElementById('timer-msg');
+  const CIRCUMF    = 2 * Math.PI * 80;
+  circle.style.strokeDasharray  = CIRCUMF;
+  circle.style.strokeDashoffset = 0;
+
+  let remaining = TOTAL_SECS;
+  let timerInterval = null;
+  let running = false;
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  }
+
+  function updateRing() {
+    const offset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.strokeDashoffset = offset;
+    if (remaining > TOTAL_SECS * 0.5)      circle.style.stroke = '#1e1e1e';
+    else if (remaining > TOTAL_SECS * 0.2) circle.style.stroke = '#e67e22';
+    else                                    circle.style.stroke = '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+
+  function startTimer() {
+    if (running) return;
+    running = true;
+    msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        running = false;
+        msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.';
+        return;
+      }
+      remaining--;
+      updateRing();
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    if (!running) return;
+    clearInterval(timerInterval);
+    running = false;
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    running = false;
+    remaining = TOTAL_SECS;
+    circle.style.stroke = '#1e1e1e';
+    msg.textContent = '';
+    updateRing();
+  }
+
+  document.getElementById('btn-start').addEventListener('click', startTimer);
+  document.getElementById('btn-pause').addEventListener('click', pauseTimer);
+  document.getElementById('btn-reset').addEventListener('click', resetTimer);
+  updateRing();
+</script>
+</body>
+</html>
