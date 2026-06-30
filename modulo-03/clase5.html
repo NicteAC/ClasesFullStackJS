@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Objetos en JavaScript – AE3.5</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff; --warning: #FF6B6B;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg     { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.obj-bg    { background:linear-gradient(135deg,#004d40 0%,#00695c 100%); }
+  .slide.math-bg   { background:linear-gradient(135deg,#1565c0 0%,#0288d1 100%); }
+  .slide.str-bg    { background:linear-gradient(135deg,#6a1b9a 0%,#8e24aa 100%); }
+  .slide.nest-bg   { background:linear-gradient(135deg,#bf360c 0%,#e64a19 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:24px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.3rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px 24px; font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.86rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:14px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:42px; height:42px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:5px; }
+  .step p  { font-size:.85rem; opacity:.9; line-height:1.5; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:14px 24px; margin-top:14px; font-size:1.12rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 14px; font-size:.88rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1.05rem; }
+  th { background:rgba(102,126,234,0.55); padding:12px 16px; text-align:left; }
+  td { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:1rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.92rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:16px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 34</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:6rem;font-family:'Courier New',monospace;color:var(--js-yellow);" class="float">{ }</div>
+  <h1 class="mt20">Objetos en<br><span class="js-yellow glow">JavaScript</span></h1>
+  <p class="subtitle mt20">AE3.5 · Full Stack JavaScript Trainee V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Propiedades</span>
+    <span class="pill">Métodos</span>
+    <span class="pill">Math</span>
+    <span class="pill">String</span>
+    <span class="pill">Funciones anidadas</span>
+    <span class="pill gold">Closures</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#00695c"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">🗂️ <strong>Bloque 1</strong> · Objetos: propiedades, métodos, notación · Objetos preconstruidos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#00695c"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🔢 <strong>Bloque 2</strong> · Math y String en profundidad · Live Coding · Ejercicios 1–3</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#e64a19"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔗 <strong>Bloque 3</strong> · Funciones anidadas · Closures · Live Coding</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#e64a19"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">⚙️ <strong>Bloque 4</strong> · Generador de usuarios · Ejercicios finales</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – OBJETOS ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide obj-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div style="font-size:6rem;font-family:'Courier New',monospace;" class="float">{ }</div>
+  <h1 class="sm mt20">Objetos en JavaScript</h1>
+  <p class="subtitle">Propiedades · Métodos · Notación · Preconstruidos</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES UN OBJETO? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Objetos</span>
+  <h2>¿Qué es un Objeto?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📦 Definición</h3>
+      <p>Estructura de datos que almacena información en pares <span class="accent">clave-valor</span>. Puede tener <span class="accent">propiedades</span> (datos) y <span class="accent">métodos</span> (funciones).</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Es más flexible que los tipos primitivos: puede contener múltiples valores organizados en un solo contenedor.</p>
+    </div>
+    <div class="card">
+      <h3>💡 Vida real → código</h3>
+      <p>Un auto tiene: marca, modelo, año (propiedades) y puede arrancar, frenar (métodos). En código:</p>
+      <div class="code-block" style="font-size:.83rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">auto</span> = {<br>
+        &nbsp;&nbsp;<span class="var">marca</span>: <span class="str">"Toyota"</span>,<br>
+        &nbsp;&nbsp;<span class="var">anio</span>:  <span class="num">2023</span>,<br>
+        &nbsp;&nbsp;<span class="fn">arrancar</span>: <span class="kw">function</span>() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Vroom!"</span>);<br>
+        &nbsp;&nbsp;}<br>
+        };
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Los objetos agrupan datos relacionados en un solo lugar → código más <span class="js-yellow">organizado y legible</span>.</div>
+</div>
+
+<!-- SLIDE 5 – PROPIEDADES Y MÉTODOS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Propiedades y métodos</span>
+  <h2>Propiedades y Métodos</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="kw">const</span> <span class="var">persona</span> = {<br>
+    &nbsp;&nbsp;<span class="cm">// Propiedades (pares clave-valor)</span><br>
+    &nbsp;&nbsp;<span class="var">nombre</span>:    <span class="str">"Carlos"</span>,<br>
+    &nbsp;&nbsp;<span class="var">edad</span>:      <span class="num">25</span>,<br>
+    &nbsp;&nbsp;<span class="var">profesion</span>: <span class="str">"Desarrollador"</span>,<br><br>
+    &nbsp;&nbsp;<span class="cm">// Método (función dentro del objeto)</span><br>
+    &nbsp;&nbsp;<span class="fn">presentarse</span>: <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">`Hola, soy ${<span class="kw">this</span>.nombre} y trabajo como ${<span class="kw">this</span>.profesion}.`</span>;<br>
+    &nbsp;&nbsp;}<br>
+    };<br><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">persona</span>.nombre);          <span class="cm">// "Carlos"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">persona</span>.<span class="fn">presentarse</span>()); <span class="cm">// "Hola, soy Carlos..."</span>
+  </div>
+  <div class="highlight mt20"><code>this</code> dentro de un método se refiere al propio objeto. <span class="js-yellow">this.nombre</span> es equivalente a <span class="js-yellow">persona.nombre</span>.</div>
+</div>
+
+<!-- SLIDE 6 – CREAR Y MODIFICAR -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Crear y modificar</span>
+  <h2>Crear, Modificar y Eliminar Propiedades</h2>
+  <div class="code-block sm">
+    <span class="cm">// Crear con literal de objeto {}</span><br>
+    <span class="kw">const</span> <span class="var">perro</span> = { <span class="var">nombre</span>: <span class="str">"Rex"</span>, <span class="var">raza</span>: <span class="str">"Labrador"</span> };<br><br>
+    <span class="cm">// Modificar una propiedad existente</span><br>
+    <span class="var">perro</span>.nombre = <span class="str">"Max"</span>;<br><br>
+    <span class="cm">// Agregar nueva propiedad dinámicamente</span><br>
+    <span class="var">perro</span>.edad = <span class="num">3</span>;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">perro</span>); <span class="cm">// { nombre:"Max", raza:"Labrador", edad:3 }</span><br><br>
+    <span class="cm">// Eliminar una propiedad</span><br>
+    <span class="kw">delete</span> <span class="var">perro</span>.raza;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">perro</span>); <span class="cm">// { nombre:"Max", edad:3 }</span>
+  </div>
+</div>
+
+<!-- SLIDE 7 – NOTACIÓN PUNTO Y CORCHETES -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Notación</span>
+  <h2>Notación de Punto vs Corchetes</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔵 Notación de punto <code>obj.clave</code></h3>
+      <p>Más común y legible. Usar <span class="accent">siempre que sea posible</span>.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">persona</span>.nombre); <span class="cm">// ✅</span><br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">persona</span>.edad);   <span class="cm">// ✅</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🟡 Notación de corchetes <code>obj["clave"]</code></h3>
+      <p>Necesaria para: claves con espacios, caracteres especiales o acceso <span class="accent">dinámico</span>.</p>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="cm">// Clave con espacios</span><br>
+        <span class="var">obj</span>[<span class="str">"nombre completo"</span>];<br><br>
+        <span class="cm">// Acceso dinámico con variable</span><br>
+        <span class="kw">const</span> <span class="var">campo</span> = <span class="str">"nombre"</span>;<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">persona</span>[<span class="var">campo</span>]); <span class="cm">// ✅</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Usá <span class="js-yellow">punto</span> por defecto · Usá <span class="js-yellow">corchetes</span> para acceso dinámico o claves con caracteres especiales.</div>
+</div>
+
+<!-- SLIDE 8 – OBJETOS PRECONSTRUIDOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Preconstruidos</span>
+  <h2>Objetos Preconstruidos en JavaScript</h2>
+  <div class="grid-4">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5rem;">🔢</div>
+      <h3>Math</h3>
+      <p style="font-size:.9rem;">Operaciones matemáticas avanzadas</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5rem;">📅</div>
+      <h3>Date</h3>
+      <p style="font-size:.9rem;">Fechas y horas</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5rem;">🔤</div>
+      <h3>String</h3>
+      <p style="font-size:.9rem;">Manipulación de texto</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5rem;">📦</div>
+      <h3>Array</h3>
+      <p style="font-size:.9rem;">Listas de datos</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Los objetos preconstruidos están <span class="js-yellow">disponibles sin importar nada</span>. JavaScript los provee de forma nativa, listos para usar.</div>
+</div>
+
+<!-- SLIDE 9 – OBJETO MATH -->
+<div class="slide math-bg">
+  <span class="section-label">Bloque 2 · Math</span>
+  <h2>Objeto Math — Métodos Principales</h2>
+  <div class="code-block sm">
+    <span class="cm">// Redondeo</span><br>
+    <span class="fn">Math</span>.<span class="fn">round</span>(<span class="num">5.7</span>)   <span class="cm">// 6   → más cercano</span><br>
+    <span class="fn">Math</span>.<span class="fn">ceil</span>(<span class="num">5.1</span>)    <span class="cm">// 6   → siempre hacia arriba</span><br>
+    <span class="fn">Math</span>.<span class="fn">floor</span>(<span class="num">5.9</span>)   <span class="cm">// 5   → siempre hacia abajo</span><br>
+    <span class="fn">Math</span>.<span class="fn">trunc</span>(<span class="num">5.9</span>)   <span class="cm">// 5   → elimina decimales (sin redondear)</span><br><br>
+    <span class="cm">// Matemáticas</span><br>
+    <span class="fn">Math</span>.<span class="fn">abs</span>(<span class="op">-</span><span class="num">8</span>)      <span class="cm">// 8   → valor absoluto</span><br>
+    <span class="fn">Math</span>.<span class="fn">pow</span>(<span class="num">2</span>, <span class="num">10</span>)   <span class="cm">// 1024 → potencia</span><br>
+    <span class="fn">Math</span>.<span class="fn">sqrt</span>(<span class="num">16</span>)     <span class="cm">// 4   → raíz cuadrada</span><br>
+    <span class="fn">Math</span>.<span class="fn">max</span>(<span class="num">3</span>,<span class="num">7</span>,<span class="num">1</span>)   <span class="cm">// 7   → máximo</span><br>
+    <span class="fn">Math</span>.<span class="fn">min</span>(<span class="num">3</span>,<span class="num">7</span>,<span class="num">1</span>)   <span class="cm">// 1   → mínimo</span><br><br>
+    <span class="cm">// Número aleatorio entre min y max (entero)</span><br>
+    <span class="kw">function</span> <span class="fn">random</span>(<span class="var">min</span>, <span class="var">max</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="fn">Math</span>.<span class="fn">floor</span>(<span class="fn">Math</span>.<span class="fn">random</span>() <span class="op">*</span> (<span class="var">max</span> <span class="op">-</span> <span class="var">min</span> <span class="op">+</span> <span class="num">1</span>)) <span class="op">+</span> <span class="var">min</span>;<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 10 – OBJETO STRING -->
+<div class="slide str-bg">
+  <span class="section-label">Bloque 2 · String</span>
+  <h2>Objeto String — Métodos Principales</h2>
+  <div class="code-block sm">
+    <span class="kw">const</span> <span class="var">txt</span> = <span class="str">"  JavaScript es Genial  "</span>;<br><br>
+    <span class="cm">// Modificar</span><br>
+    <span class="var">txt</span>.<span class="fn">toUpperCase</span>()    <span class="cm">// "  JAVASCRIPT ES GENIAL  "</span><br>
+    <span class="var">txt</span>.<span class="fn">toLowerCase</span>()    <span class="cm">// "  javascript es genial  "</span><br>
+    <span class="var">txt</span>.<span class="fn">trim</span>()           <span class="cm">// "JavaScript es Genial" (sin espacios)</span><br>
+    <span class="var">txt</span>.<span class="fn">replace</span>(<span class="str">"Genial"</span>, <span class="str">"Increíble"</span>) <span class="cm">// "JavaScript es Increíble"</span><br><br>
+    <span class="cm">// Buscar</span><br>
+    <span class="var">txt</span>.<span class="fn">includes</span>(<span class="str">"Java"</span>)    <span class="cm">// true</span><br>
+    <span class="var">txt</span>.<span class="fn">indexOf</span>(<span class="str">"es"</span>)      <span class="cm">// índice donde aparece</span><br>
+    <span class="var">txt</span>.<span class="fn">startsWith</span>(<span class="str">"  J"</span>) <span class="cm">// true</span><br><br>
+    <span class="cm">// Extraer y dividir</span><br>
+    <span class="var">txt</span>.<span class="fn">slice</span>(<span class="num">2</span>, <span class="num">12</span>)      <span class="cm">// "JavaScript"</span><br>
+    <span class="var">txt</span>.<span class="fn">split</span>(<span class="str">" "</span>)        <span class="cm">// ["","","JavaScript","es","Genial","",""]</span><br>
+    <span class="var">txt</span>.length            <span class="cm">// 24</span>
+  </div>
+</div>
+
+<!-- SLIDE 11 – LIVE CODING 1: MATH + STRING -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔑</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Generador de Contraseña</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Métodos <code>Math</code>: abs, round, ceil, floor, random, pow, sqrt</li>
+        <li>2️⃣ Métodos <code>String</code>: indexOf, includes, toUpperCase, trim, replace, slice, split</li>
+        <li>3️⃣ Construir en vivo una función <code>generarContrasena(nombre)</code></li>
+        <li>4️⃣ Usar el nombre del usuario + número aleatorio para crear una contraseña segura</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12 – EJERCICIO 1: OBJETO PERSONA -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">👤</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Crear y Manipular<br>un Objeto</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Crear objeto <code>persona</code> con nombre, edad, profesión<br>
+        ✅ Agregar método <code>presentarse()</code> que devuelva un mensaje<br>
+        ✅ Acceder a la edad con notación de <strong>punto</strong> y con <strong>corchetes</strong><br>
+        ✅ Llamar al método y mostrar el resultado
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 2: MATH -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔢</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Usando el Objeto Math</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Generar número aleatorio entre 1 y 100<br>
+        ✅ Calcular raíz cuadrada de un número dado<br>
+        ✅ Redondear el número 5.7 al entero más cercano<br>
+        ⭐ Extra: encontrar el máximo entre tres números con <code>Math.max()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – EJERCICIO 3: STRING -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔤</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Manipulación<br>de Cadenas</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Texto: <code>"JavaScript es genial"</code><br>
+        ✅ Convertir a mayúsculas con <code>toUpperCase()</code><br>
+        ✅ Reemplazar "genial" por "increíble" con <code>replace()</code><br>
+        ✅ Contar caracteres con <code>.length</code><br>
+        ⭐ Extra: dividir en palabras con <code>split()</code> y contar cuántas hay
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – DESCANSO CON TIMER -->
+<div class="slide break-bg" id="slide-break">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – MATH/STRING AVANZADO + ANIDADAS ═══════ -->
+
+<!-- SLIDE 16 – TÍTULO BLOQUE 3 -->
+<div class="slide nest-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔗</div>
+  <h1 class="sm mt20">Math, String Avanzado<br>y Funciones Anidadas</h1>
+  <p class="subtitle">replace · match · closures · encapsulamiento</p>
+</div>
+
+<!-- SLIDE 17 – REPLACE Y REPLACEALL -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · String.replace</span>
+  <h2>Reemplazo de Texto</h2>
+  <div class="code-block sm">
+    <span class="kw">const</span> <span class="var">frase</span> = <span class="str">"Hola mundo hola"</span>;<br><br>
+    <span class="cm">// Primera ocurrencia</span><br>
+    <span class="var">frase</span>.<span class="fn">replace</span>(<span class="str">"hola"</span>, <span class="str">"chau"</span>);       <span class="cm">// "Hola mundo chau" (solo 1ª)</span><br><br>
+    <span class="cm">// Todas las ocurrencias (regex /g)</span><br>
+    <span class="var">frase</span>.<span class="fn">replace</span>(<span class="op">/</span>hola<span class="op">/gi</span>, <span class="str">"chau"</span>);   <span class="cm">// "chau mundo chau" (/gi = global + ignore case)</span><br><br>
+    <span class="cm">// ES2021: replaceAll()</span><br>
+    <span class="var">frase</span>.<span class="fn">replaceAll</span>(<span class="str">"hola"</span>, <span class="str">"chau"</span>);    <span class="cm">// sin regex, reemplaza todas</span>
+  </div>
+  <table class="mt20" style="max-width:900px;font-size:.95rem;">
+    <thead><tr><th>Método</th><th>Reemplaza</th><th>Mayúsculas/minúsculas</th></tr></thead>
+    <tbody>
+      <tr><td><code>replace("a","b")</code></td><td>Solo la primera</td><td>Distingue</td></tr>
+      <tr><td><code>replace(/a/g,"b")</code></td><td>Todas</td><td>Distingue</td></tr>
+      <tr><td><code>replace(/a/gi,"b")</code></td><td>Todas</td><td>Ignora</td></tr>
+      <tr><td><code>replaceAll("a","b")</code></td><td>Todas</td><td>Distingue</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SLIDE 18 – COMPARACIÓN DE CADENAS -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · String comparación</span>
+  <h2>Comparar Cadenas Correctamente</h2>
+  <div class="code-block sm">
+    <span class="cm">// Básica: sensible a mayúsculas</span><br>
+    <span class="str">"hola"</span> <span class="op">===</span> <span class="str">"Hola"</span>  <span class="cm">// false ⚠️</span><br><br>
+    <span class="cm">// Ignorando mayúsculas</span><br>
+    <span class="str">"hola"</span>.<span class="fn">toLowerCase</span>() <span class="op">===</span> <span class="str">"Hola"</span>.<span class="fn">toLowerCase</span>() <span class="cm">// true ✅</span><br><br>
+    <span class="cm">// Con espacios y mayúsculas: trim() + toLowerCase()</span><br>
+    <span class="str">"  Hola  "</span>.<span class="fn">trim</span>().<span class="fn">toLowerCase</span>() <span class="op">===</span> <span class="str">"hola"</span> <span class="cm">// true ✅</span><br><br>
+    <span class="cm">// Comparación natural (orden de palabras, acentos)</span><br>
+    [<span class="str">"banana"</span>, <span class="str">"Árbol"</span>, <span class="str">"manzana"</span>].<span class="fn">sort</span>((<span class="var">a</span>,<span class="var">b</span>) <span class="op">=&gt;</span> <span class="var">a</span>.<span class="fn">localeCompare</span>(<span class="var">b</span>));<br>
+    <span class="cm">// ["Árbol", "banana", "manzana"] — ordenado correctamente</span>
+  </div>
+  <div class="highlight mt20">Siempre aplicar <span class="js-yellow">.trim().toLowerCase()</span> antes de comparar texto ingresado por el usuario.</div>
+</div>
+
+<!-- SLIDE 19 – MATCH Y REGEX -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · String.match</span>
+  <h2>Extraer Datos con String.match()</h2>
+  <div class="code-block sm">
+    <span class="kw">const</span> <span class="var">texto</span> = <span class="str">"Pedido 3 productos por $150.50 y 2 por $80"</span>;<br><br>
+    <span class="cm">// Extraer todos los números enteros</span><br>
+    <span class="kw">const</span> <span class="var">enteros</span> = <span class="var">texto</span>.<span class="fn">match</span>(<span class="op">/</span>\d+<span class="op">/g</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">enteros</span>); <span class="cm">// ["3","150","50","2","80"]</span><br><br>
+    <span class="cm">// Convertir a números</span><br>
+    <span class="kw">const</span> <span class="var">nums</span> = <span class="var">enteros</span>.<span class="fn">map</span>(<span class="fn">Number</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">nums</span>); <span class="cm">// [3, 150, 50, 2, 80]</span><br><br>
+    <span class="cm">// Extraer decimales y negativos</span><br>
+    <span class="kw">const</span> <span class="var">precios</span> = <span class="var">texto</span>.<span class="fn">match</span>(<span class="op">/</span>-?\d+(\.\d+)?<span class="op">/g</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">precios</span>); <span class="cm">// ["3","150.50","2","80"]</span>
+  </div>
+  <div class="highlight mt20"><code>/\d+/g</code> — <span class="js-yellow">\d</span> es dígito, <span class="js-yellow">+</span> es uno o más, <span class="js-yellow">g</span> es global (todas las coincidencias).</div>
+</div>
+
+<!-- SLIDE 20 – FUNCIONES ANIDADAS -->
+<div class="slide nest-bg">
+  <span class="section-label">Bloque 3 · Funciones anidadas</span>
+  <h2>Funciones Anidadas</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>¿Cuándo usarlas?</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>La lógica interna solo se usa dentro de la función externa</li>
+        <li>Para mejorar la organización y legibilidad</li>
+        <li>Para evitar contaminar el scope global</li>
+        <li>Para facilitar el uso de closures</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔑 Regla de alcance léxico</h3>
+      <p>La función interna puede <span class="accent">acceder</span> a las variables de la función externa. La función externa <span class="accent">NO</span> puede acceder a las de la interna.</p>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:1000px;font-size:.87rem;">
+    <span class="kw">function</span> <span class="fn">calcularArea</span>(<span class="var">base</span>, <span class="var">altura</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">function</span> <span class="fn">validar</span>(<span class="var">v</span>) { <span class="kw">return</span> <span class="kw">typeof</span> <span class="var">v</span> <span class="op">===</span> <span class="str">"number"</span> <span class="op">&amp;&amp;</span> <span class="var">v</span> <span class="op">&gt;</span> <span class="num">0</span>; }<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (!<span class="fn">validar</span>(<span class="var">base</span>) <span class="op">||</span> !<span class="fn">validar</span>(<span class="var">altura</span>)) <span class="kw">return</span> <span class="str">"Valores inválidos"</span>;<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">base</span> <span class="op">*</span> <span class="var">altura</span>;<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 21 – CLOSURES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Closures</span>
+  <h2>Closures — Funciones que "Recuerdan"</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="cm">// Un closure ocurre cuando una función interna</span><br>
+    <span class="cm">// se retorna y "recuerda" el ámbito donde fue creada</span><br><br>
+    <span class="kw">function</span> <span class="fn">crearContador</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">let</span> <span class="var">cuenta</span> = <span class="num">0</span>;   <span class="cm">// variable privada</span><br><br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="kw">function</span>() {   <span class="cm">// función interna retornada</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">cuenta</span><span class="op">++</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Conteo: ${<span class="var">cuenta</span>}`</span>);<br>
+    &nbsp;&nbsp;};<br>
+    }<br><br>
+    <span class="kw">const</span> <span class="var">contador</span> = <span class="fn">crearContador</span>(); <span class="cm">// guarda la función interna</span><br>
+    <span class="fn">contador</span>(); <span class="cm">// Conteo: 1</span><br>
+    <span class="fn">contador</span>(); <span class="cm">// Conteo: 2</span><br>
+    <span class="fn">contador</span>(); <span class="cm">// Conteo: 3</span>
+  </div>
+  <div class="highlight mt20">El closure permite crear <span class="js-yellow">variables privadas</span> que solo la función interna puede acceder y modificar.</div>
+</div>
+
+<!-- SLIDE 22 – ANIDADAS VS MÉTODOS -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Comparativa</span>
+  <h2>Funciones Anidadas vs Métodos en Objetos</h2>
+  <table>
+    <thead><tr><th>Característica</th><th>Funciones Anidadas</th><th>Métodos en Objetos</th></tr></thead>
+    <tbody>
+      <tr><td>Definición</td><td>Dentro de una función</td><td>Dentro de un objeto</td></tr>
+      <tr><td>Alcance</td><td>Solo en su función contenedora</td><td>Disponible en todo el objeto</td></tr>
+      <tr><td>Uso de <code>this</code></td><td>No tiene <code>this</code> propio (depende del tipo)</td><td>Puede acceder a <code>this</code></td></tr>
+      <tr><td>Reutilización</td><td>Solo dentro de la función padre</td><td>Llamable desde fuera</td></tr>
+      <tr><td>Uso principal</td><td>Modularizar lógica interna</td><td>Manipular datos del objeto</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════ BLOQUE 4 – LIVE CODING Y EJERCICIOS ═══════ -->
+
+<!-- SLIDE 23 – LIVE CODING 2: GENERADOR DE USUARIO -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🧑‍💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Generador de Nombres de Usuario</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Arrays de nombres y apellidos</li>
+        <li>2️⃣ Función <code>randomIndex(arr)</code> con <code>Math.random()</code></li>
+        <li>3️⃣ Función <code>generarUsuario()</code>: elegir nombre y apellido al azar</li>
+        <li>4️⃣ Limpiar con <code>toLowerCase()</code>, <code>trim()</code>, <code>replace()</code></li>
+        <li>5️⃣ Agregar número de 3 dígitos con <code>padStart()</code></li>
+        <li>6️⃣ Mostrar en pantalla con DOM</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – LIVE CODING 3: FUNCIONES ANIDADAS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔗</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Funciones Anidadas y Closures</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Definir función interna y acceder a variable externa</li>
+        <li>2️⃣ Mostrar cómo la interna accede al scope de la externa</li>
+        <li>3️⃣ Retornar una función interna (closure)</li>
+        <li>4️⃣ Aplicar closure para un contador con estado privado</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25 – EJERCICIO 4: JUEGO DE DADOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🎲</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Simulación de<br>Juego con Dados</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Función <code>lanzarDado()</code>: número aleatorio 1–6 con <code>Math.random()</code><br>
+        ✅ Función <code>jugar()</code>: lanza 2 dados, suma · gana si &gt;7 · empata si =7 · pierde si &lt;7<br>
+        ✅ Ejecutar el juego 5 veces con un ciclo <code>for</code><br>
+        ⭐ Extra: llevar conteo de victorias, derrotas y empates
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – EJERCICIO 5: GENERADOR DE CÓDIGOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 5 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔐</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Generador de<br>Códigos Aleatorios</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Función <code>generarCodigo()</code>: 6 caracteres alfanuméricos aleatorios<br>
+        ✅ Usar <code>Math.random()</code> y un string de caracteres permitidos<br>
+        ✅ Generar 5 códigos y guardarlos en un arreglo<br>
+        ✅ Mostrar los códigos en consola
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – EJERCICIO 6: ANÁLISIS DE TEXTO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 6 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📝</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Análisis de Texto<br>con Funciones Anidadas</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Función <code>analizarTexto(texto)</code> con tres funciones anidadas:<br>
+        ✅ <code>contarPalabras()</code> → cantidad de palabras con <code>split()</code><br>
+        ✅ <code>contarCaracteres()</code> → caracteres sin espacios<br>
+        ✅ <code>palabraMasLarga()</code> → la palabra más larga del texto<br>
+        ✅ Retornar un objeto con los tres resultados
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28 – EJERCICIO 7: INVENTARIO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 7 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📦</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Sistema de<br>Gestión de Inventario</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Función <code>gestionarInventario(inventario)</code> con dos anidadas:<br>
+        ✅ <code>calcularStockTotal()</code> → suma de todas las unidades con <code>reduce()</code><br>
+        ✅ <code>productosAgotados()</code> → lista de productos con stock 0 con <code>filter()</code><br>
+        ✅ Retornar objeto con <code>stockTotal</code> y <code>agotados</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>🗂️ Objetos y Preconstruidos</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Propiedades y métodos de un objeto</li>
+        <li>Notación de punto y corchetes</li>
+        <li>Crear, modificar y eliminar propiedades</li>
+        <li><code>Math</code>: round, ceil, floor, abs, random, pow, sqrt</li>
+        <li><code>String</code>: toUpperCase, trim, replace, slice, split, match</li>
+        <li>Comparación correcta de cadenas</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔗 Funciones Anidadas</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Cuándo y por qué usar funciones anidadas</li>
+        <li>Alcance léxico: la interna ve la externa</li>
+        <li>Closures: variables privadas con estado</li>
+        <li>Diferencia con métodos en objetos</li>
+        <li>Aplicación en problemas reales: inventario, análisis de texto</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – CIERRE -->
+<div class="slide obj-bg">
+  <div style="font-size:6rem;font-family:'Courier New',monospace;" class="float glow">{ }</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Dominás los objetos, los métodos nativos y las funciones anidadas. La base está completa.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Objetos ✅</span>
+    <span class="pill">Math ✅</span>
+    <span class="pill">String ✅</span>
+    <span class="pill">Funciones anidadas ✅</span>
+    <span class="pill gold">Closures ✅</span>
+  </div>
+  <div class="highlight mt20">🏆 Con esto completás el <span class="js-yellow">Módulo 3 de Fundamentos de JavaScript</span>. ¡Adelante al siguiente módulo!</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle     = document.getElementById('ring-circle');
+  const display    = document.getElementById('timer-display');
+  const msg        = document.getElementById('timer-msg');
+  const CIRCUMF    = 2 * Math.PI * 80;
+  circle.style.strokeDasharray  = CIRCUMF;
+  circle.style.strokeDashoffset = 0;
+
+  let remaining = TOTAL_SECS;
+  let timerInterval = null;
+  let running = false;
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  }
+
+  function updateRing() {
+    const offset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.strokeDashoffset = offset;
+    if (remaining > TOTAL_SECS * 0.5)      circle.style.stroke = '#1e1e1e';
+    else if (remaining > TOTAL_SECS * 0.2) circle.style.stroke = '#e67e22';
+    else                                    circle.style.stroke = '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+
+  function startTimer() {
+    if (running) return;
+    running = true;
+    msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        running = false;
+        msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.';
+        return;
+      }
+      remaining--;
+      updateRing();
+    }, 1000);
+  }
+
+  document.getElementById('btn-start').addEventListener('click', startTimer);
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
