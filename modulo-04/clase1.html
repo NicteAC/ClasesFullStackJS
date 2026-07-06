@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orientación a Objetos en JavaScript – AE1.1 / AE1.2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg    { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg      { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg    { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg  { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg   { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.poo-bg     { background:linear-gradient(135deg,#0a3d62 0%,#1e5f74 100%); }
+  .slide.pillar-bg  { background:linear-gradient(135deg,#4a235a 0%,#7d3c98 100%); }
+  .slide.proto-bg   { background:linear-gradient(135deg,#1b2631 0%,#2e4053 100%); }
+  .slide.json-bg    { background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%); }
+  .slide.challenge-bg { background:linear-gradient(135deg,#922b21 0%,#c0392b 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.9rem; }
+  h2 { font-size:2.3rem; text-align:center; margin-bottom:24px; text-shadow:2px 2px 6px rgba(0,0,0,0.3); }
+  h3 { font-size:1.5rem; margin-bottom:10px; }
+  p, li { font-size:1.2rem; line-height:1.8; }
+  .subtitle { font-size:1.3rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px 24px; font-family:'Courier New',monospace; font-size:.97rem; line-height:1.85; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.85rem; line-height:1.7; }
+  .kw  { color:#ff7b72; }
+  .fn  { color:#d2a8ff; }
+  .str { color:#a8ff78; }
+  .num { color:#79c0ff; }
+  .cm  { color:#8b949e; }
+  .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 22px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:5px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:14px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:18px 14px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:42px; height:42px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1.1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.9rem; color:var(--accent); margin-bottom:5px; }
+  .step p  { font-size:.85rem; opacity:.9; line-height:1.5; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:14px 24px; margin-top:14px; font-size:1.12rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 14px; font-size:.88rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1.05rem; }
+  th { background:rgba(102,126,234,0.55); padding:12px 16px; text-align:left; }
+  td { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:1rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.92rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:1rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:16px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 32</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:5.5rem;font-family:'Courier New',monospace;color:var(--js-yellow);font-weight:900;" class="float">POO</div>
+  <h1 class="mt20">Orientación a Objetos<br><span class="js-yellow glow">en JavaScript</span></h1>
+  <p class="subtitle mt20">AE1.1 · AE1.2 · Programación Avanzada en JavaScript V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Clases</span>
+    <span class="pill">Herencia</span>
+    <span class="pill">Encapsulamiento</span>
+    <span class="pill">Prototype</span>
+    <span class="pill">JSON</span>
+    <span class="pill gold">Polimorfismo</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#1e5f74"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">🧩 <strong>Bloque 1</strong> · POO: paradigmas, conceptos clave, los 4 pilares</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#1e5f74"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🏗️ <strong>Bloque 2</strong> · 3 formas de crear objetos · Prototype · Live Coding · Ejercicios 1–2</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#2980b9"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔗 <strong>Bloque 3</strong> · Prototype profundo · JSON: stringify, parse, estructura</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#2980b9"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">📦 <strong>Bloque 4</strong> · JSON vs Objetos · Herramientas · Ventajas · Ejercicios 3–4</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – POO FUNDAMENTOS ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide poo-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">🧩</div>
+  <h1 class="sm mt20">Programación Orientada<br>a Objetos</h1>
+  <p class="subtitle">Paradigmas · Conceptos clave · Los 4 pilares</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES LA POO? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · POO</span>
+  <h2>¿Qué es la POO?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🎯 Definición</h3>
+      <p>Paradigma de programación que organiza el código en <span class="accent">objetos</span>, modelando entidades del mundo real con sus datos y comportamientos.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Objetivo: acercar el software a cómo pensamos e interactuamos con el mundo real.</p>
+    </div>
+    <div class="card">
+      <h3>💡 ¿Por qué usarla?</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Mejor <span class="accent">organización</span> del código</li>
+        <li>Mayor <span class="accent">reutilización</span> de funcionalidades</li>
+        <li>Facilita el <span class="accent">mantenimiento</span> a largo plazo</li>
+        <li>Escala mejor en proyectos <span class="accent">grandes</span></li>
+        <li>Base de frameworks modernos: React, Angular, Vue</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">La POO es el paradigma dominante en el desarrollo de software moderno. JavaScript la soporta completamente desde ES6.</div>
+</div>
+
+<!-- SLIDE 5 – PARADIGMAS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Paradigmas</span>
+  <h2>Paradigmas de Programación</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📋 Imperativa</h3>
+      <p>Instrucciones <span class="accent">paso a paso</span>: "haz esto, luego esto". El más cercano a cómo piensa la máquina.</p>
+      <p style="font-size:.95rem;opacity:.8;margin-top:6px;">Ejemplos: C, Pascal</p>
+    </div>
+    <div class="card">
+      <h3>📢 Declarativa</h3>
+      <p>Describe <span class="accent">qué</span> se quiere en lugar de cómo lograrlo. Más abstracto.</p>
+      <p style="font-size:.95rem;opacity:.8;margin-top:6px;">Ejemplos: SQL, HTML</p>
+    </div>
+    <div class="card">
+      <h3>λ Funcional</h3>
+      <p>Basado en funciones matemáticas puras, sin efectos secundarios. Favorece la <span class="accent">inmutabilidad</span>.</p>
+      <p style="font-size:.95rem;opacity:.8;margin-top:6px;">Ejemplos: Haskell, Lisp</p>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,0.4);">
+      <h3 style="color:var(--js-yellow);">🧩 Orientada a Objetos</h3>
+      <p>Modela entidades reales mediante <span class="accent">clases y objetos</span>. Organiza el código en torno a objetos que interactúan.</p>
+      <p style="font-size:.95rem;opacity:.8;margin-top:6px;">Ejemplos: Java, Python, <span class="js-yellow">JavaScript</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 – CONCEPTOS CLAVE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Conceptos</span>
+  <h2>Conceptos Clave de la POO</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">📋</div>
+      <h3>Clase</h3>
+      <p>Plantilla o molde para crear objetos. Define qué propiedades y métodos tendrán.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">📦</div>
+      <h3>Objeto</h3>
+      <p>Instancia concreta de una clase. Tiene valores reales en sus propiedades.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">🏷️</div>
+      <h3>Propiedad</h3>
+      <p>Variable dentro de un objeto. Describe sus características.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">⚙️</div>
+      <h3>Método</h3>
+      <p>Función dentro de un objeto. Define sus comportamientos y acciones.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">✨</div>
+      <h3>Instancia</h3>
+      <p>Cada objeto creado a partir de una clase es una instancia única de ella.</p>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.88rem;">
+    <span class="kw">class</span> <span class="fn">Persona</span> {                              <span class="cm">// ← Clase (plantilla)</span><br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">nombre</span>, <span class="var">edad</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;               <span class="cm">// ← Propiedad</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.edad   = <span class="var">edad</span>;<br>
+    &nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;<span class="fn">saludar</span>() { <span class="kw">return</span> <span class="str">`Hola, soy ${<span class="kw">this</span>.nombre}`</span>; } <span class="cm">// ← Método</span><br>
+    }<br>
+    <span class="kw">const</span> <span class="var">persona1</span> = <span class="kw">new</span> <span class="fn">Persona</span>(<span class="str">"Sofía"</span>, <span class="num">25</span>); <span class="cm">// ← Instancia / Objeto</span>
+  </div>
+</div>
+
+<!-- SLIDE 7 – LOS 4 PILARES -->
+<div class="slide pillar-bg">
+  <span class="section-label">Bloque 1 · Los 4 pilares</span>
+  <h2>Los 4 Pilares de la POO</h2>
+  <div class="grid-4">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.8rem;">🔒</div>
+      <h3>Encapsulamiento</h3>
+      <p style="font-size:.95rem;">Protege los datos internos. Solo expone lo necesario.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.8rem;">🧬</div>
+      <h3>Herencia</h3>
+      <p style="font-size:.95rem;">Una clase hija reutiliza propiedades y métodos de la clase padre.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.8rem;">🎭</div>
+      <h3>Polimorfismo</h3>
+      <p style="font-size:.95rem;">Una clase hija redefine métodos del padre con su propia implementación.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.8rem;">🎯</div>
+      <h3>Abstracción</h3>
+      <p style="font-size:.95rem;">Oculta la complejidad interna. Solo muestra lo esencial.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Ejemplo del auto: <span class="js-yellow">Encapsulamiento</span> → motor oculto · <span class="js-yellow">Herencia</span> → camión hereda de Vehículo · <span class="js-yellow">Polimorfismo</span> → cada vehículo acelera diferente · <span class="js-yellow">Abstracción</span> → solo ves el volante</div>
+</div>
+
+<!-- SLIDE 8 – ENCAPSULAMIENTO EN JS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Encapsulamiento</span>
+  <h2>Encapsulamiento en JavaScript</h2>
+  <div class="code-block" style="max-width:1000px;">
+    <span class="kw">class</span> <span class="fn">CuentaBancaria</span> {<br>
+    &nbsp;&nbsp;<span class="var">#saldo</span> = <span class="num">0</span>; <span class="cm">// propiedad privada con #</span><br><br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">titular</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.titular = <span class="var">titular</span>;<br>
+    &nbsp;&nbsp;}<br><br>
+    &nbsp;&nbsp;<span class="fn">depositar</span>(<span class="var">monto</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">monto</span> <span class="op">&gt;</span> <span class="num">0</span>) <span class="kw">this</span>.<span class="var">#saldo</span> <span class="op">+=</span> <span class="var">monto</span>;<br>
+    &nbsp;&nbsp;}<br><br>
+    &nbsp;&nbsp;<span class="fn">getSaldo</span>() { <span class="cm">// getter: única forma de leer el saldo</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="kw">this</span>.<span class="var">#saldo</span>;<br>
+    &nbsp;&nbsp;}<br>
+    }<br><br>
+    <span class="kw">const</span> <span class="var">cuenta</span> = <span class="kw">new</span> <span class="fn">CuentaBancaria</span>(<span class="str">"Ana"</span>);<br>
+    <span class="var">cuenta</span>.<span class="fn">depositar</span>(<span class="num">1000</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">cuenta</span>.<span class="fn">getSaldo</span>()); <span class="cm">// 1000</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">cuenta</span>.<span class="var">#saldo</span>);       <span class="cm">// ❌ SyntaxError: campo privado</span>
+  </div>
+</div>
+
+<!-- SLIDE 9 – HERENCIA Y POLIMORFISMO -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Herencia y Polimorfismo</span>
+  <h2>Herencia y Polimorfismo</h2>
+  <div class="code-block sm">
+    <span class="kw">class</span> <span class="fn">Vehiculo</span> {<br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">marca</span>) { <span class="kw">this</span>.marca = <span class="var">marca</span>; }<br>
+    &nbsp;&nbsp;<span class="fn">info</span>() { <span class="kw">return</span> <span class="str">`Vehículo: ${<span class="kw">this</span>.marca}`</span>; }  <span class="cm">// método base</span><br>
+    }<br><br>
+    <span class="kw">class</span> <span class="fn">Auto</span> <span class="kw">extends</span> <span class="fn">Vehiculo</span> {               <span class="cm">// ← herencia</span><br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">marca</span>, <span class="var">puertas</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">super</span>(<span class="var">marca</span>);                             <span class="cm">// llama al constructor padre</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.puertas = <span class="var">puertas</span>;<br>
+    &nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;<span class="fn">info</span>() { <span class="kw">return</span> <span class="str">`Auto: ${<span class="kw">this</span>.marca}, ${<span class="kw">this</span>.puertas} puertas`</span>; } <span class="cm">// ← polimorfismo</span><br>
+    }<br><br>
+    <span class="kw">class</span> <span class="fn">Moto</span> <span class="kw">extends</span> <span class="fn">Vehiculo</span> {<br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">marca</span>, <span class="var">cc</span>) { <span class="kw">super</span>(<span class="var">marca</span>); <span class="kw">this</span>.cc = <span class="var">cc</span>; }<br>
+    &nbsp;&nbsp;<span class="fn">info</span>() { <span class="kw">return</span> <span class="str">`Moto: ${<span class="kw">this</span>.marca}, ${<span class="kw">this</span>.cc}cc`</span>; }          <span class="cm">// ← polimorfismo</span><br>
+    }<br><br>
+    <span class="kw">const</span> <span class="var">a</span> = <span class="kw">new</span> <span class="fn">Auto</span>(<span class="str">"Toyota"</span>, <span class="num">4</span>);   <span class="var">a</span>.<span class="fn">info</span>(); <span class="cm">// "Auto: Toyota, 4 puertas"</span><br>
+    <span class="kw">const</span> <span class="var">m</span> = <span class="kw">new</span> <span class="fn">Moto</span>(<span class="str">"Yamaha"</span>, <span class="num">600</span>); <span class="var">m</span>.<span class="fn">info</span>(); <span class="cm">// "Moto: Yamaha, 600cc"</span>
+  </div>
+</div>
+
+<!-- SLIDE 10 – 3 FORMAS DE CREAR OBJETOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Crear objetos</span>
+  <h2>3 Formas de Crear Objetos en JavaScript</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>1️⃣ Literal <code>{}</code></h3>
+      <p style="font-size:.95rem;">Más simple. No reutilizable para múltiples instancias.</p>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">perro</span> = {<br>
+        &nbsp;&nbsp;<span class="var">nombre</span>: <span class="str">"Rex"</span>,<br>
+        &nbsp;&nbsp;<span class="fn">ladrar</span>() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"¡Guau!"</span>;<br>
+        &nbsp;&nbsp;}<br>
+        };
+      </div>
+    </div>
+    <div class="card">
+      <h3>2️⃣ Constructor</h3>
+      <p style="font-size:.95rem;">Previa a ES6. Permite múltiples instancias con <code>new</code>.</p>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">Perro</span>(<span class="var">nombre</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;<br>
+        }<br>
+        <span class="kw">const</span> <span class="var">p</span> = <span class="kw">new</span> <span class="fn">Perro</span>(<span class="str">"Rex"</span>);
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,0.4);">
+      <h3 style="color:var(--js-yellow);">3️⃣ Clase ES6 ✅</h3>
+      <p style="font-size:.95rem;">La forma moderna. Más legible y organizada.</p>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">class</span> <span class="fn">Perro</span> {<br>
+        &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">nombre</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;<br>
+        &nbsp;&nbsp;}<br>
+        }<br>
+        <span class="kw">const</span> <span class="var">p</span> = <span class="kw">new</span> <span class="fn">Perro</span>(<span class="str">"Rex"</span>);
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">En código moderno: siempre usar <span class="js-yellow">clases ES6</span>. Los otros dos métodos se ven en código legado.</div>
+</div>
+
+<!-- SLIDE 11 – PROTOTYPE INTRO -->
+<div class="slide proto-bg">
+  <span class="section-label">Bloque 2 · Prototype</span>
+  <h2>Prototype — Herencia en JavaScript</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔗 ¿Qué es?</h3>
+      <p>Mecanismo interno de JavaScript que permite a los objetos <span class="accent">heredar</span> propiedades y métodos de otros objetos. Cada función tiene una propiedad <code>prototype</code>.</p>
+      <p class="mt10" style="font-size:.95rem;opacity:.8;">Las clases ES6 usan prototype internamente de forma automática.</p>
+    </div>
+    <div class="card">
+      <h3>💡 ¿Para qué sirve?</h3>
+      <p>Permite que todos los objetos creados con una función constructora <span class="accent">compartan métodos</span> sin duplicarlos en memoria.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">Animal</span>(<span class="var">nombre</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;<br>
+        }<br>
+        <span class="cm">// Método compartido vía prototype</span><br>
+        <span class="fn">Animal</span>.prototype.<span class="fn">hablar</span> = <span class="kw">function</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="str">`${<span class="kw">this</span>.nombre} habla`</span>;<br>
+        };
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12 – LIVE CODING -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>POO en JavaScript</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear objetos con las 3 formas y comparar</li>
+        <li>2️⃣ Demostrar los 4 pilares con ejemplos prácticos</li>
+        <li>3️⃣ Herencia con <code>extends</code> y <code>super</code></li>
+        <li>4️⃣ Polimorfismo: sobrescribir métodos en clases hijas</li>
+        <li>5️⃣ Encapsulamiento con propiedades privadas <code>#</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 1 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">👥</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Gestionando<br>Usuarios con POO</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Clase <code>Usuario</code> con nombre, correo y método <code>mostrarInfo()</code><br>
+        ✅ Subclase <code>Administrador</code> que hereda de <code>Usuario</code> y agrega <code>permiso</code><br>
+        ✅ Sobrescribir <code>mostrarInfo()</code> en <code>Administrador</code><br>
+        ✅ Instanciar un usuario normal y un administrador
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – EJERCICIO 2 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 35 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🚗</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Sistema de<br>Vehículos con Herencia</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Clase base <code>Vehiculo</code> con marca, modelo y <code>mostrarInfo()</code><br>
+        ✅ Subclase <code>Auto</code>: agrega <code>puertas</code> y sobrescribe <code>mostrarInfo()</code><br>
+        ✅ Subclase <code>Moto</code>: agrega <code>cilindrada</code> y sobrescribe <code>mostrarInfo()</code><br>
+        ✅ Instanciar un auto y una moto y probar los métodos
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15 – DESCANSO CON TIMER -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – PROTOTYPE + JSON ═══════ -->
+
+<!-- SLIDE 16 – TÍTULO BLOQUE 3 -->
+<div class="slide json-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔗</div>
+  <h1 class="sm mt20">Prototype en profundidad<br>y JSON</h1>
+  <p class="subtitle">Cadena de prototipos · JSON.stringify · JSON.parse</p>
+</div>
+
+<!-- SLIDE 17 – PROTOTYPE COMPARATIVA -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Prototype</span>
+  <h2>Prototype y los 3 Métodos de Creación</h2>
+  <table>
+    <thead><tr><th>Método</th><th>Uso de prototype</th><th>Recomendación</th></tr></thead>
+    <tbody>
+      <tr><td>📄 Objetos literales <code>{}</code></td><td>No usa prototype propio. Hereda de <code>Object.prototype</code>.</td><td>Para objetos únicos simples</td></tr>
+      <tr><td>🔧 Función constructora</td><td>Se define manualmente con <code>Funcion.prototype.metodo</code>. Los métodos son compartidos.</td><td>Código legado, aún funcional</td></tr>
+      <tr><td>✅ Clase ES6</td><td>Usa prototype automáticamente. Los métodos se asignan al prototype sin escribirlo.</td><td>La opción moderna</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight mt20">Con <span class="js-yellow">clases ES6</span> el prototype se gestiona automáticamente. Ya no necesitás escribirlo manualmente.</div>
+</div>
+
+<!-- SLIDE 18 – PROTOTYPE CÓDIGO -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 3 · Prototype código</span>
+  <h2>Prototype Manual vs Clase ES6</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>⚙️ Con prototype manual</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">function</span> <span class="fn">Empleado</span>(<span class="var">nombre</span>, <span class="var">cargo</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;<br>
+        &nbsp;&nbsp;<span class="kw">this</span>.cargo  = <span class="var">cargo</span>;<br>
+        }<br>
+        <span class="cm">// Método en prototype (compartido)</span><br>
+        <span class="fn">Empleado</span>.prototype.<span class="fn">info</span> = <span class="kw">function</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="str">`${<span class="kw">this</span>.nombre} - ${<span class="kw">this</span>.cargo}`</span>;<br>
+        };<br>
+        <span class="kw">const</span> <span class="var">e1</span> = <span class="kw">new</span> <span class="fn">Empleado</span>(<span class="str">"Ana"</span>, <span class="str">"Dev"</span>);
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--js-yellow);">✅ Con clase ES6 (equivalente)</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">class</span> <span class="fn">Empleado</span> {<br>
+        &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">nombre</span>, <span class="var">cargo</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.nombre = <span class="var">nombre</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.cargo  = <span class="var">cargo</span>;<br>
+        &nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;<span class="cm">// JS lo agrega al prototype automáticamente</span><br>
+        &nbsp;&nbsp;<span class="fn">info</span>() {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">`${<span class="kw">this</span>.nombre} - ${<span class="kw">this</span>.cargo}`</span>;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19 – QUÉ ES JSON -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · JSON</span>
+  <h2>¿Qué es JSON?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📄 Definición</h3>
+      <p><strong>J</strong>avaScript <strong>O</strong>bject <strong>N</strong>otation. Formato ligero de <span class="accent">intercambio de datos</span>. Es un string con estructura de objeto.</p>
+      <ul class="list-clean" style="font-size:1rem;margin-top:10px;">
+        <li>Se usa para enviar datos entre cliente y servidor</li>
+        <li>Formato estándar de las APIs REST</li>
+        <li>Soportado por todos los lenguajes modernos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📐 Reglas de sintaxis</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Las claves <span class="accent">siempre</span> van entre comillas dobles</li>
+        <li>Valores: string, number, boolean, array, object, null</li>
+        <li>Sin funciones ni <code>undefined</code></li>
+        <li>Sin comentarios</li>
+        <li>Sin comas al final del último elemento</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:800px;font-size:.9rem;">
+    { <span class="str">"nombre"</span>: <span class="str">"Ana"</span>, <span class="str">"edad"</span>: <span class="num">25</span>, <span class="str">"activo"</span>: <span class="kw">true</span>, <span class="str">"cursos"</span>: [<span class="str">"JS"</span>, <span class="str">"CSS"</span>] }
+  </div>
+</div>
+
+<!-- SLIDE 20 – JSON.STRINGIFY Y JSON.PARSE -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · JSON</span>
+  <h2>JSON.stringify() y JSON.parse()</h2>
+  <div class="code-block" style="max-width:1050px;">
+    <span class="kw">const</span> <span class="var">usuario</span> = {<br>
+    &nbsp;&nbsp;<span class="var">nombre</span>: <span class="str">"Sofía"</span>,<br>
+    &nbsp;&nbsp;<span class="var">edad</span>:   <span class="num">25</span>,<br>
+    &nbsp;&nbsp;<span class="var">cursos</span>: [<span class="str">"JavaScript"</span>, <span class="str">"CSS"</span>]<br>
+    };<br><br>
+    <span class="cm">// Objeto → JSON (string)</span><br>
+    <span class="kw">const</span> <span class="var">json</span> = <span class="fn">JSON</span>.<span class="fn">stringify</span>(<span class="var">usuario</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">typeof</span> <span class="var">json</span>); <span class="cm">// "string"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">json</span>); <span class="cm">// '{"nombre":"Sofía","edad":25,"cursos":["JavaScript","CSS"]}'</span><br><br>
+    <span class="cm">// JSON (string) → Objeto</span><br>
+    <span class="kw">const</span> <span class="var">obj</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">json</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">typeof</span> <span class="var">obj</span>);       <span class="cm">// "object"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">obj</span>.nombre);        <span class="cm">// "Sofía"</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">obj</span>.cursos[<span class="num">0</span>]);     <span class="cm">// "JavaScript"</span>
+  </div>
+  <div class="highlight mt20"><span class="js-yellow">stringify</span>: objeto → string JSON para enviar · <span class="js-yellow">parse</span>: string JSON → objeto para usar en código</div>
+</div>
+
+<!-- ═══════ BLOQUE 4 – JSON AVANZADO Y EJERCICIOS ═══════ -->
+
+<!-- SLIDE 21 – JSON VS OBJETOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Comparativa</span>
+  <h2>Objetos JavaScript vs JSON</h2>
+  <table>
+    <thead><tr><th>Característica</th><th>Objeto JavaScript</th><th>JSON</th></tr></thead>
+    <tbody>
+      <tr><td>Tipo</td><td>Estructura de datos en memoria</td><td>String con formato de objeto</td></tr>
+      <tr><td>Claves</td><td>Con o sin comillas</td><td><span style="color:#FF6B6B;">Siempre con comillas dobles</span></td></tr>
+      <tr><td>Funciones</td><td><span style="color:#a8ff78;">Sí, puede tener métodos</span></td><td><span style="color:#FF6B6B;">No, solo datos</span></td></tr>
+      <tr><td>Uso</td><td>Programación en JavaScript</td><td>Intercambio de datos entre sistemas</td></tr>
+      <tr><td>Comentarios</td><td><span style="color:#a8ff78;">Sí</span></td><td><span style="color:#FF6B6B;">No</span></td></tr>
+      <tr><td>Valores permitidos</td><td>Cualquier tipo JS, incluyendo <code>undefined</code></td><td>string, number, boolean, array, object, null</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SLIDE 22 – HERRAMIENTAS JSON -->
+<div class="slide json-bg">
+  <span class="section-label">Bloque 4 · Herramientas</span>
+  <h2>Herramientas para Validar JSON</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔍 JSONLint</h3>
+      <p>La herramienta más popular. Valida y formatea JSON. Detecta errores de sintaxis: comas faltantes, comillas mal colocadas.</p>
+      <div class="mt10" style="background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 14px;font-family:'Courier New',monospace;font-size:.95rem;">
+        https://jsonlint.com
+      </div>
+    </div>
+    <div class="card">
+      <h3>✨ JSON Formatter</h3>
+      <p>Valida y formatea JSON con interfaz intuitiva. Útil para visualizar JSON comprimido en formato legible.</p>
+      <div class="mt10" style="background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 14px;font-family:'Courier New',monospace;font-size:.85rem;">
+        jsonformatter.curiousconcept.com
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Antes de usar un JSON recibido de una API o de otro sistema, siempre <span class="js-yellow">validarlo</span>. Un error de sintaxis en el JSON rompe toda la aplicación.</div>
+</div>
+
+<!-- SLIDE 23 – VENTAJAS DE JSON -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Ventajas</span>
+  <h2>¿Por qué JSON domina la web?</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>⚡ Ligero y rápido</h3>
+      <p>Formato muy compacto. Los datos son fáciles de transportar, especialmente en aplicaciones web y móviles donde el ancho de banda importa.</p>
+    </div>
+    <div class="card">
+      <h3>👁️ Legible</h3>
+      <p>Estructura clara que los humanos pueden leer y escribir directamente. Facilita la depuración y revisión de datos.</p>
+    </div>
+    <div class="card">
+      <h3>🌍 Universal</h3>
+      <p>Soportado por prácticamente todos los lenguajes: Python, Java, PHP, Ruby, Go. Permite integración entre sistemas distintos.</p>
+    </div>
+    <div class="card">
+      <h3>🔗 Interoperable</h3>
+      <p>Estándar para APIs REST. Cuando un servidor envía datos a un cliente, casi siempre lo hace en JSON.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – EJERCICIO 3 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">👨‍💼</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Prototype<br>y JSON</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Función constructora <code>Empleado</code> con nombre, edad, cargo<br>
+        ✅ Agregar <code>mostrarInfo()</code> con <code>prototype</code><br>
+        ✅ Instanciar al menos 2 empleados<br>
+        ✅ Convertir a JSON con <code>JSON.stringify()</code><br>
+        ✅ Validar el JSON en JSONLint
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25 – EJERCICIO 4 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛍️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Gestión de<br>Productos con JSON</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Crear al menos 3 productos con nombre, precio, stock<br>
+        ✅ Agregar método <code>aplicarDescuento(porcentaje)</code><br>
+        ✅ Convertir los productos a JSON con <code>JSON.stringify()</code><br>
+        ✅ Validar la estructura en JSONLint<br>
+        ⭐ Extra: convertir el JSON de vuelta a objeto con <code>JSON.parse()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>🧩 Parte I · POO</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Paradigmas de programación y lugar de la POO</li>
+        <li>Clases, objetos, instancias, propiedades, métodos</li>
+        <li>Los 4 pilares: encapsulamiento, herencia, polimorfismo, abstracción</li>
+        <li>3 formas de crear objetos en JavaScript</li>
+        <li>Herencia con <code>extends</code> y <code>super</code></li>
+        <li>Propiedades privadas con <code>#</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔗 Parte II · Prototype y JSON</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Prototype: mecanismo de herencia de JavaScript</li>
+        <li>Prototype manual vs automático con clases ES6</li>
+        <li>JSON: formato de intercambio de datos</li>
+        <li><code>JSON.stringify()</code>: objeto → string</li>
+        <li><code>JSON.parse()</code>: string → objeto</li>
+        <li>Diferencias entre objetos JS y JSON</li>
+        <li>Herramientas de validación: JSONLint</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – CIERRE -->
+<div class="slide poo-bg">
+  <div style="font-size:5.5rem;font-family:'Courier New',monospace;font-weight:900;" class="float glow">POO</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya conocés los fundamentos de la Programación Orientada a Objetos y cómo JavaScript la implementa.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Clases ✅</span>
+    <span class="pill">Herencia ✅</span>
+    <span class="pill">Encapsulamiento ✅</span>
+    <span class="pill">Prototype ✅</span>
+    <span class="pill">JSON ✅</span>
+    <span class="pill gold">POO ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Características de JavaScript ES6</span>.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle  = document.getElementById('ring-circle');
+  const display = document.getElementById('timer-display');
+  const msg     = document.getElementById('timer-msg');
+  const CIRCUMF = 2 * Math.PI * 80;
+  circle.style.strokeDasharray  = CIRCUMF;
+  circle.style.strokeDashoffset = 0;
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS*.5 ? '#1e1e1e' : remaining > TOTAL_SECS*.2 ? '#e67e22' : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return;
+    running = true; msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); running = false; msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.'; return; }
+      remaining--; updateRing();
+    }, 1000);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
