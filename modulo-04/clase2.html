@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ES6+ · DOM · Eventos – AE2.1 / AE3.1 / AE3.2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg    { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg      { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg    { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg  { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg   { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.es6-bg     { background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.tool-bg    { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+  .slide.dom-bg     { background:linear-gradient(135deg,#4a0e0e 0%,#7b1f1f 100%); }
+  .slide.evt-bg     { background:linear-gradient(135deg,#3e2723 0%,#6d4c41 100%); }
+  .slide.challenge-bg { background:linear-gradient(135deg,#880e4f 0%,#c62828 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.8rem; }
+  h2 { font-size:2.2rem; text-align:center; margin-bottom:22px; }
+  h3 { font-size:1.45rem; margin-bottom:10px; }
+  p, li { font-size:1.15rem; line-height:1.8; }
+  .subtitle { font-size:1.25rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 22px; font-family:'Courier New',monospace; font-size:.95rem; line-height:1.8; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.83rem; line-height:1.65; }
+  .kw  { color:#ff7b72; } .fn  { color:#d2a8ff; } .str { color:#a8ff78; }
+  .num { color:#79c0ff; } .cm  { color:#8b949e; } .op  { color:#f0883e; }
+  .var { color:#ffa657; } .tag { color:#f0883e; } .attr { color:#79c0ff; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:22px 20px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:4px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:13px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:16px 12px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.88rem; color:var(--accent); margin-bottom:4px; }
+  .step p  { font-size:.82rem; opacity:.9; line-height:1.45; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:13px 22px; margin-top:13px; font-size:1.08rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 13px; font-size:.86rem; margin:3px; }
+  .pill.gold { background:rgba(247,223,30,0.2); border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2); border-color:#4CAF50; color:#a8ff78; }
+
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1rem; }
+  th { background:rgba(102,126,234,0.55); padding:11px 15px; text-align:left; }
+  td { padding:9px 15px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:.95rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.9rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:.98rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:14px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 38</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- ══════════════════════════════════════ -->
+<!-- SLIDE 1 – PORTADA                      -->
+<!-- ══════════════════════════════════════ -->
+<div class="slide active js-bg">
+  <div style="font-size:5rem;font-family:'Courier New',monospace;color:var(--js-yellow);font-weight:900;" class="float">ES6+ · DOM</div>
+  <h1 class="mt20">JavaScript Moderno<br><span class="js-yellow glow">y Manipulación del DOM</span></h1>
+  <p class="subtitle mt20">AE2.1 · AE3.1 · AE3.2 · Programación Avanzada en JavaScript V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">ES6+</span><span class="pill">Babel</span><span class="pill">Destructuring</span>
+    <span class="pill">DOM</span><span class="pill">Eventos</span><span class="pill gold">async/await</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#283593"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">⚡ <strong>Bloque 1</strong> · ES6+: historia, compatibilidad, Babel, Webpack, Polyfills</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#283593"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🔧 <strong>Bloque 2</strong> · ES6 práctico: destructuring, spread/rest, módulos, promesas · Live Coding</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#7b1f1f"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🌳 <strong>Bloque 3</strong> · DOM: jerarquía, selectores, modificar, agregar y eliminar</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#6d4c41"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">🖱️ <strong>Bloque 4</strong> · Eventos: tipos, bubbling, addEventListener, delegación · Ejercicios</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- BLOQUE 1 – ES6 FUNDAMENTOS             -->
+<!-- ══════════════════════════════════════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide es6-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div style="font-size:5.5rem;font-family:'Courier New',monospace;font-weight:900;" class="float">ES6+</div>
+  <h1 class="sm mt20">JavaScript Moderno</h1>
+  <p class="subtitle">Historia · Compatibilidad · Babel · Webpack · Polyfills</p>
+</div>
+
+<!-- SLIDE 4 – ¿QUÉ ES ES6? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · ES6+</span>
+  <h2>¿Qué es ES6+?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📜 Historia rápida</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><strong>1995</strong>: JavaScript creado por Brendan Eich</li>
+        <li><strong>1997</strong>: Estandarizado como ECMAScript (ES1)</li>
+        <li><strong>2009 (ES5)</strong>: strict mode, JSON.parse, Object.create</li>
+        <li><strong>2015 (ES6)</strong>: Gran salto — let, const, clases, arrow functions, módulos…</li>
+        <li><strong>ES6+</strong>: actualizaciones anuales desde 2016</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚡ Principales mejoras ES6</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><code>let</code> y <code>const</code> — scope de bloque</li>
+        <li>Arrow functions <code>=></code></li>
+        <li>Template literals</li>
+        <li>Destructuring</li>
+        <li>Módulos <code>import/export</code></li>
+        <li>Clases y herencia</li>
+        <li>Promesas y <code>async/await</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">ES6 fue lanzado en <span class="js-yellow">2015</span> y marcó un antes y un después. Desde entonces: actualizaciones anuales con mejoras adicionales.</div>
+</div>
+
+<!-- SLIDE 5 – COMPATIBILIDAD -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Compatibilidad</span>
+  <h2>Compatibilidad en Navegadores</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>✅ Soporte actual</h3>
+      <p>La mayoría de navegadores modernos soportan ES6+ completamente: Chrome, Firefox, Safari, Edge.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Características como <code>let</code>, <code>const</code>, arrow functions y promesas tienen soporte universal en navegadores modernos.</p>
+    </div>
+    <div class="card">
+      <h3>⚠️ Problema con IE</h3>
+      <p>Internet Explorer no soporta ES6. Algunos dispositivos antiguos también pueden tener problemas.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Para verificar soporte: <span class="accent">caniuse.com</span> y <span class="accent">MDN Web Docs</span>.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Demo: ir a <span class="js-yellow">caniuse.com</span> y buscar <code>arrow functions</code> — ver soporte por navegador y versión.</div>
+</div>
+
+<!-- SLIDE 6 – BABEL -->
+<div class="slide tool-bg">
+  <span class="section-label">Bloque 1 · Herramientas</span>
+  <h2>Babel — Transpilador ES6 → ES5</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🔄 ¿Qué hace?</h3>
+      <p>Convierte código ES6+ a ES5 compatible con navegadores antiguos. Permite usar todas las nuevas características sin preocuparse por compatibilidad.</p>
+      <p class="mt10" style="font-size:.95rem;opacity:.8;">Demo en línea: <span class="accent">babeljs.io/repl</span></p>
+    </div>
+    <div class="card">
+      <h3>💻 Ejemplo de transpilación</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        <div class="code-block" style="font-size:.83rem;padding:10px 14px;">
+          <span class="cm">// ES6 (input)</span><br>
+          <span class="kw">const</span> <span class="fn">sumar</span> = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=></span> <span class="var">a</span> + <span class="var">b</span>;
+        </div>
+        <div style="text-align:center;font-size:1.5rem;">↓ Babel</div>
+        <div class="code-block" style="font-size:.83rem;padding:10px 14px;">
+          <span class="cm">// ES5 (output)</span><br>
+          <span class="kw">var</span> <span class="fn">sumar</span> = <span class="kw">function</span>(<span class="var">a</span>, <span class="var">b</span>) {<br>
+          &nbsp;&nbsp;<span class="kw">return</span> <span class="var">a</span> + <span class="var">b</span>;<br>
+          };
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7 – WEBPACK Y POLYFILLS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Herramientas</span>
+  <h2>Webpack y Polyfills</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📦 Webpack</h3>
+      <p>Empacador de módulos que <span class="accent">agrupa</span> todos los archivos del proyecto (JS, CSS, imágenes) en un paquete optimizado.</p>
+      <ul class="list-clean" style="font-size:.98rem;margin-top:10px;">
+        <li>Code splitting para mejor rendimiento</li>
+        <li>Compatible con Babel para ES5</li>
+        <li>Base de React, Angular y Vue</li>
+      </ul>
+      <p style="margin-top:8px;font-size:.9rem;opacity:.75;">webpack.js.org</p>
+    </div>
+    <div class="card">
+      <h3>🩹 Polyfills</h3>
+      <p>Fragmentos de código que <span class="accent">implementan funciones modernas</span> en navegadores que no las soportan.</p>
+      <ul class="list-clean" style="font-size:.98rem;margin-top:10px;">
+        <li><code>Array.prototype.includes()</code></li>
+        <li><code>fetch()</code> para HTTP en IE</li>
+        <li>Se cargan desde <span class="accent">polyfill.io</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 – CARACTERÍSTICAS ES6 OVERVIEW -->
+<div class="slide es6-bg">
+  <span class="section-label">Bloque 2 · Características ES6</span>
+  <h2>Características Principales de ES6+</h2>
+  <div class="grid-4">
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">📦</div>
+      <h3 style="font-size:1.1rem;">let / const</h3>
+      <p style="font-size:.88rem;">Scope de bloque</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">⚡</div>
+      <h3 style="font-size:1.1rem;">Arrow =>  </h3>
+      <p style="font-size:.88rem;">Funciones concisas</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">🔤</div>
+      <h3 style="font-size:1.1rem;">Template Literals</h3>
+      <p style="font-size:.88rem;">Interpolación con ``</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">🎁</div>
+      <h3 style="font-size:1.1rem;">Destructuring</h3>
+      <p style="font-size:.88rem;">Extraer valores</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">📡</div>
+      <h3 style="font-size:1.1rem;">Spread / Rest</h3>
+      <p style="font-size:.88rem;">Expandir y agrupar</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">📂</div>
+      <h3 style="font-size:1.1rem;">Módulos</h3>
+      <p style="font-size:.88rem;">import / export</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">🗃️</div>
+      <h3 style="font-size:1.1rem;">Set / Map</h3>
+      <p style="font-size:.88rem;">Colecciones avanzadas</p>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;">
+      <div style="font-size:2.2rem;">⏳</div>
+      <h3 style="font-size:1.1rem;">Async / Await</h3>
+      <p style="font-size:.88rem;">Asincronía clara</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9 – LET CONST ARROW TEMPLATE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · ES6 práctico</span>
+  <h2>Variables, Arrow Functions y Template Literals</h2>
+  <div class="code-block sm">
+    <span class="cm">// let: reasignable · const: no reasignable · scope de bloque</span><br>
+    <span class="kw">let</span>   <span class="var">edad</span> = <span class="num">25</span>;  <span class="var">edad</span> = <span class="num">26</span>;         <span class="cm">// ✅</span><br>
+    <span class="kw">const</span> <span class="var">PI</span>   = <span class="num">3.1416</span>; <span class="cm">// PI = 3 → ❌ Error</span><br><br>
+    <span class="cm">// Arrow function: sintaxis corta, sin this propio</span><br>
+    <span class="kw">const</span> <span class="fn">sumar</span>    = (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=></span> <span class="var">a</span> + <span class="var">b</span>;      <span class="cm">// retorno implícito</span><br>
+    <span class="kw">const</span> <span class="fn">cuadrado</span> = <span class="var">n</span> <span class="op">=></span> <span class="var">n</span> <span class="op">**</span> <span class="num">2</span>;           <span class="cm">// un parámetro</span><br><br>
+    <span class="cm">// Parámetros por defecto</span><br>
+    <span class="kw">const</span> <span class="fn">saludar</span> = (<span class="var">nombre</span> = <span class="str">"invitado"</span>) <span class="op">=></span> <span class="str">`Hola, ${<span class="var">nombre</span>}!`</span>;<br><br>
+    <span class="cm">// Template literals: backticks + ${ expresión }</span><br>
+    <span class="kw">const</span> <span class="var">nombre</span> = <span class="str">"Ana"</span>; <span class="kw">const</span> <span class="var">edad2</span> = <span class="num">25</span>;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`${<span class="var">nombre</span>} tiene ${<span class="var">edad2</span>} años`</span>); <span class="cm">// "Ana tiene 25 años"</span>
+  </div>
+</div>
+
+<!-- SLIDE 10 – DESTRUCTURING Y SPREAD/REST -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · ES6 práctico</span>
+  <h2>Destructuring · Spread · Rest</h2>
+  <div class="code-block sm">
+    <span class="cm">// DESTRUCTURING de objetos</span><br>
+    <span class="kw">const</span> <span class="var">usuario</span> = { <span class="var">nombre</span>: <span class="str">"Carlos"</span>, <span class="var">edad</span>: <span class="num">30</span>, <span class="var">pais</span>: <span class="str">"Chile"</span> };<br>
+    <span class="kw">const</span> { <span class="var">nombre</span>, <span class="var">edad</span> } = <span class="var">usuario</span>;   <span class="cm">// extrae solo nombre y edad</span><br><br>
+    <span class="cm">// DESTRUCTURING de arrays</span><br>
+    <span class="kw">const</span> [<span class="var">primero</span>, <span class="var">segundo</span>] = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>];<br><br>
+    <span class="cm">// SPREAD: expandir / combinar</span><br>
+    <span class="kw">const</span> <span class="var">nums</span>   = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>];<br>
+    <span class="kw">const</span> <span class="var">mas</span>    = [<span class="op">...</span><span class="var">nums</span>, <span class="num">4</span>, <span class="num">5</span>];          <span class="cm">// [1,2,3,4,5]</span><br>
+    <span class="kw">const</span> <span class="var">copia</span>  = { <span class="op">...</span><span class="var">usuario</span>, <span class="var">activo</span>: <span class="kw">true</span> }; <span class="cm">// nuevo obj con propiedad extra</span><br><br>
+    <span class="cm">// REST: agrupar argumentos variables</span><br>
+    <span class="kw">const</span> <span class="fn">sumarTodo</span> = (<span class="op">...</span><span class="var">n</span>) <span class="op">=></span> <span class="var">n</span>.<span class="fn">reduce</span>((<span class="var">a</span>,<span class="var">b</span>) <span class="op">=></span> <span class="var">a</span>+<span class="var">b</span>, <span class="num">0</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">sumarTodo</span>(<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>)); <span class="cm">// 10</span>
+  </div>
+</div>
+
+<!-- SLIDE 11 – MÓDULOS, SET, MAP, ASYNC -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · ES6 práctico</span>
+  <h2>Módulos · Set · Map · Async/Await</h2>
+  <div class="code-block sm">
+    <span class="cm">// MÓDULOS: export en saludo.js</span><br>
+    <span class="kw">export const</span> <span class="fn">saludar</span> = () <span class="op">=></span> <span class="str">"¡Hola!"</span>;<br>
+    <span class="cm">// import en app.js</span><br>
+    <span class="kw">import</span> { <span class="fn">saludar</span> } <span class="kw">from</span> <span class="str">'./saludo.js'</span>;<br><br>
+    <span class="cm">// SET: colección de valores únicos</span><br>
+    <span class="kw">const</span> <span class="var">set</span> = <span class="kw">new</span> <span class="fn">Set</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">3</span>]); <span class="cm">// Set {1,2,3}</span><br><br>
+    <span class="cm">// MAP: pares clave-valor con cualquier tipo de clave</span><br>
+    <span class="kw">const</span> <span class="var">mapa</span> = <span class="kw">new</span> <span class="fn">Map</span>();<br>
+    <span class="var">mapa</span>.<span class="fn">set</span>(<span class="str">"nombre"</span>, <span class="str">"Lucía"</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">mapa</span>.<span class="fn">get</span>(<span class="str">"nombre"</span>)); <span class="cm">// "Lucía"</span><br><br>
+    <span class="cm">// ASYNC/AWAIT: asincronía legible</span><br>
+    <span class="kw">async function</span> <span class="fn">obtenerDatos</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">res</span>   = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://api.example.com/data"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">datos</span> = <span class="kw">await</span> <span class="var">res</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">datos</span>);<br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) { <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>); }<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 12 – LIVE CODING ES6 -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 40 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">💻</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding: ES6+ en Acción</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ <strong>Variables y funciones</strong>: let/const, arrow, parámetros por defecto</li>
+        <li>2️⃣ <strong>Destructuring, spread, rest</strong>: objetos y arrays</li>
+        <li>3️⃣ <strong>Clases y módulos</strong>: clase Persona, export/import</li>
+        <li>4️⃣ <strong>Set y Map</strong>: casos de uso prácticos</li>
+        <li>5️⃣ <strong>Promesas y async/await</strong>: comparar .then() vs await</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 1: ES6 MODERNIZAR -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔄</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Modernizar<br>Código ES5 → ES6</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Convertir código ES5 a ES6+ aplicando:<br>
+        ✅ Reemplazar <code>var</code> por <code>let</code> / <code>const</code><br>
+        ✅ Función constructora → clase ES6<br>
+        ✅ Concatenaciones → template literals<br>
+        ✅ <code>function()</code> → arrow functions<br>
+        ✅ <code>for</code> loops → <code>forEach</code>, <code>map</code>, <code>filter</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – DESCANSO CON TIMER -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- BLOQUE 3 – DOM                         -->
+<!-- ══════════════════════════════════════ -->
+
+<!-- SLIDE 15 – TÍTULO BLOQUE 3 -->
+<div class="slide dom-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🌳</div>
+  <h1 class="sm mt20">Document Object Model</h1>
+  <p class="subtitle">Jerarquía · Selectores · Modificar · Agregar · Eliminar</p>
+</div>
+
+<!-- SLIDE 16 – ¿QUÉ ES EL DOM? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · DOM</span>
+  <h2>¿Qué es el DOM?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📄 Definición</h3>
+      <p>Interfaz de programación que representa la estructura de un documento HTML como un <span class="accent">árbol jerárquico</span>. Permite a JavaScript acceder y modificar la página.</p>
+    </div>
+    <div class="card">
+      <h3>💡 Permite</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Modificar contenido <span class="accent">sin recargar</span> la página</li>
+        <li>Agregar y eliminar elementos HTML dinámicamente</li>
+        <li>Cambiar estilos CSS en respuesta a eventos</li>
+        <li>Escuchar clics, teclas, scroll, formularios</li>
+      </ul>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:800px;font-size:.88rem;">
+    <span class="cm">// Árbol DOM: document → html → head/body → elementos</span><br>
+    <span class="cm">// Tipos de nodos:</span><br>
+    <span class="cm">// - Nodo raíz: document</span><br>
+    <span class="cm">// - Nodos elemento: &lt;body&gt;, &lt;h1&gt;, &lt;p&gt;</span><br>
+    <span class="cm">// - Nodos texto: el contenido dentro de los elementos</span><br>
+    <span class="cm">// - Nodos atributo: class, id, src, href</span>
+  </div>
+</div>
+
+<!-- SLIDE 17 – JERARQUÍA Y RELACIONES -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Jerarquía</span>
+  <h2>Jerarquía y Relaciones del DOM</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🔗 Relaciones entre nodos</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li><code>parentNode</code> → nodo padre</li>
+        <li><code>children</code> → nodos hijos</li>
+        <li><code>nextElementSibling</code> → hermano siguiente</li>
+        <li><code>previousElementSibling</code> → hermano anterior</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>💻 Código</h3>
+      <div class="code-block" style="font-size:.83rem;margin-top:8px;">
+        <span class="cm">// HTML: &lt;ul&gt;&lt;li&gt;A&lt;/li&gt;&lt;li id="b"&gt;B&lt;/li&gt;&lt;li&gt;C&lt;/li&gt;&lt;/ul&gt;</span><br>
+        <span class="kw">const</span> <span class="var">b</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"b"</span>);<br>
+        <span class="var">b</span>.parentNode;             <span class="cm">// &lt;ul&gt;</span><br>
+        <span class="var">b</span>.nextElementSibling;     <span class="cm">// &lt;li&gt;C&lt;/li&gt;</span><br>
+        <span class="var">b</span>.previousElementSibling; <span class="cm">// &lt;li&gt;A&lt;/li&gt;</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18 – SELECTORES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Selectores</span>
+  <h2>Seleccionar Elementos del DOM</h2>
+  <div class="code-block sm">
+    <span class="cm">// Por ID → un solo elemento</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"titulo"</span>);<br><br>
+    <span class="cm">// Por clase → colección HTMLCollection</span><br>
+    <span class="var">document</span>.<span class="fn">getElementsByClassName</span>(<span class="str">"descripcion"</span>)[<span class="num">0</span>];<br><br>
+    <span class="cm">// Por etiqueta → todos los &lt;li&gt;</span><br>
+    <span class="var">document</span>.<span class="fn">getElementsByTagName</span>(<span class="str">"li"</span>);<br><br>
+    <span class="cm">// querySelector → primer elemento que coincide (CSS selector)</span><br>
+    <span class="var">document</span>.<span class="fn">querySelector</span>(<span class="str">"#miId"</span>);           <span class="cm">// por ID</span><br>
+    <span class="var">document</span>.<span class="fn">querySelector</span>(<span class="str">".miClase"</span>);         <span class="cm">// por clase</span><br>
+    <span class="var">document</span>.<span class="fn">querySelector</span>(<span class="str">"ul li:first-child"</span>); <span class="cm">// selector complejo</span><br><br>
+    <span class="cm">// querySelectorAll → NodeList con TODOS los que coinciden</span><br>
+    <span class="var">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">".elemento"</span>)<br>
+    &nbsp;&nbsp;.<span class="fn">forEach</span>(<span class="var">el</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">el</span>.textContent));
+  </div>
+  <div class="highlight mt20">Preferir siempre <span class="js-yellow">querySelector</span> y <span class="js-yellow">querySelectorAll</span> — más flexibles y usan selectores CSS estándar.</div>
+</div>
+
+<!-- SLIDE 19 – MODIFICAR CONTENIDO Y ATRIBUTOS -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Modificar</span>
+  <h2>Modificar Contenido y Atributos</h2>
+  <div class="code-block sm">
+    <span class="cm">// CONTENIDO</span><br>
+    <span class="var">elem</span>.textContent = <span class="str">"Nuevo texto"</span>;          <span class="cm">// solo texto (seguro)</span><br>
+    <span class="var">elem</span>.innerHTML   = <span class="str">"&lt;strong&gt;Negrita&lt;/strong&gt;"</span>; <span class="cm">// HTML (cuidado con XSS)</span><br><br>
+    <span class="cm">// ATRIBUTOS directamente</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"img"</span>).src = <span class="str">"nueva.jpg"</span>;<br><br>
+    <span class="cm">// setAttribute / getAttribute (para cualquier atributo, incluyendo data-*)</span><br>
+    <span class="var">elem</span>.<span class="fn">setAttribute</span>(<span class="str">"href"</span>, <span class="str">"https://ejemplo.com"</span>);<br>
+    <span class="var">elem</span>.<span class="fn">setAttribute</span>(<span class="str">"target"</span>, <span class="str">"_blank"</span>);<br>
+    <span class="kw">const</span> <span class="var">url</span> = <span class="var">elem</span>.<span class="fn">getAttribute</span>(<span class="str">"href"</span>);<br><br>
+    <span class="cm">// ESTILOS y CLASES</span><br>
+    <span class="var">elem</span>.style.color = <span class="str">"red"</span>;<br>
+    <span class="var">elem</span>.classList.<span class="fn">add</span>(<span class="str">"activo"</span>);      <span class="cm">// agregar clase</span><br>
+    <span class="var">elem</span>.classList.<span class="fn">remove</span>(<span class="str">"activo"</span>);   <span class="cm">// quitar clase</span><br>
+    <span class="var">elem</span>.classList.<span class="fn">toggle</span>(<span class="str">"oscuro"</span>);   <span class="cm">// alternar clase</span>
+  </div>
+</div>
+
+<!-- SLIDE 20 – AGREGAR Y ELIMINAR -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Agregar y eliminar</span>
+  <h2>Agregar y Eliminar Elementos</h2>
+  <div class="code-block sm">
+    <span class="cm">// CREAR y AGREGAR</span><br>
+    <span class="kw">const</span> <span class="var">parrafo</span> = <span class="var">document</span>.<span class="fn">createElement</span>(<span class="str">"p"</span>);<br>
+    <span class="var">parrafo</span>.textContent = <span class="str">"Nuevo párrafo"</span>;<br>
+    <span class="var">document</span>.body.<span class="fn">appendChild</span>(<span class="var">parrafo</span>);           <span class="cm">// al final del body</span><br><br>
+    <span class="cm">// Dentro de un contenedor específico</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"contenedor"</span>).<span class="fn">appendChild</span>(<span class="var">parrafo</span>);<br><br>
+    <span class="cm">// Insertar ANTES de otro elemento</span><br>
+    <span class="kw">const</span> <span class="var">ref</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"referencia"</span>);<br>
+    <span class="var">document</span>.body.<span class="fn">insertBefore</span>(<span class="var">parrafo</span>, <span class="var">ref</span>);<br><br>
+    <span class="cm">// ELIMINAR directamente</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"miDiv"</span>).<span class="fn">remove</span>();<br><br>
+    <span class="cm">// Eliminar un hijo desde su padre</span><br>
+    <span class="kw">const</span> <span class="var">padre</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"lista"</span>);<br>
+    <span class="var">padre</span>.<span class="fn">removeChild</span>(<span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"item2"</span>));
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- BLOQUE 4 – EVENTOS                    -->
+<!-- ══════════════════════════════════════ -->
+
+<!-- SLIDE 21 – TÍTULO BLOQUE 4 -->
+<div class="slide evt-bg">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">🖱️</div>
+  <h1 class="sm mt20">Eventos en JavaScript</h1>
+  <p class="subtitle">Tipos · Bubbling · addEventListener · Delegación</p>
+</div>
+
+<!-- SLIDE 22 – ¿QUÉ SON LOS EVENTOS? -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Eventos</span>
+  <h2>¿Qué son los Eventos?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🎯 Definición</h3>
+      <p>Acciones o sucesos que ocurren en el navegador y pueden ser <span class="accent">detectados y manejados</span> con JavaScript. Permiten reaccionar a acciones del usuario.</p>
+    </div>
+    <div class="card">
+      <h3>📋 Tipos de eventos</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li><span class="accent">Mouse</span>: click, dblclick, mouseover, mouseout</li>
+        <li><span class="accent">Teclado</span>: keydown, keyup, keypress</li>
+        <li><span class="accent">Formulario</span>: submit, change, focus, blur, input</li>
+        <li><span class="accent">Ventana</span>: load, resize, scroll</li>
+        <li><span class="accent">DOM</span>: DOMContentLoaded</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23 – FORMAS DE MANEJAR EVENTOS -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Manejo de eventos</span>
+  <h2>Formas de Manejar Eventos</h2>
+  <div class="code-block sm">
+    <span class="cm">// ❌ Atributo HTML (no recomendado: mezcla HTML y JS)</span><br>
+    <span class="cm">// &lt;button onclick="saludar()"&gt;Click&lt;/button&gt;</span><br><br>
+    <span class="cm">// ⚠️ Propiedad del DOM (solo permite un manejador por evento)</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"btn"</span>).onclick = <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Click!"</span>);<br>
+    };<br><br>
+    <span class="cm">// ✅ addEventListener (recomendado: múltiples manejadores, más control)</span><br>
+    <span class="kw">const</span> <span class="var">btn</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"btn"</span>);<br><br>
+    <span class="var">btn</span>.<span class="fn">addEventListener</span>(<span class="str">"click"</span>, () <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Primer manejador"</span>);<br>
+    });<br>
+    <span class="var">btn</span>.<span class="fn">addEventListener</span>(<span class="str">"click"</span>, () <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Segundo manejador"</span>); <span class="cm">// ambos se ejecutan ✅</span><br>
+    });
+  </div>
+</div>
+
+<!-- SLIDE 24 – BUBBLING Y CAPTURING -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Modelo de eventos</span>
+  <h2>Event Bubbling y Capturing</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⬆️ Bubbling (default)</h3>
+      <p>El evento se propaga desde el elemento objetivo hacia sus <span class="accent">elementos padres</span>. Click en <code>&lt;li&gt;</code> → sube a <code>&lt;ul&gt;</code> → sube a <code>&lt;div&gt;</code>…</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="cm">// Detener la propagación</span><br>
+        <span class="var">elem</span>.<span class="fn">addEventListener</span>(<span class="str">"click"</span>, (<span class="var">e</span>) <span class="op">=></span> {<br>
+        &nbsp;&nbsp;<span class="var">e</span>.<span class="fn">stopPropagation</span>(); <span class="cm">// no sube más</span><br>
+        });
+      </div>
+    </div>
+    <div class="card">
+      <h3>⬇️ Capturing</h3>
+      <p>El evento se propaga <span class="accent">desde el raíz</span> hacia el elemento objetivo. Se activa con tercer parámetro <code>true</code>.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="cm">// Prevenir comportamiento default</span><br>
+        <span class="var">form</span>.<span class="fn">addEventListener</span>(<span class="str">"submit"</span>, (<span class="var">e</span>) <span class="op">=></span> {<br>
+        &nbsp;&nbsp;<span class="var">e</span>.<span class="fn">preventDefault</span>(); <span class="cm">// no envía el form</span><br>
+        });
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20"><code>stopPropagation()</code> detiene el burbujeo · <code>preventDefault()</code> cancela la acción por defecto del navegador</div>
+</div>
+
+<!-- SLIDE 25 – DELEGACIÓN DE EVENTOS -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Delegación</span>
+  <h2>Delegación de Eventos</h2>
+  <div class="code-block sm">
+    <span class="cm">// ❌ Sin delegación: un listener por elemento</span><br>
+    <span class="var">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">"li"</span>).<span class="fn">forEach</span>(<span class="var">li</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="var">li</span>.<span class="fn">addEventListener</span>(<span class="str">"click"</span>, (<span class="var">e</span>) <span class="op">=></span> <span class="var">e</span>.target.<span class="fn">remove</span>());<br>
+    }); <span class="cm">// no funciona con elementos creados dinámicamente</span><br><br>
+    <span class="cm">// ✅ Con delegación: UN listener en el padre maneja todos los hijos</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"lista"</span>).<span class="fn">addEventListener</span>(<span class="str">"click"</span>, (<span class="var">e</span>) <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">e</span>.target.tagName <span class="op">===</span> <span class="str">"LI"</span>) {       <span class="cm">// filtrar el elemento correcto</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">e</span>.target.<span class="fn">remove</span>();<br>
+    &nbsp;&nbsp;}<br>
+    });<br><br>
+    <span class="cm">// También funciona con clases</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"lista"</span>).<span class="fn">addEventListener</span>(<span class="str">"click"</span>, (<span class="var">e</span>) <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">e</span>.target.classList.<span class="fn">contains</span>(<span class="str">"eliminar"</span>)) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">e</span>.target.parentElement.<span class="fn">remove</span>();<br>
+    &nbsp;&nbsp;}<br>
+    });
+  </div>
+  <div class="highlight mt20">La delegación de eventos es esencial para elementos <span class="js-yellow">creados dinámicamente</span>. Reduce listeners y mejora el rendimiento.</div>
+</div>
+
+<!-- SLIDE 26 – DESAFÍO 1 -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Error en el código</span>
+  <h2>⚡ Desafío: Identificar el Error</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="tag">&lt;button</span> <span class="attr">id</span>=<span class="str">"miBoton"</span><span class="tag">&gt;</span>Click<span class="tag">&lt;/button&gt;</span><br><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"miBoton"</span>)<br>
+    &nbsp;&nbsp;.<span class="fn">addEventlistener</span>(<span class="str">"click"</span>, <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">alert</span>(<span class="str">"Hola!"</span>);<br>
+    &nbsp;&nbsp;});
+  </div>
+  <div class="highlight mt20">
+    A) <code>addEventlistener</code> mal escrito (debe ser <code>addEventListener</code>) &nbsp;·&nbsp;
+    B) El botón no tiene ID válido &nbsp;·&nbsp;
+    C) <code>alert()</code> no funciona en eventos &nbsp;·&nbsp;
+    D) Falta cerrar la etiqueta button
+  </div>
+</div>
+
+<!-- SLIDE 27 – DESAFÍO 2 -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · preventDefault</span>
+  <h2>⚡ Desafío: ¿Cómo Evitar el Envío?</h2>
+  <div class="code-block" style="max-width:800px;">
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"miFormulario"</span>)<br>
+    &nbsp;&nbsp;.<span class="fn">addEventListener</span>(<span class="str">"submit"</span>, <span class="kw">function</span>(<span class="var">event</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// ¿Qué va aquí para evitar que el formulario se envíe?</span><br>
+    &nbsp;&nbsp;});
+  </div>
+  <div class="highlight mt20">
+    A) <code>event.preventDefault()</code> &nbsp;·&nbsp;
+    B) <code>event.stopPropagation()</code> &nbsp;·&nbsp;
+    C) <code>this.reset()</code> &nbsp;·&nbsp;
+    D) <code>console.log("enviado")</code>
+  </div>
+</div>
+
+<!-- SLIDE 28 – LIVE CODING DOM + EVENTOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📝</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Gestor de Tareas</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ HTML: <code>&lt;input&gt;</code>, <code>&lt;button&gt;</code>, <code>&lt;ul&gt;</code></li>
+        <li>2️⃣ <code>addEventListener("click")</code> en el botón Agregar</li>
+        <li>3️⃣ Crear <code>&lt;li&gt;</code> con <code>createElement</code> + <code>appendChild</code></li>
+        <li>4️⃣ Delegación de eventos en <code>&lt;ul&gt;</code> para eliminar tareas</li>
+        <li>5️⃣ Evento <code>keypress</code> para agregar con Enter</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – EJERCICIO 2: DOM -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔍</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Seleccionar<br>y Modificar el DOM</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Crear HTML con párrafo, lista y div<br>
+        ✅ Seleccionar con <code>getElementById</code>, <code>querySelector</code>, <code>querySelectorAll</code><br>
+        ✅ Modificar texto con <code>textContent</code> e <code>innerHTML</code><br>
+        ✅ Cambiar un estilo con <code>style</code> y alternar clase con <code>classList.toggle()</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – EJERCICIO 3: EVENTOS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🖱️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Delegación<br>de Eventos</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Lista con botón "Eliminar" por ítem:<br>
+        ✅ Usar delegación de eventos en el <code>&lt;ul&gt;</code> padre<br>
+        ✅ Al hacer clic en un botón "Eliminar", remover ese <code>&lt;li&gt;</code><br>
+        ✅ Funciona también para ítems agregados dinámicamente<br>
+        ⭐ Extra: capturar evento de teclado — bloquear números en un input
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 31 – EJERCICIO 4: ES6 AVANZADO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛍️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Gestión de<br>Usuarios y Pedidos</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Destructuring para extraer propiedades de un objeto usuario<br>
+        ✅ Spread para crear nuevo objeto sin modificar el original<br>
+        ✅ Función <code>prepararPedido(pedido)</code> que retorna una Promesa con <code>setTimeout</code><br>
+        ✅ Manejar con <code>async/await</code> y <code>try/catch</code><br>
+        ✅ Ejecutar 2-3 pedidos y mostrar resultados en consola
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 32 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>⚡ ES6+</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Historia y evolución de JavaScript</li>
+        <li>Compatibilidad y herramientas: Babel, Webpack, Polyfills</li>
+        <li>let/const · arrow functions · template literals</li>
+        <li>Destructuring · spread · rest · parámetros por defecto</li>
+        <li>Módulos import/export · Set · Map</li>
+        <li>Promesas y async/await</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🌳 DOM y Eventos</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Qué es el DOM y su estructura jerárquica</li>
+        <li>Selectores: getElementById, querySelector</li>
+        <li>Modificar contenido, atributos, estilos y clases</li>
+        <li>Crear y eliminar elementos dinámicamente</li>
+        <li>Tipos de eventos y addEventListener</li>
+        <li>Event bubbling · stopPropagation · preventDefault</li>
+        <li>Delegación de eventos para elementos dinámicos</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 33 – CIERRE -->
+<div class="slide js-bg">
+  <div style="font-size:5rem;font-family:'Courier New',monospace;font-weight:900;" class="float glow">ES6+</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Dominás JavaScript moderno y la manipulación dinámica del DOM.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">ES6+ ✅</span><span class="pill">Babel ✅</span>
+    <span class="pill">DOM ✅</span><span class="pill">Eventos ✅</span>
+    <span class="pill">Delegación ✅</span><span class="pill gold">async/await ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">JavaScript Asíncrono</span> — Fetch API y consumo de APIs REST.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active'); slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle  = document.getElementById('ring-circle');
+  const display = document.getElementById('timer-display');
+  const msg     = document.getElementById('timer-msg');
+  const CIRCUMF = 2 * Math.PI * 80;
+  circle.style.strokeDasharray = CIRCUMF; circle.style.strokeDashoffset = 0;
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS*.5 ? '#1e1e1e' : remaining > TOTAL_SECS*.2 ? '#e67e22' : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return; running = true; msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); running = false; msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.'; return; }
+      remaining--; updateRing();
+    }, 1000);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
