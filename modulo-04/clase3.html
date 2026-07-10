@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Asíncrono · Fetch API · REST</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e; --light: #ffffff;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg   { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg     { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg   { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg  { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.async-bg  { background:linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%); }
+  .slide.promise-bg{ background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.rest-bg   { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+  .slide.fetch-bg  { background:linear-gradient(135deg,#004d40 0%,#00695c 100%); }
+  .slide.challenge-bg { background:linear-gradient(135deg,#880e4f 0%,#c62828 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.7rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.8rem; }
+  h2 { font-size:2.2rem; text-align:center; margin-bottom:22px; }
+  h3 { font-size:1.45rem; margin-bottom:10px; }
+  p, li { font-size:1.15rem; line-height:1.8; }
+  .subtitle { font-size:1.25rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 22px; font-family:'Courier New',monospace; font-size:.95rem; line-height:1.8; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.83rem; line-height:1.65; }
+  .kw  { color:#ff7b72; } .fn  { color:#d2a8ff; } .str { color:#a8ff78; }
+  .num { color:#79c0ff; } .cm  { color:#8b949e; } .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:22px 20px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:4px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:13px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:16px 12px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.88rem; color:var(--accent); margin-bottom:4px; }
+  .step p  { font-size:.82rem; opacity:.9; line-height:1.45; }
+
+  .emoji-big { font-size:6rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:13px 22px; margin-top:13px; font-size:1.08rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 13px; font-size:.86rem; margin:3px; }
+  .pill.gold  { background:rgba(247,223,30,0.2);  border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2);   border-color:#4CAF50; color:#a8ff78; }
+  .pill.red   { background:rgba(244,67,54,0.2);   border-color:#f44336; color:#ffab91; }
+
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1rem; }
+  th { background:rgba(102,126,234,0.55); padding:11px 15px; text-align:left; }
+  td { padding:9px 15px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:.95rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .method-badge { display:inline-block; padding:4px 12px; border-radius:8px; font-family:'Courier New',monospace; font-weight:700; font-size:.9rem; }
+  .m-get    { background:rgba(76,175,80,0.25);  border:1px solid #4CAF50; color:#a8ff78; }
+  .m-post   { background:rgba(33,150,243,0.25); border:1px solid #2196f3; color:#90caf9; }
+  .m-put    { background:rgba(255,152,0,0.25);  border:1px solid #ff9800; color:#ffcc80; }
+  .m-delete { background:rgba(244,67,54,0.25);  border:1px solid #f44336; color:#ffab91; }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.9rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:.98rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:14px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card { animation:fadeUp .5s ease both; }
+  .slide.active .step { animation:fadeUp .5s ease both; }
+  .slide.active h2    { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 34</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active js-bg">
+  <div style="font-size:5.5rem;font-family:'Courier New',monospace;color:var(--js-yellow);font-weight:900;" class="float">async</div>
+  <h1 class="mt20">JavaScript Asíncrono<br><span class="js-yellow glow">y Fetch API</span></h1>
+  <p class="subtitle mt20">AE4.1 · AE4.2 · Programación Avanzada en JavaScript V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Event Loop</span>
+    <span class="pill">Callbacks</span>
+    <span class="pill">Promesas</span>
+    <span class="pill">async/await</span>
+    <span class="pill">Fetch</span>
+    <span class="pill gold">API REST</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#302b63"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">⏳ <strong>Bloque 1</strong> · Asincronía: Call Stack, Event Loop, Callbacks, setTimeout</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#302b63"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🔄 <strong>Bloque 2</strong> · Promesas · async/await · Manejo de errores · Live Coding · Ej 1</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#2e7d32"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🌐 <strong>Bloque 3</strong> · API REST: qué es, métodos HTTP, status codes, fetch GET</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#00695c"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">📡 <strong>Bloque 4</strong> · fetch POST/PUT/DELETE · Headers · JSON · Ejercicios 2–4</div></div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 1 – ASINCRONÍA ═══════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide async-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">⏳</div>
+  <h1 class="sm mt20">JavaScript Asíncrono</h1>
+  <p class="subtitle">Call Stack · Event Loop · Callbacks · setTimeout · setInterval</p>
+</div>
+
+<!-- SLIDE 4 – JS ES SINGLE-THREAD -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Asincronía</span>
+  <h2>JavaScript es Single-Thread</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🧵 Un solo hilo</h3>
+      <p>JavaScript ejecuta <span class="accent">una sola tarea a la vez</span>. No puede hacer dos cosas simultáneamente de forma nativa.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Esto significa que si una tarea tarda mucho (leer un archivo, llamar a una API), bloquearía todo el código siguiente.</p>
+    </div>
+    <div class="card">
+      <h3>🔄 Solución: asincronía</h3>
+      <p>En lugar de esperar, JavaScript <span class="accent">delega las tareas lentas</span> al entorno (navegador o Node.js) y sigue ejecutando el resto del código.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.8;">Cuando la tarea lenta termina, la respuesta vuelve a la cola de JavaScript para procesarse.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Analogía: el mozo anota tu pedido, lo manda a la cocina y sigue atendiendo otras mesas. No espera parado que la comida esté lista.</div>
+</div>
+
+<!-- SLIDE 5 – CALL STACK Y EVENT LOOP -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Call Stack y Event Loop</span>
+  <h2>Call Stack y Event Loop</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">📋</div>
+      <h3>Call Stack</h3>
+      <p>Pila de llamadas. Registra qué función se está ejecutando. LIFO: última en entrar, primera en salir.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">🌐</div>
+      <h3>Web APIs</h3>
+      <p>El navegador provee: setTimeout, fetch, eventos del DOM. Corren fuera del hilo de JS.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">📬</div>
+      <h3>Callback Queue</h3>
+      <p>Cola donde esperan los callbacks listos para ejecutarse cuando el Call Stack esté vacío.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">🔄</div>
+      <h3>Event Loop</h3>
+      <p>Vigila el Call Stack. Cuando está vacío, mueve el siguiente callback de la Cola al Stack.</p>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.88rem;">
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"1 - Inicio"</span>);<br>
+    <span class="fn">setTimeout</span>(() <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"3 - Timeout (0ms)"</span>), <span class="num">0</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"2 - Fin"</span>);<br>
+    <span class="cm">// Imprime: 1 → 2 → 3 (el timeout va a la cola aunque sea 0ms)</span>
+  </div>
+</div>
+
+<!-- SLIDE 6 – SETTIMEOUT Y SETINTERVAL -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Timers</span>
+  <h2>setTimeout y setInterval</h2>
+  <div class="code-block sm">
+    <span class="cm">// setTimeout: ejecutar UNA VEZ después de X milisegundos</span><br>
+    <span class="kw">const</span> <span class="var">id1</span> = <span class="fn">setTimeout</span>(() <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Ejecutado después de 2 segundos"</span>);<br>
+    }, <span class="num">2000</span>);<br><br>
+    <span class="cm">// clearTimeout: cancelar antes de que se ejecute</span><br>
+    <span class="fn">clearTimeout</span>(<span class="var">id1</span>); <span class="cm">// cancela el timeout de arriba</span><br><br>
+    <span class="cm">// setInterval: ejecutar REPETIDAMENTE cada X milisegundos</span><br>
+    <span class="kw">let</span> <span class="var">cuenta</span> = <span class="num">0</span>;<br>
+    <span class="kw">const</span> <span class="var">id2</span> = <span class="fn">setInterval</span>(() <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="var">cuenta</span><span class="op">++</span>;<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Segundo: ${<span class="var">cuenta</span>}`</span>);<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">cuenta</span> <span class="op">===</span> <span class="num">5</span>) <span class="fn">clearInterval</span>(<span class="var">id2</span>); <span class="cm">// detener a los 5</span><br>
+    }, <span class="num">1000</span>);
+  </div>
+  <div class="highlight mt20">Siempre guardar el ID retornado para poder <span class="js-yellow">cancelar</span> el timer cuando ya no sea necesario y evitar memory leaks.</div>
+</div>
+
+<!-- SLIDE 7 – CALLBACKS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Callbacks</span>
+  <h2>Callbacks y Callback Hell</h2>
+  <div class="code-block sm">
+    <span class="cm">// Callback: función que se pasa como argumento para llamar después</span><br>
+    <span class="kw">function</span> <span class="fn">obtenerUsuario</span>(<span class="var">id</span>, <span class="var">callback</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">setTimeout</span>(() <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">callback</span>({ <span class="var">id</span>: <span class="var">id</span>, <span class="var">nombre</span>: <span class="str">"Ana"</span> });<br>
+    &nbsp;&nbsp;}, <span class="num">1000</span>);<br>
+    }<br>
+    <span class="fn">obtenerUsuario</span>(<span class="num">1</span>, <span class="var">usuario</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">usuario</span>));<br><br>
+    <span class="cm">// ❌ CALLBACK HELL: anidamiento que dificulta la lectura</span><br>
+    <span class="fn">obtenerUsuario</span>(<span class="num">1</span>, <span class="var">u</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="fn">obtenerPedidos</span>(<span class="var">u</span>.id, <span class="var">pedidos</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">procesarPago</span>(<span class="var">pedidos</span>[<span class="num">0</span>], <span class="var">pago</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Procesado"</span>); <span class="cm">// 😵 difícil de mantener</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+    &nbsp;&nbsp;});<br>
+    });
+  </div>
+  <div class="highlight mt20">El Callback Hell es la razón por la que nacieron las <span class="js-yellow">Promesas</span> y luego <span class="js-yellow">async/await</span>.</div>
+</div>
+
+<!-- ═══════ BLOQUE 2 – PROMESAS Y ASYNC/AWAIT ═══════ -->
+
+<!-- SLIDE 8 – PROMESAS -->
+<div class="slide promise-bg">
+  <span class="section-label">Bloque 2 · Promesas</span>
+  <h2>Promesas — Promises</h2>
+  <div class="code-block sm">
+    <span class="cm">// Una promesa representa un valor futuro: éxito o fracaso</span><br>
+    <span class="kw">const</span> <span class="var">promesa</span> = <span class="kw">new</span> <span class="fn">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">exito</span> = <span class="kw">true</span>;<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">exito</span>) <span class="fn">resolve</span>(<span class="str">"✅ Datos obtenidos"</span>);<br>
+    &nbsp;&nbsp;<span class="kw">else</span>       <span class="fn">reject</span>(<span class="str">"❌ Error al obtener datos"</span>);<br>
+    });<br><br>
+    <span class="cm">// Consumir con .then() / .catch() / .finally()</span><br>
+    <span class="var">promesa</span><br>
+    &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">datos</span>    <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Éxito:"</span>, <span class="var">datos</span>))<br>
+    &nbsp;&nbsp;.<span class="fn">catch</span>(<span class="var">error</span>   <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error:"</span>, <span class="var">error</span>))<br>
+    &nbsp;&nbsp;.<span class="fn">finally</span>(() <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Siempre se ejecuta"</span>));
+  </div>
+  <div class="highlight mt20">Una promesa tiene 3 estados: <span class="js-yellow">pending</span> (esperando) · <span class="js-yellow">fulfilled</span> (resuelta) · <span class="js-yellow">rejected</span> (rechazada)</div>
+</div>
+
+<!-- SLIDE 9 – ASYNC/AWAIT -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · async/await</span>
+  <h2>async / await — La Forma Moderna</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🔗 Con .then() (prometido)</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="fn">obtenerUsuario</span>(<span class="num">1</span>)<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">u</span> <span class="op">=></span> <span class="fn">obtenerPedidos</span>(<span class="var">u</span>.id))<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">p</span> <span class="op">=></span> <span class="fn">procesarPago</span>(<span class="var">p</span>[<span class="num">0</span>]))<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>))<br>
+        &nbsp;&nbsp;.<span class="fn">catch</span>(<span class="var">e</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>));
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,0.4);">
+      <h3 style="color:var(--js-yellow);">✅ Con async/await (mejor)</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="kw">async function</span> <span class="fn">flujo</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">try</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">u</span> = <span class="kw">await</span> <span class="fn">obtenerUsuario</span>(<span class="num">1</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">p</span> = <span class="kw">await</span> <span class="fn">obtenerPedidos</span>(<span class="var">u</span>.id);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">procesarPago</span>(<span class="var">p</span>[<span class="num">0</span>]);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>);<br>
+        &nbsp;&nbsp;} <span class="kw">catch</span>(<span class="var">e</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>);<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – PROMESAS PARALELAS -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Promesas avanzadas</span>
+  <h2>Promesas en Paralelo</h2>
+  <div class="code-block sm">
+    <span class="cm">// Promise.all: espera TODAS · falla si una falla</span><br>
+    <span class="kw">const</span> [<span class="var">users</span>, <span class="var">posts</span>] = <span class="kw">await</span> <span class="fn">Promise</span>.<span class="fn">all</span>([<br>
+    &nbsp;&nbsp;<span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/users"</span>).<span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="var">r</span>.<span class="fn">json</span>()),<br>
+    &nbsp;&nbsp;<span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/posts"</span>).<span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="var">r</span>.<span class="fn">json</span>())<br>
+    ]);<br><br>
+    <span class="cm">// Promise.allSettled: espera TODAS · nunca falla · informa cada resultado</span><br>
+    <span class="kw">const</span> <span class="var">resultados</span> = <span class="kw">await</span> <span class="fn">Promise</span>.<span class="fn">allSettled</span>([promesa1, promesa2]);<br>
+    <span class="var">resultados</span>.<span class="fn">forEach</span>(<span class="var">r</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.status <span class="op">===</span> <span class="str">"fulfilled"</span>) <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>.value);<br>
+    &nbsp;&nbsp;<span class="kw">else</span>                             <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">r</span>.reason);<br>
+    });<br><br>
+    <span class="cm">// Promise.race: resuelve con la PRIMERA que termine</span><br>
+    <span class="kw">const</span> <span class="var">rapida</span> = <span class="kw">await</span> <span class="fn">Promise</span>.<span class="fn">race</span>([promesaA, promesaB]);
+  </div>
+</div>
+
+<!-- SLIDE 11 – MANEJO DE ERRORES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · Errores</span>
+  <h2>Manejo de Errores Asíncronos</h2>
+  <div class="code-block sm">
+    <span class="kw">async function</span> <span class="fn">obtenerDatos</span>(<span class="var">url</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">respuesta</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="var">url</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// fetch NO lanza error en 404/500 — hay que verificar ok</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">respuesta</span>.ok) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP Error: ${<span class="var">respuesta</span>.status}`</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">datos</span> = <span class="kw">await</span> <span class="var">respuesta</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="var">datos</span>;<br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">error</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// Errores de red Y errores lanzados manualmente</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error:"</span>, <span class="var">error</span>.message);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">throw</span> <span class="var">error</span>; <span class="cm">// re-lanzar para que el llamador lo maneje</span><br>
+    &nbsp;&nbsp;} <span class="kw">finally</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Finalizó la petición"</span>);<br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+  <div class="highlight mt20">⚠️ <code>fetch()</code> solo rechaza la promesa ante <span class="js-yellow">errores de red</span>. Errores HTTP (404, 500) hay que verificarlos con <code>response.ok</code>.</div>
+</div>
+
+<!-- SLIDE 12 – LIVE CODING: ASYNC/AWAIT -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">⏳</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Asincronía Paso a Paso</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Demostrar el Event Loop con setTimeout 0ms</li>
+        <li>2️⃣ Crear una promesa manual con resolve/reject</li>
+        <li>3️⃣ Consumir con .then()/.catch() y luego con async/await</li>
+        <li>4️⃣ Simular múltiples pedidos con Promise.all</li>
+        <li>5️⃣ Manejo de errores con try/catch y verificar response.ok</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO 1 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🔄</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Simular<br>Proceso Asíncrono</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        ✅ Función <code>simularCarga(nombre, ms)</code> que retorna una Promesa<br>
+        ✅ Resuelve con un mensaje de éxito después de <code>ms</code> milisegundos<br>
+        ✅ Consumir con <code>async/await</code> y mostrar los tiempos reales<br>
+        ✅ Ejecutar 3 cargas en paralelo con <code>Promise.all</code><br>
+        ⭐ Extra: agregar posibilidad de fallo aleatorio con <code>reject</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14 – DESCANSO -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg" cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 3 – API REST ═══════ -->
+
+<!-- SLIDE 15 – TÍTULO BLOQUE 3 -->
+<div class="slide rest-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🌐</div>
+  <h1 class="sm mt20">API REST</h1>
+  <p class="subtitle">Qué es · Métodos HTTP · Status Codes · fetch GET</p>
+</div>
+
+<!-- SLIDE 16 – QUÉ ES UNA API REST -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · API REST</span>
+  <h2>¿Qué es una API REST?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📡 Definición</h3>
+      <p><strong>A</strong>pplication <strong>P</strong>rogramming <strong>I</strong>nterface + <strong>RE</strong>presentational <strong>S</strong>tate <strong>T</strong>ransfer.</p>
+      <p class="mt10">Forma estándar de comunicación entre sistemas a través de <span class="accent">HTTP</span>. El cliente pide, el servidor responde con datos en <span class="accent">JSON</span>.</p>
+    </div>
+    <div class="card">
+      <h3>🌍 Ejemplos del mundo real</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Twitter → publicar tweets, obtener timeline</li>
+        <li>Spotify → buscar canciones, crear playlists</li>
+        <li>Google Maps → coordenadas, rutas</li>
+        <li>GitHub → repositorios, commits, usuarios</li>
+        <li>Stripe → pagos, tarjetas, suscripciones</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">Nuestra app: cliente (navegador con JS) → <span class="js-yellow">HTTP Request</span> → servidor → <span class="js-yellow">JSON Response</span> → mostrar en pantalla</div>
+</div>
+
+<!-- SLIDE 17 – MÉTODOS HTTP -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Métodos HTTP</span>
+  <h2>Métodos HTTP — CRUD</h2>
+  <table>
+    <thead>
+      <tr><th>Método</th><th>Acción CRUD</th><th>Qué hace</th><th>Con cuerpo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="method-badge m-get">GET</span></td><td>Read</td><td>Obtener datos. No modifica nada.</td><td>No</td></tr>
+      <tr><td><span class="method-badge m-post">POST</span></td><td>Create</td><td>Crear un nuevo recurso.</td><td>Sí</td></tr>
+      <tr><td><span class="method-badge m-put">PUT</span></td><td>Update</td><td>Actualizar un recurso existente (reemplaza todo).</td><td>Sí</td></tr>
+      <tr><td><span class="method-badge m-put">PATCH</span></td><td>Update</td><td>Actualizar campos específicos (modificación parcial).</td><td>Sí</td></tr>
+      <tr><td><span class="method-badge m-delete">DELETE</span></td><td>Delete</td><td>Eliminar un recurso.</td><td>No</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight mt20">API de ejemplo para practicar (sin registro): <span class="js-yellow">jsonplaceholder.typicode.com</span></div>
+</div>
+
+<!-- SLIDE 18 – STATUS CODES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Status Codes</span>
+  <h2>Códigos de Estado HTTP</h2>
+  <div class="grid-3">
+    <div class="card" style="border-color:rgba(76,175,80,0.4);">
+      <h3 style="color:#a8ff78;">✅ 2xx — Éxito</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><strong>200</strong> OK — solicitud exitosa</li>
+        <li><strong>201</strong> Created — recurso creado</li>
+        <li><strong>204</strong> No Content — éxito sin cuerpo</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(255,152,0,0.4);">
+      <h3 style="color:#ffcc80;">⚠️ 4xx — Error cliente</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><strong>400</strong> Bad Request — datos inválidos</li>
+        <li><strong>401</strong> Unauthorized — sin autenticación</li>
+        <li><strong>403</strong> Forbidden — sin permiso</li>
+        <li><strong>404</strong> Not Found — no existe</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:rgba(244,67,54,0.4);">
+      <h3 style="color:#ffab91;">❌ 5xx — Error servidor</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><strong>500</strong> Internal Server Error</li>
+        <li><strong>502</strong> Bad Gateway</li>
+        <li><strong>503</strong> Service Unavailable</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">En JavaScript: <code>response.status</code> → el código · <code>response.ok</code> → <code>true</code> si el código está entre <span class="js-yellow">200 y 299</span></div>
+</div>
+
+<!-- SLIDE 19 – FETCH GET -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Fetch GET</span>
+  <h2>Fetch API — GET</h2>
+  <div class="code-block sm">
+    <span class="cm">// GET básico con async/await</span><br>
+    <span class="kw">async function</span> <span class="fn">obtenerUsuarios</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">respuesta</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/users"</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">respuesta</span>.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Error ${<span class="var">respuesta</span>.status}`</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">usuarios</span> = <span class="kw">await</span> <span class="var">respuesta</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Se obtuvieron ${<span class="var">usuarios</span>.length} usuarios`</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">usuarios</span>.<span class="fn">forEach</span>(<span class="var">u</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`- ${<span class="var">u</span>.name} (${<span class="var">u</span>.email})`</span>));<br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error:"</span>, <span class="var">e</span>.message);<br>
+    &nbsp;&nbsp;}<br>
+    }<br>
+    <span class="fn">obtenerUsuarios</span>();
+  </div>
+</div>
+
+<!-- SLIDE 20 – DESAFÍO -->
+<div class="slide challenge-bg">
+  <span class="section-label">Desafío · Predecir salida</span>
+  <h2>⚡ Desafío: ¿Cuál es el orden?</h2>
+  <div class="code-block" style="max-width:820px;">
+    <span class="kw">async function</span> <span class="fn">cargarDatos</span>() {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"A - Inicio"</span>);<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/todos/1"</span>);<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">d</span> = <span class="kw">await</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"B - Datos:"</span>, <span class="var">d</span>.title);<br>
+    }<br><br>
+    <span class="fn">cargarDatos</span>();<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"C - Después de llamar"</span>);
+  </div>
+  <div class="highlight mt20">
+    A) A → B → C &nbsp;·&nbsp; B) A → C → B &nbsp;·&nbsp; C) C → A → B &nbsp;·&nbsp; D) A → B → C pero C aparece dos veces
+  </div>
+</div>
+
+<!-- ═══════ BLOQUE 4 – FETCH AVANZADO ═══════ -->
+
+<!-- SLIDE 21 – TÍTULO BLOQUE 4 -->
+<div class="slide fetch-bg">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">📡</div>
+  <h1 class="sm mt20">Fetch API Avanzada</h1>
+  <p class="subtitle">POST · PUT · DELETE · Headers · JSON</p>
+</div>
+
+<!-- SLIDE 22 – FETCH POST -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Fetch POST</span>
+  <h2>Fetch POST — Crear Recursos</h2>
+  <div class="code-block sm">
+    <span class="kw">async function</span> <span class="fn">crearPost</span>(<span class="var">titulo</span>, <span class="var">cuerpo</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">respuesta</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/posts"</span>, {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;method:  <span class="str">"POST"</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body:    <span class="fn">JSON</span>.<span class="fn">stringify</span>({ <span class="var">title</span>: <span class="var">titulo</span>, <span class="var">body</span>: <span class="var">cuerpo</span>, <span class="var">userId</span>: <span class="num">1</span> })<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;});<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">respuesta</span>.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Error ${<span class="var">respuesta</span>.status}`</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">nuevo</span> = <span class="kw">await</span> <span class="var">respuesta</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"✅ Creado con id:"</span>, <span class="var">nuevo</span>.id, <span class="str">"|"</span>, <span class="var">nuevo</span>.title);<br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) { <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>.message); }<br>
+    }<br>
+    <span class="fn">crearPost</span>(<span class="str">"Mi primer post"</span>, <span class="str">"Contenido del post"</span>);
+  </div>
+</div>
+
+<!-- SLIDE 23 – FETCH PUT Y DELETE -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Fetch PUT / DELETE</span>
+  <h2>Fetch PUT y DELETE</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3><span class="method-badge m-put">PUT</span> Actualizar</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">async function</span> <span class="fn">actualizarPost</span>(<span class="var">id</span>, <span class="var">data</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`/posts/${<span class="var">id</span>}`</span>, {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;method:  <span class="str">"PUT"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;body: <span class="fn">JSON</span>.<span class="fn">stringify</span>(<span class="var">data</span>)<br>
+        &nbsp;&nbsp;});<br>
+        &nbsp;&nbsp;<span class="kw">return</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="method-badge m-delete">DELETE</span> Eliminar</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">async function</span> <span class="fn">eliminarPost</span>(<span class="var">id</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`/posts/${<span class="var">id</span>}`</span>, {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;method: <span class="str">"DELETE"</span><br>
+        &nbsp;&nbsp;});<br>
+        &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.ok) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"🗑️ Eliminado"</span>);<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – HEADERS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Headers</span>
+  <h2>Headers HTTP</h2>
+  <div class="code-block sm">
+    <span class="cm">// Headers comunes en solicitudes</span><br>
+    <span class="kw">const</span> <span class="var">opciones</span> = {<br>
+    &nbsp;&nbsp;method:  <span class="str">"POST"</span>,<br>
+    &nbsp;&nbsp;headers: {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Content-Type"</span>:  <span class="str">"application/json"</span>,    <span class="cm">// tipo del body enviado</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Accept"</span>:         <span class="str">"application/json"</span>,    <span class="cm">// tipo de respuesta esperado</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Authorization"</span>:  <span class="str">"Bearer TOKEN_AQUI"</span>    <span class="cm">// autenticación JWT</span><br>
+    &nbsp;&nbsp;},<br>
+    &nbsp;&nbsp;body: <span class="fn">JSON</span>.<span class="fn">stringify</span>({ <span class="var">nombre</span>: <span class="str">"Ana"</span> })<br>
+    };<br><br>
+    <span class="cm">// Leer headers de la respuesta</span><br>
+    <span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="var">url</span>, <span class="var">opciones</span>);<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>.headers.<span class="fn">get</span>(<span class="str">"content-type"</span>));<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">r</span>.status, <span class="var">r</span>.statusText);
+  </div>
+  <div class="highlight mt20"><code>Content-Type: application/json</code> es <span class="js-yellow">obligatorio</span> en POST/PUT/PATCH cuando se envía JSON en el cuerpo.</div>
+</div>
+
+<!-- SLIDE 25 – FETCH COMPLETO: EL PATRÓN -->
+<div class="slide code-bg">
+  <span class="section-label">Bloque 4 · Patrón completo</span>
+  <h2>El Patrón Completo de Fetch</h2>
+  <div class="code-block sm">
+    <span class="cm">// Función genérica reutilizable para cualquier método</span><br>
+    <span class="kw">async function</span> <span class="fn">solicitud</span>(<span class="var">url</span>, <span class="var">metodo</span> = <span class="str">"GET"</span>, <span class="var">datos</span> = <span class="kw">null</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">opciones</span> = {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;method:  <span class="var">metodo</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> }<br>
+    &nbsp;&nbsp;};<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">datos</span>) <span class="var">opciones</span>.body = <span class="fn">JSON</span>.<span class="fn">stringify</span>(<span class="var">datos</span>);<br><br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="var">url</span>, <span class="var">opciones</span>);<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">r</span>.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP ${<span class="var">r</span>.status}: ${<span class="var">r</span>.statusText}`</span>);<br>
+    &nbsp;&nbsp;<span class="kw">return</span> <span class="var">r</span>.status <span class="op">===</span> <span class="num">204</span> ? <span class="kw">null</span> : <span class="var">r</span>.<span class="fn">json</span>();<br>
+    }<br><br>
+    <span class="cm">// Usar la función genérica</span><br>
+    <span class="kw">const</span> <span class="var">BASE</span> = <span class="str">"https://jsonplaceholder.typicode.com"</span>;<br>
+    <span class="kw">const</span> <span class="var">usuarios</span> = <span class="kw">await</span> <span class="fn">solicitud</span>(<span class="str">`${<span class="var">BASE</span>}/users`</span>);<br>
+    <span class="kw">const</span> <span class="var">nuevo</span>    = <span class="kw">await</span> <span class="fn">solicitud</span>(<span class="str">`${<span class="var">BASE</span>}/posts`</span>, <span class="str">"POST"</span>, { <span class="var">title</span>: <span class="str">"Test"</span> });<br>
+    <span class="kw">await</span>             <span class="fn">solicitud</span>(<span class="str">`${<span class="var">BASE</span>}/posts/1`</span>, <span class="str">"DELETE"</span>);
+  </div>
+</div>
+
+<!-- SLIDE 26 – LIVE CODING FETCH -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📡</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>CRUD con Fetch</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ GET: obtener lista de usuarios de JSONPlaceholder</li>
+        <li>2️⃣ POST: crear un nuevo post con JSON.stringify</li>
+        <li>3️⃣ PUT: actualizar el post creado</li>
+        <li>4️⃣ DELETE: eliminar el post y verificar 200</li>
+        <li>5️⃣ Mostrar resultados en el DOM dinámicamente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – EJERCICIO 2: GET -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📋</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Consumir<br>una API con GET</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Usando <code>jsonplaceholder.typicode.com</code>:<br>
+        ✅ GET <code>/users</code> → mostrar nombres y emails en consola<br>
+        ✅ GET <code>/posts?userId=1</code> → mostrar posts del usuario 1<br>
+        ✅ Verificar <code>response.ok</code> y manejar errores<br>
+        ⭐ Extra: mostrar los datos en el DOM con una lista HTML
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28 – EJERCICIO 3: POST -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">✏️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Crear<br>Recursos con POST</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Formulario HTML con título y contenido:<br>
+        ✅ Capturar el evento <code>submit</code> con <code>preventDefault()</code><br>
+        ✅ Construir el objeto de datos desde los campos del form<br>
+        ✅ Enviar POST a <code>/posts</code> con headers correctos<br>
+        ✅ Mostrar el ID del recurso creado en la respuesta
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – EJERCICIO 4: CRUD COMPLETO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 4 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🗂️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: CRUD<br>Completo</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Usando <code>/posts</code> de JSONPlaceholder:<br>
+        ✅ <strong>GET</strong>: listar posts del usuario 1<br>
+        ✅ <strong>POST</strong>: crear nuevo post desde un formulario<br>
+        ✅ <strong>PUT</strong>: actualizar el título del post 1<br>
+        ✅ <strong>DELETE</strong>: eliminar el post 1 y confirmar<br>
+        ✅ Toda la lógica dentro de funciones <code>async</code> con <code>try/catch</code>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>⏳ Asincronía</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>JavaScript es single-thread — asincronía para no bloquear</li>
+        <li>Call Stack, Web APIs, Callback Queue, Event Loop</li>
+        <li>setTimeout y setInterval · clearTimeout · clearInterval</li>
+        <li>Callbacks y Callback Hell</li>
+        <li>Promesas: pending · fulfilled · rejected</li>
+        <li>.then()/.catch()/.finally() y async/await</li>
+        <li>Promise.all · Promise.allSettled · Promise.race</li>
+        <li>Manejo de errores con try/catch y response.ok</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📡 Fetch API y REST</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Qué es una API REST y cómo se usa</li>
+        <li>Métodos HTTP: GET · POST · PUT · PATCH · DELETE</li>
+        <li>Códigos de estado: 2xx · 4xx · 5xx</li>
+        <li>fetch() GET para obtener datos</li>
+        <li>fetch() POST con body y headers JSON</li>
+        <li>fetch() PUT y DELETE</li>
+        <li>Content-Type y Authorization headers</li>
+        <li>Patrón genérico reutilizable para cualquier petición</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 31 – CIERRE -->
+<div class="slide async-bg">
+  <div style="font-size:5.5rem;font-family:'Courier New',monospace;font-weight:900;" class="float glow">async</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya podés conectar tu aplicación JavaScript con cualquier API REST del mundo.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Event Loop ✅</span>
+    <span class="pill">Promesas ✅</span>
+    <span class="pill">async/await ✅</span>
+    <span class="pill">Fetch ✅</span>
+    <span class="pill">REST ✅</span>
+    <span class="pill gold">CRUD ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Node.js y Express</span> — crear tu propio servidor y API REST.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active'); slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle  = document.getElementById('ring-circle');
+  const display = document.getElementById('timer-display');
+  const msg     = document.getElementById('timer-msg');
+  const CIRCUMF = 2 * Math.PI * 80;
+  circle.style.strokeDasharray = CIRCUMF; circle.style.strokeDashoffset = 0;
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS*.5 ? '#1e1e1e' : remaining > TOTAL_SECS*.2 ? '#e67e22' : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return; running = true; msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); running = false; msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.'; return; }
+      remaining--; updateRing();
+    }, 1000);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
