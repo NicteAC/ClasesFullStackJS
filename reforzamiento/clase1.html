@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reforzamiento · Fundamentos Front-End – Módulo 2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg    { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg      { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg    { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg  { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg   { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.html-bg    { background:linear-gradient(135deg,#b34700 0%,#e05206 100%); }
+  .slide.css-bg     { background:linear-gradient(135deg,#1565c0 0%,#0277bd 100%); }
+  .slide.bs-bg      { background:linear-gradient(135deg,#4a148c 0%,#7b1fa2 100%); }
+  .slide.jq-bg      { background:linear-gradient(135deg,#006064 0%,#00838f 100%); }
+  .slide.git-bg     { background:linear-gradient(135deg,#1b1f23 0%,#2d333b 100%); }
+  .slide.integrador-bg { background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.check-bg   { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.5rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.7rem; }
+  h2 { font-size:2.1rem; text-align:center; margin-bottom:22px; }
+  h3 { font-size:1.4rem; margin-bottom:10px; }
+  p, li { font-size:1.12rem; line-height:1.8; }
+  .subtitle { font-size:1.2rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 22px; font-family:'Courier New',monospace; font-size:.95rem; line-height:1.8; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.82rem; line-height:1.65; }
+  .kw   { color:#ff7b72; } .fn  { color:#d2a8ff; } .str { color:#a8ff78; }
+  .num  { color:#79c0ff; } .cm  { color:#8b949e; } .op  { color:#f0883e; }
+  .var  { color:#ffa657; } .tag { color:#f0883e; } .attr { color:#79c0ff; }
+  .prop { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:22px 20px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); box-shadow:0 15px 40px rgba(0,0,0,0.3); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:4px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:13px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:16px 12px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.88rem; color:var(--accent); margin-bottom:4px; }
+  .step p  { font-size:.82rem; opacity:.9; line-height:1.45; }
+
+  .emoji-big { font-size:5.5rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:13px 22px; margin-top:13px; font-size:1.08rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 13px; font-size:.86rem; margin:3px; }
+  .pill.gold  { background:rgba(247,223,30,0.2);  border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2);   border-color:#4CAF50; color:#a8ff78; }
+  .pill.red   { background:rgba(244,67,54,0.2);   border-color:#f44336; color:#ffab91; }
+  .pill.blue  { background:rgba(33,150,243,0.2);  border-color:#2196f3; color:#90caf9; }
+
+  /* AE badge */
+  .ae-badge { display:inline-flex; align-items:center; background:rgba(247,223,30,0.2); border:2px solid var(--js-yellow); border-radius:30px; padding:6px 18px; font-size:.95rem; font-weight:700; color:var(--js-yellow); margin-bottom:16px; }
+
+  /* check questions */
+  .check-item { display:flex; align-items:flex-start; gap:14px; background:var(--card-bg); border-radius:14px; padding:14px 18px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.15); }
+  .check-num { min-width:34px; height:34px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.95rem; }
+  .check-item p { font-size:1.05rem; }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.9rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:.97rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* ── BREAK TIMER 15 min ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:14px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card  { animation:fadeUp .5s ease both; }
+  .slide.active .step  { animation:fadeUp .5s ease both; }
+  .slide.active h2     { animation:fadeUp .4s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 36</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- ══ SLIDE 1 – PORTADA ══ -->
+<div class="slide active js-bg">
+  <div style="font-size:4.5rem;font-weight:900;color:var(--js-yellow);" class="float">{'</>'}  </div>
+  <h1 class="mt20">Reforzamiento<br><span class="js-yellow glow">Fundamentos Front-End</span></h1>
+  <p class="subtitle mt20">Módulo 2 · MB00162 · Clase de Repaso Integral</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">HTML5</span><span class="pill">CSS3</span>
+    <span class="pill">Bootstrap</span><span class="pill">JavaScript</span>
+    <span class="pill">jQuery</span><span class="pill gold">Git / GitHub</span>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 – CRONOGRAMA ══ -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#e05206"></div><div class="sched-time">0:00 – 0:45</div><div class="sched-label">🌐 <strong>Bloque 1</strong> · AE1: Front-End/Back-End/Fullstack · AE2: HTML5</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#0277bd"></div><div class="sched-time">0:45 – 1:20</div><div class="sched-label">🎨 <strong>Bloque 2</strong> · AE3: CSS y Responsividad · AE4: Bootstrap</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:35</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 15 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#00838f"></div><div class="sched-time">1:35 – 2:30</div><div class="sched-label">⚡ <strong>Bloque 3</strong> · AE5: JavaScript · AE6: jQuery y Plugins</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#555"></div><div class="sched-time">2:30 – 4:00</div><div class="sched-label">🌿 <strong>Bloque 4</strong> · AE7: Git y GitHub · Ejercicio Integrador</div></div>
+  </div>
+  <div class="highlight mt20">Clase de <span class="js-yellow">reforzamiento</span>: repasamos conceptos clave, resolvemos dudas y practicamos con ejemplos reales.</div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- BLOQUE 1: AE1 + AE2             -->
+<!-- ════════════════════════════════ -->
+
+<!-- SLIDE 3 – AE1: FRONT / BACK / FULL -->
+<div class="slide html-bg">
+  <span class="section-label">Bloque 1 · AE1</span>
+  <div class="ae-badge">AE1 · Desarrollo Web: Front-End, Back-End y Fullstack</div>
+  <div class="grid-3">
+    <div class="card">
+      <h3>🖥️ Front-End</h3>
+      <p>Lo que el usuario <span class="accent">ve e interactúa</span>. Corre en el navegador.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill">HTML</span><span class="pill">CSS</span><span class="pill">JavaScript</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚙️ Back-End</h3>
+      <p>La lógica del <span class="accent">servidor</span>. Procesa datos, maneja bases de datos.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill">Node.js</span><span class="pill">Python</span><span class="pill">PHP</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,.4);">
+      <h3 style="color:var(--js-yellow);">🔄 Fullstack</h3>
+      <p>Trabaja en <span class="accent">ambos lados</span>. Front-End + Back-End.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill gold">MERN</span><span class="pill gold">MEAN</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">El <span class="js-yellow">rol del navegador</span>: interpreta HTML, aplica CSS y ejecuta JavaScript. Es el entorno del Front-End.</div>
+</div>
+
+<!-- SLIDE 4 – AE2: HTML5 ESTRUCTURA -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · AE2</span>
+  <div class="ae-badge">AE2 · Estructura HTML5</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🏗️ Estructura base</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="tag">&lt;!DOCTYPE html&gt;</span><br>
+        <span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="str">"es"</span><span class="tag">&gt;</span><br>
+        <span class="tag">&lt;head&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;title&gt;</span>Mi página<span class="tag">&lt;/title&gt;</span><br>
+        <span class="tag">&lt;/head&gt;</span><br>
+        <span class="tag">&lt;body&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;header&gt;</span>...<span class="tag">&lt;/header&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;main&gt;</span>...<span class="tag">&lt;/main&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;footer&gt;</span>...<span class="tag">&lt;/footer&gt;</span><br>
+        <span class="tag">&lt;/body&gt;</span><br>
+        <span class="tag">&lt;/html&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏷️ Etiquetas semánticas HTML5</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><code>&lt;header&gt;</code> encabezado de página o sección</li>
+        <li><code>&lt;nav&gt;</code> menú de navegación</li>
+        <li><code>&lt;main&gt;</code> contenido principal único</li>
+        <li><code>&lt;section&gt;</code> sección temática</li>
+        <li><code>&lt;article&gt;</code> contenido autónomo</li>
+        <li><code>&lt;aside&gt;</code> contenido lateral</li>
+        <li><code>&lt;footer&gt;</code> pie de página</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5 – AE2: FORMULARIOS Y ASSETS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · AE2</span>
+  <div class="ae-badge">AE2 · Formularios y Assets</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📋 Formulario HTML5</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="str">"#"</span> <span class="attr">method</span>=<span class="str">"POST"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"text"</span> <span class="attr">name</span>=<span class="str">"nombre"</span> <span class="attr">required</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="str">"email"</span> <span class="attr">placeholder</span>=<span class="str">"Email"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;select</span> <span class="attr">name</span>=<span class="str">"ciudad"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="str">"scl"</span><span class="tag">&gt;</span>Santiago<span class="tag">&lt;/option&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;/select&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="str">"submit"</span><span class="tag">&gt;</span>Enviar<span class="tag">&lt;/button&gt;</span><br>
+        <span class="tag">&lt;/form&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📁 Rutas y Assets</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="cm">&lt;!-- Ruta relativa (recomendada) --&gt;</span><br>
+        <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="str">"img/foto.jpg"</span> <span class="attr">alt</span>=<span class="str">"foto"</span><span class="tag">&gt;</span><br>
+        <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span> <span class="attr">href</span>=<span class="str">"css/estilos.css"</span><span class="tag">&gt;</span><br><br>
+        <span class="cm">&lt;!-- Ruta absoluta --&gt;</span><br>
+        <span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="str">"https://sitio.com/img.jpg"</span><span class="tag">&gt;</span>
+      </div>
+      <p class="mt10" style="font-size:.95rem;opacity:.8;">Estructura recomendada: <code>img/</code> · <code>css/</code> · <code>js/</code></p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 – CHECK AE1 + AE2 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · AE1 y AE2</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>¿Cuál es la diferencia entre un desarrollador Front-End y uno Back-End?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Qué etiqueta semántica usarías para el menú de navegación de una página?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Cómo se estructura un formulario HTML con un campo de texto y un botón de envío?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Cuál es la diferencia entre una ruta relativa y una ruta absoluta para un asset?</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- BLOQUE 2: AE3 + AE4             -->
+<!-- ════════════════════════════════ -->
+
+<!-- SLIDE 7 – AE3: CSS FUNDAMENTOS -->
+<div class="slide css-bg">
+  <span class="section-label">Bloque 2 · AE3</span>
+  <div class="ae-badge">AE3 · CSS — Estilos y Responsividad</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🎨 Tipos de estilos</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:8px;">
+        <span class="cm">&lt;!-- Inline (menor peso) --&gt;</span><br>
+        <span class="tag">&lt;p</span> <span class="attr">style</span>=<span class="str">"color:red"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/p&gt;</span><br><br>
+        <span class="cm">&lt;!-- Embebido --&gt;</span><br>
+        <span class="tag">&lt;style&gt;</span> p { color: red; } <span class="tag">&lt;/style&gt;</span><br><br>
+        <span class="cm">&lt;!-- Externo (recomendado) --&gt;</span><br>
+        <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span> <span class="attr">href</span>=<span class="str">"estilos.css"</span><span class="tag">&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Selectores y Box Model</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:8px;">
+        <span class="cm">/* Por etiqueta, clase, ID */</span><br>
+        p { color: blue; }<br>
+        .titulo { font-size: 2rem; }<br>
+        #logo { width: 100px; }<br><br>
+        <span class="cm">/* Box Model */</span><br>
+        .caja {<br>
+        &nbsp;&nbsp;margin: 20px;     <span class="cm">/* espacio exterior */</span><br>
+        &nbsp;&nbsp;padding: 10px;    <span class="cm">/* espacio interior */</span><br>
+        &nbsp;&nbsp;border: 1px solid #000;<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8 – AE3: RESPONSIVIDAD -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · AE3</span>
+  <div class="ae-badge">AE3 · Responsividad y Media Queries</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📱 Mobile First</h3>
+      <p>Diseñar primero para <span class="accent">pantallas pequeñas</span> y luego agregar estilos para pantallas más grandes con <code>min-width</code>.</p>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="cm">/* Base: móvil */</span><br>
+        .contenedor { width: 100%; }<br><br>
+        <span class="cm">/* Tablet → 768px o más */</span><br>
+        @media (min-width: 768px) {<br>
+        &nbsp;&nbsp;.contenedor { width: 750px; }<br>
+        }<br><br>
+        <span class="cm">/* Desktop → 1024px o más */</span><br>
+        @media (min-width: 1024px) {<br>
+        &nbsp;&nbsp;.contenedor { width: 960px; }<br>
+        }
+      </div>
+    </div>
+    <div class="card">
+      <h3>🖥️ Breakpoints comunes</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;font-size:.95rem;">📱 <strong>Móvil</strong> — menos de 576px</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;font-size:.95rem;">📟 <strong>Tablet</strong> — 576px a 768px</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;font-size:.95rem;">💻 <strong>Laptop</strong> — 768px a 1024px</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;font-size:.95rem;">🖥️ <strong>Desktop</strong> — más de 1024px</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9 – AE4: BOOTSTRAP -->
+<div class="slide bs-bg">
+  <span class="section-label">Bloque 2 · AE4</span>
+  <div class="ae-badge">AE4 · Bootstrap</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📦 Incluir Bootstrap</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:8px;">
+        <span class="cm">&lt;!-- CSS en &lt;head&gt; --&gt;</span><br>
+        <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span><br>
+        &nbsp;<span class="attr">href</span>=<span class="str">"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"</span><span class="tag">&gt;</span><br><br>
+        <span class="cm">&lt;!-- JS al final del body --&gt;</span><br>
+        <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏗️ Sistema de Grilla</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:8px;">
+        <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"container"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"row"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"col-12 col-md-6 col-lg-4"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Columna<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;/div&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;/div&gt;</span><br>
+        <span class="tag">&lt;/div&gt;</span>
+      </div>
+      <p class="mt10" style="font-size:.9rem;opacity:.8;">12 columnas · <code>col-</code> móvil · <code>col-md-</code> tablet · <code>col-lg-</code> desktop</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – AE4: BOOTSTRAP COMPONENTES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · AE4</span>
+  <div class="ae-badge">AE4 · Componentes Bootstrap</div>
+  <div class="code-block sm">
+    <span class="cm">&lt;!-- Navbar --&gt;</span><br>
+    <span class="tag">&lt;nav</span> <span class="attr">class</span>=<span class="str">"navbar navbar-expand-lg navbar-dark bg-dark"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/nav&gt;</span><br><br>
+    <span class="cm">&lt;!-- Jumbotron / Hero --&gt;</span><br>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"p-5 bg-primary text-white text-center"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;h1</span> <span class="attr">class</span>=<span class="str">"display-4"</span><span class="tag">&gt;</span>Título Hero<span class="tag">&lt;/h1&gt;</span><br>
+    <span class="tag">&lt;/div&gt;</span><br><br>
+    <span class="cm">&lt;!-- Botones --&gt;</span><br>
+    <span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="str">"btn btn-primary"</span><span class="tag">&gt;</span>Primario<span class="tag">&lt;/button&gt;</span><br>
+    <span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="str">"btn btn-outline-danger"</span><span class="tag">&gt;</span>Peligro<span class="tag">&lt;/button&gt;</span><br><br>
+    <span class="cm">&lt;!-- Alertas --&gt;</span><br>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"alert alert-success"</span><span class="tag">&gt;</span>¡Éxito!<span class="tag">&lt;/div&gt;</span><br>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"alert alert-warning"</span><span class="tag">&gt;</span>¡Atención!<span class="tag">&lt;/div&gt;</span>
+  </div>
+</div>
+
+<!-- SLIDE 11 – CHECK AE3 + AE4 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · AE3 y AE4</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>¿Cuál es el orden de prioridad (especificidad) entre estilos inline, embebidos y externos?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Qué significa Mobile First y cómo se aplica con media queries?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Cómo se estructura una grilla de 3 columnas iguales en Bootstrap que en móvil sea 1 columna?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Qué clases Bootstrap usarías para un botón azul primario y una alerta de éxito?</p></div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 – DESCANSO 15 MIN ══ -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg"   cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">15:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- BLOQUE 3: AE5 + AE6             -->
+<!-- ════════════════════════════════ -->
+
+<!-- SLIDE 13 – AE5: JS FUNDAMENTOS -->
+<div class="slide js-bg">
+  <span class="section-label">Bloque 3 · AE5</span>
+  <div class="ae-badge">AE5 · JavaScript Básico</div>
+  <div class="code-block sm">
+    <span class="cm">// Variables y tipos</span><br>
+    <span class="kw">let</span>   <span class="var">nombre</span> = <span class="str">"Ana"</span>;   <span class="cm">// string</span><br>
+    <span class="kw">const</span> <span class="var">edad</span>   = <span class="num">25</span>;      <span class="cm">// number</span><br>
+    <span class="kw">let</span>   <span class="var">activo</span> = <span class="kw">true</span>;   <span class="cm">// boolean</span><br><br>
+    <span class="cm">// Expresiones aritméticas</span><br>
+    <span class="kw">let</span> <span class="var">suma</span>  = <span class="num">5</span> + <span class="num">3</span>;            <span class="cm">// 8</span><br>
+    <span class="kw">let</span> <span class="var">resto</span> = <span class="num">10</span> <span class="op">%</span> <span class="num">3</span>;           <span class="cm">// 1 (módulo)</span><br><br>
+    <span class="cm">// Sentencias condicionales</span><br>
+    <span class="kw">if</span> (<span class="var">edad</span> <span class="op">&gt;=</span> <span class="num">18</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Mayor de edad"</span>);<br>
+    } <span class="kw">else</span> {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Menor de edad"</span>);<br>
+    }<br><br>
+    <span class="cm">// Función</span><br>
+    <span class="kw">function</span> <span class="fn">saludar</span>(<span class="var">n</span>) { <span class="kw">return</span> <span class="str">`Hola, ${<span class="var">n</span>}!`</span>; }
+  </div>
+</div>
+
+<!-- SLIDE 14 – AE5: DOM Y EVENTOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · AE5</span>
+  <div class="ae-badge">AE5 · DOM y Eventos onclick / onchange</div>
+  <div class="code-block sm">
+    <span class="cm">// Seleccionar elementos del DOM</span><br>
+    <span class="kw">const</span> <span class="var">titulo</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"titulo"</span>);<br>
+    <span class="kw">const</span> <span class="var">items</span>  = <span class="var">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">".item"</span>);<br><br>
+    <span class="cm">// Obtener y modificar valores</span><br>
+    <span class="var">titulo</span>.textContent = <span class="str">"Nuevo título"</span>;<br>
+    <span class="kw">const</span> <span class="var">valor</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"miInput"</span>).value;<br><br>
+    <span class="cm">// Evento onclick</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"btn"</span>).<span class="fn">addEventListener</span>(<span class="str">"click"</span>, <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;<span class="fn">alert</span>(<span class="str">"¡Botón clickeado!"</span>);<br>
+    });<br><br>
+    <span class="cm">// Evento onchange en un select</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"select"</span>).<span class="fn">addEventListener</span>(<span class="str">"change"</span>, <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Opción seleccionada:"</span>, <span class="kw">this</span>.value);<br>
+    });
+  </div>
+</div>
+
+<!-- SLIDE 15 – AE5: CONSOLA Y DEPURACIÓN -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · AE5</span>
+  <div class="ae-badge">AE5 · Consola JavaScript</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🖨️ Métodos de consola</h3>
+      <div class="code-block" style="font-size:.85rem;margin-top:10px;">
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Mensaje normal"</span>);<br>
+        <span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">"Advertencia"</span>);<br>
+        <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error crítico"</span>);<br>
+        <span class="fn">console</span>.<span class="fn">table</span>([{<span class="prop">nombre</span>:<span class="str">"Ana"</span>}]);
+      </div>
+    </div>
+    <div class="card">
+      <h3>🐛 Depurar con DevTools</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Abrir con <span class="accent">F12</span> o Ctrl+Shift+I</li>
+        <li>Pestaña <span class="accent">Console</span>: ver errores y logs</li>
+        <li>Pestaña <span class="accent">Sources</span>: poner breakpoints</li>
+        <li><code>debugger;</code> pausa la ejecución</li>
+        <li>Revisar el mensaje de error: nombre del archivo y número de línea</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16 – AE6: JQUERY -->
+<div class="slide jq-bg">
+  <span class="section-label">Bloque 3 · AE6</span>
+  <div class="ae-badge">AE6 · jQuery — DOM y Eventos</div>
+  <div class="code-block sm">
+    <span class="cm">&lt;!-- Incluir jQuery --&gt;</span><br>
+    <span class="cm">&lt;script src="https://code.jquery.com/jquery-3.6.0.min.js"&gt;&lt;/script&gt;</span><br><br>
+    <span class="cm">// Selector y manipulación del DOM</span><br>
+    $(<span class="str">"#titulo"</span>).text(<span class="str">"Nuevo título"</span>);<br>
+    $(<span class="str">".card"</span>).css(<span class="str">"background"</span>, <span class="str">"#f5f5f5"</span>);<br>
+    $(<span class="str">"p"</span>).addClass(<span class="str">"activo"</span>);<br><br>
+    <span class="cm">// Efectos</span><br>
+    $(<span class="str">"#menu"</span>).hide();<br>
+    $(<span class="str">"#menu"</span>).show();<br>
+    $(<span class="str">"#caja"</span>).fadeIn(<span class="num">500</span>);<br>
+    $(<span class="str">"#panel"</span>).slideToggle();<br><br>
+    <span class="cm">// Eventos</span><br>
+    $(<span class="str">"#btn"</span>).on(<span class="str">"click"</span>, <span class="kw">function</span>() {<br>
+    &nbsp;&nbsp;$(<span class="str">"#resultado"</span>).text(<span class="str">"¡Hecho!"</span>);<br>
+    });<br><br>
+    <span class="cm">// Obtener valor de input</span><br>
+    <span class="kw">const</span> <span class="var">val</span> = $(<span class="str">"#miInput"</span>).val();<br>
+    $(<span class="str">"#miInput"</span>).val(<span class="str">""</span>); <span class="cm">// vaciar input</span>
+  </div>
+</div>
+
+<!-- SLIDE 17 – AE6: PLUGINS BOOTSTRAP-JQUERY -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · AE6</span>
+  <div class="ae-badge">AE6 · Plugins Bootstrap-jQuery</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🎠 Carrusel Bootstrap</h3>
+      <div class="code-block" style="font-size:.78rem;margin-top:8px;">
+        <span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"miCarrusel"</span> <span class="attr">class</span>=<span class="str">"carousel slide"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">data-bs-ride</span>=<span class="str">"carousel"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"carousel-inner"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"carousel-item active"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="str">"img1.jpg"</span> <span class="attr">class</span>=<span class="str">"d-block w-100"</span><span class="tag">&gt;</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;/div&gt;</span><br>
+        &nbsp;&nbsp;<span class="tag">&lt;/div&gt;</span><br>
+        <span class="tag">&lt;/div&gt;</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>💡 ¿Qué es un Plugin?</h3>
+      <p style="font-size:1rem;">Extensión que agrega funcionalidad predefinida. Bootstrap incluye plugins JS para:</p>
+      <ul class="list-clean" style="font-size:.95rem;margin-top:8px;">
+        <li>Carrusel de imágenes (<code>carousel</code>)</li>
+        <li>Modal / ventana emergente (<code>modal</code>)</li>
+        <li>Menú colapsable (<code>collapse</code>)</li>
+        <li>Tooltips y Popovers</li>
+        <li>Acordeón (<code>accordion</code>)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18 – CHECK AE5 + AE6 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · AE5 y AE6</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>¿Cuál es la diferencia entre <code>getElementById()</code> y <code>querySelector()</code>?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Cómo capturás el valor de un input con JavaScript puro? ¿Y con jQuery?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Qué hace <code>$('#btn').on('click', function(){})</code>?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Para qué sirve un plugin Bootstrap-jQuery como el carrusel?</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- BLOQUE 4: AE7 + INTEGRADOR      -->
+<!-- ════════════════════════════════ -->
+
+<!-- SLIDE 19 – AE7: GIT FUNDAMENTOS -->
+<div class="slide git-bg">
+  <span class="section-label">Bloque 4 · AE7</span>
+  <div class="ae-badge">AE7 · Git — Fundamentos</div>
+  <div class="steps">
+    <div class="step"><div class="step-num" style="font-size:.75rem;">init</div><h3>git init</h3><p>Inicializar un repositorio local en la carpeta del proyecto.</p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">add</div><h3>git add .</h3><p>Agregar todos los cambios al área de staging.</p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">commit</div><h3>git commit</h3><p>Guardar los cambios con un mensaje descriptivo.</p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">push</div><h3>git push</h3><p>Subir los commits al repositorio remoto (GitHub).</p></div>
+    <div class="step"><div class="step-num" style="font-size:.75rem;">pull</div><h3>git pull</h3><p>Descargar y fusionar cambios del repositorio remoto.</p></div>
+  </div>
+  <div class="code-block mt20" style="max-width:950px;font-size:.88rem;">
+    git init &nbsp;&nbsp;·&nbsp;&nbsp; git add . &nbsp;&nbsp;·&nbsp;&nbsp; git commit -m <span class="str">"mensaje"</span> &nbsp;&nbsp;·&nbsp;&nbsp; git push origin main
+  </div>
+</div>
+
+<!-- SLIDE 20 – AE7: RAMAS Y GITHUB -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · AE7</span>
+  <div class="ae-badge">AE7 · Ramas y GitHub</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🌿 Trabajo con ramas</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="cm"># Ver ramas existentes</span><br>
+        git branch<br><br>
+        <span class="cm"># Crear y cambiar a nueva rama</span><br>
+        git checkout -b feature/nueva<br><br>
+        <span class="cm"># Fusionar rama en main</span><br>
+        git checkout main<br>
+        git merge feature/nueva<br><br>
+        <span class="cm"># Resolver conflictos: editar archivo,</span><br>
+        <span class="cm"># luego git add . y git commit</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🐙 GitHub</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><span class="accent">Repositorio remoto</span>: copia del repo en la nube</li>
+        <li><code>git clone URL</code>: clonar un repositorio</li>
+        <li><code>git fetch</code>: descargar sin fusionar</li>
+        <li><span class="accent">Pull Request</span>: propuesta de cambios para revisión</li>
+        <li><code>README.md</code>: documentación en Markdown</li>
+        <li><span class="accent">Flujo sugerido</span>: branch → commit → push → PR → merge</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 21 – AE7: COMANDOS CLAVE -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · AE7</span>
+  <div class="ae-badge">AE7 · Comandos Git Esenciales</div>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📋 Configuración y estado</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="cm"># Configurar identidad (primera vez)</span><br>
+        git config --global user.name <span class="str">"Tu Nombre"</span><br>
+        git config --global user.email <span class="str">"email@ejemplo.com"</span><br><br>
+        <span class="cm"># Ver estado del repositorio</span><br>
+        git status<br><br>
+        <span class="cm"># Ver historial de commits</span><br>
+        git log --oneline
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 Stash e ignorar archivos</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="cm"># Guardar cambios temporalmente</span><br>
+        git stash<br>
+        git stash pop  <span class="cm"># recuperar</span><br><br>
+        <span class="cm"># .gitignore: archivos que NO se suben</span><br>
+        node_modules/<br>
+        .env<br>
+        *.log
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 22 – CHECK AE7 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · AE7</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>¿Cuál es la diferencia entre <code>git fetch</code> y <code>git pull</code>?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Para qué sirve crear una rama (<code>branch</code>) en lugar de trabajar directo en <code>main</code>?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Cuál es el flujo correcto para subir un cambio a GitHub?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Qué es un Pull Request y para qué sirve en trabajo colaborativo?</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ -->
+<!-- EJERCICIO INTEGRADOR            -->
+<!-- ════════════════════════════════ -->
+
+<!-- SLIDE 23 – EJERCICIO INTEGRADOR -->
+<div class="slide integrador-bg">
+  <span class="section-label">Ejercicio Integrador · 60 min</span>
+  <div class="emoji-big float">🛠️</div>
+  <h1 class="sm mt20">Ejercicio Integrador:<br>Página de Perfil</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.95;">
+        <li>1️⃣ <strong>HTML5</strong>: estructura semántica con header, main, footer y formulario</li>
+        <li>2️⃣ <strong>CSS + Media Queries</strong>: estilos propios + 1 breakpoint responsive</li>
+        <li>3️⃣ <strong>Bootstrap</strong>: grilla de 2 columnas + navbar + 1 componente</li>
+        <li>4️⃣ <strong>JavaScript</strong>: botón que muestra un saludo usando el valor del input</li>
+        <li>5️⃣ <strong>jQuery</strong>: ocultar/mostrar sección con <code>fadeToggle()</code></li>
+        <li>6️⃣ <strong>Git</strong>: inicializar repo → add → commit → subir a GitHub</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – CÓDIGO INICIO INTEGRADOR -->
+<div class="slide dark-bg">
+  <span class="section-label">Ejercicio Integrador · Base HTML</span>
+  <h2>Estructura Base para Comenzar</h2>
+  <div class="code-block sm">
+    <span class="tag">&lt;!DOCTYPE html&gt;</span><br>
+    <span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="str">"es"</span><span class="tag">&gt;</span><br>
+    <span class="tag">&lt;head&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="str">"viewport"</span> <span class="attr">content</span>=<span class="str">"width=device-width, initial-scale=1.0"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;title&gt;</span>Mi Perfil<span class="tag">&lt;/title&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span> <span class="attr">href</span>=<span class="str">"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="str">"stylesheet"</span> <span class="attr">href</span>=<span class="str">"css/estilos.css"</span><span class="tag">&gt;</span><br>
+    <span class="tag">&lt;/head&gt;</span><br>
+    <span class="tag">&lt;body&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;nav</span> <span class="attr">class</span>=<span class="str">"navbar navbar-dark bg-dark"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/nav&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;main</span> <span class="attr">class</span>=<span class="str">"container mt-4"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"row"</span><span class="tag">&gt;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"col-12 col-md-6"</span><span class="tag">&gt;</span><span class="cm">&lt;!-- contenido izq --&gt;</span><span class="tag">&lt;/div&gt;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"col-12 col-md-6"</span><span class="tag">&gt;</span><span class="cm">&lt;!-- contenido der --&gt;</span><span class="tag">&lt;/div&gt;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;/div&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;/main&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://code.jquery.com/jquery-3.6.0.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    &nbsp;&nbsp;<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="str">"js/app.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br>
+    <span class="tag">&lt;/body&gt;&lt;/html&gt;</span>
+  </div>
+</div>
+
+<!-- SLIDE 25 – RESUMEN FINAL -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>Resumen del Módulo 2</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>🌐 Front-End Base</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li><strong>AE1</strong>: Front-End, Back-End, Fullstack · Rol del navegador</li>
+        <li><strong>AE2</strong>: HTML5 semántico · Formularios · Rutas y assets</li>
+        <li><strong>AE3</strong>: CSS · Box Model · Media Queries · Mobile First</li>
+        <li><strong>AE4</strong>: Bootstrap · Grilla 12 col · Navbar · Componentes</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚡ Interactividad y Control</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li><strong>AE5</strong>: JS · Variables · Condicionales · DOM · Eventos</li>
+        <li><strong>AE6</strong>: jQuery · Selectores $ · Efectos · Plugins Bootstrap</li>
+        <li><strong>AE7</strong>: Git · Ramas · GitHub · Pull Requests · .gitignore</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">Competencia del módulo: <span class="js-yellow">implementar páginas web básicas responsivas</span> utilizando HTML, CSS y JavaScript.</div>
+</div>
+
+<!-- SLIDE 26 – CIERRE -->
+<div class="slide js-bg">
+  <div style="font-size:5rem;font-weight:900;color:var(--js-yellow);" class="float glow">{'</>'}</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Repasaron los 7 aprendizajes esperados del Módulo 2.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">AE1 ✅</span><span class="pill">AE2 ✅</span>
+    <span class="pill">AE3 ✅</span><span class="pill">AE4 ✅</span>
+    <span class="pill">AE5 ✅</span><span class="pill">AE6 ✅</span>
+    <span class="pill gold">AE7 ✅</span>
+  </div>
+  <div class="highlight mt20">¡Ahora a practicar! El ejercicio integrador queda como portafolio. 💼</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active'); slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER: 15 min ── */
+  const TOTAL_SECS = 15 * 60;
+  const circle  = document.getElementById('ring-circle');
+  const display = document.getElementById('timer-display');
+  const msg     = document.getElementById('timer-msg');
+  const CIRCUMF = 2 * Math.PI * 80;
+  circle.style.strokeDasharray = CIRCUMF; circle.style.strokeDashoffset = 0;
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS*.5 ? '#1e1e1e' : remaining > TOTAL_SECS*.2 ? '#e67e22' : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return; running = true; msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); running = false; msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.'; return; }
+      remaining--; updateRing();
+    }, 1000);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
