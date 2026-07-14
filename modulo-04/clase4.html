@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consumo de APIs con JavaScript – AE5.1 / AE5.2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg    { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.js-bg      { background:linear-gradient(135deg,#323330 0%,#1a1900 100%); }
+  .slide.code-bg    { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg  { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg   { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.api-bg     { background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); }
+  .slide.browser-bg { background:linear-gradient(135deg,#1565c0 0%,#0277bd 100%); }
+  .slide.weather-bg { background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.error-bg   { background:linear-gradient(135deg,#4a0e0e 0%,#7b1f1f 100%); }
+  .slide.challenge-bg { background:linear-gradient(135deg,#880e4f 0%,#c62828 100%); }
+  .slide.key-bg     { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.5rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.7rem; }
+  h2 { font-size:2.1rem; text-align:center; margin-bottom:22px; }
+  h3 { font-size:1.4rem; margin-bottom:10px; }
+  p, li { font-size:1.12rem; line-height:1.8; }
+  .subtitle { font-size:1.2rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 22px; font-family:'Courier New',monospace; font-size:.95rem; line-height:1.8; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.82rem; line-height:1.65; }
+  .kw  { color:#ff7b72; } .fn  { color:#d2a8ff; } .str { color:#a8ff78; }
+  .num { color:#79c0ff; } .cm  { color:#8b949e; } .op  { color:#f0883e; }
+  .var { color:#ffa657; } .tag { color:#f0883e; } .attr { color:#79c0ff; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:22px 20px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:4px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:13px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:16px 12px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.88rem; color:var(--accent); margin-bottom:4px; }
+  .step p  { font-size:.82rem; opacity:.9; line-height:1.45; }
+
+  .emoji-big { font-size:5.5rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:13px 22px; margin-top:13px; font-size:1.08rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 13px; font-size:.86rem; margin:3px; }
+  .pill.gold  { background:rgba(247,223,30,0.2);  border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2);   border-color:#4CAF50; color:#a8ff78; }
+  .pill.red   { background:rgba(244,67,54,0.2);   border-color:#f44336; color:#ffab91; }
+
+  table { width:100%; max-width:1100px; border-collapse:collapse; font-size:1rem; }
+  th { background:rgba(102,126,234,0.55); padding:11px 15px; text-align:left; }
+  td { padding:9px 15px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:.95rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .status-row { display:flex; align-items:center; gap:14px; padding:10px 16px; border-radius:12px; margin-bottom:8px; background:var(--card-bg); }
+  .status-code { font-family:'Courier New',monospace; font-weight:800; font-size:1.1rem; min-width:48px; }
+  .s2 { color:#a8ff78; } .s4 { color:#ffcc80; } .s5 { color:#ffab91; }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.9rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:.97rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  /* KEY STEPS */
+  .key-step { display:flex; align-items:flex-start; gap:16px; background:var(--card-bg); border-radius:14px; padding:14px 18px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.15); }
+  .key-num { min-width:36px; height:36px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-weight:800; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+  .key-step p { font-size:1.05rem; }
+
+  /* ── BREAK TIMER 30 min ── */
+  .timer-ring { position:relative; width:180px; height:180px; margin:14px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.6rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; }
+  #timer-label   { font-size:1.1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.5rem; font-weight:700; color:var(--dark); margin-top:6px; min-height:2rem; text-align:center; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card { animation:fadeUp .5s ease both; }
+  .slide.active .step { animation:fadeUp .5s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 32</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- SLIDE 1 – PORTADA -->
+<div class="slide active api-bg">
+  <div style="font-size:5rem;font-weight:900;color:var(--js-yellow);" class="float">API</div>
+  <h1 class="mt20">Consumo de APIs<br><span class="js-yellow glow">con JavaScript</span></h1>
+  <p class="subtitle mt20">AE5.1 · AE5.2 · Programación Avanzada en JavaScript V2</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">XHR</span><span class="pill">Fetch API</span>
+    <span class="pill">APIs del Browser</span><span class="pill">APIs de Terceros</span>
+    <span class="pill gold">OpenWeather</span>
+  </div>
+</div>
+
+<!-- SLIDE 2 – CRONOGRAMA -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#2c5364"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">🌐 <strong>Bloque 1</strong> · ¿Qué es una API? · AJAX · XHR vs Fetch · APIs del Browser</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#2c5364"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">📡 <strong>Bloque 2</strong> · Fetch + DOM · .then() y async/await · Ejercicio 1</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#283593"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">🔑 <strong>Bloque 3</strong> · APIs de terceros · API Keys · OpenWeather · Live Coding</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#7b1f1f"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">⚠️ <strong>Bloque 4</strong> · Status codes · Manejo de errores · Rate limiting · Ejercicios 2 y 3</div></div>
+  </div>
+</div>
+
+<!-- ═══ BLOQUE 1 ═══ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide api-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:20</span>
+  <div class="emoji-big float">🌐</div>
+  <h1 class="sm mt20">APIs en JavaScript</h1>
+  <p class="subtitle">¿Qué son? · Tipos · AJAX · XHR · Fetch</p>
+</div>
+
+<!-- SLIDE 4 – QUÉ ES UNA API -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · ¿Qué es una API?</span>
+  <h2>¿Qué es una API?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📋 Definición</h3>
+      <p><strong>A</strong>pplication <strong>P</strong>rogramming <strong>I</strong>nterface: conjunto de reglas que permite la <span class="accent">comunicación entre sistemas</span>.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">Permite acceder a funcionalidades o datos sin conocer los detalles internos de la implementación.</p>
+    </div>
+    <div class="card">
+      <h3>💡 Analogía</h3>
+      <p>Como el <span class="accent">menú de un restaurante</span>: no necesitás saber cómo se cocina el plato. Solo pedís lo que querés y te lo traen en el formato esperado.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">La cocina = el servidor. El menú = la API. El resultado = el JSON.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">En desarrollo web: el cliente pide datos → el servidor responde con <span class="js-yellow">JSON</span> → el cliente los muestra en pantalla.</div>
+</div>
+
+<!-- SLIDE 5 – TIPOS DE APIs -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Tipos de APIs</span>
+  <h2>Tipos de APIs en JavaScript</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th>Descripción</th><th>Ejemplos</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill">APIs del Browser</span></td><td>Integradas en el navegador. Sin instalación.</td><td>DOM, Fetch, Geolocation, Storage, Clipboard</td></tr>
+      <tr><td><span class="pill gold">APIs de Terceros</span></td><td>Servicios externos. Requieren registro y generalmente API Key.</td><td>OpenWeather, Google Maps, Stripe, GitHub</td></tr>
+      <tr><td><span class="pill" style="border-color:#4CAF50;color:#a8ff78;background:rgba(76,175,80,.2);">Librerías JS</span></td><td>Funciones reutilizables para una tarea específica.</td><td>jQuery, Lodash, Axios</td></tr>
+      <tr><td><span class="pill" style="border-color:#90caf9;color:#90caf9;background:rgba(33,150,243,.2);">Frameworks JS</span></td><td>Estructura completa para desarrollar aplicaciones.</td><td>React, Angular, Vue.js</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SLIDE 6 – AJAX Y COMUNICACIÓN -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · AJAX</span>
+  <h2>AJAX y la Comunicación Cliente-Servidor</h2>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h3>Cliente pide</h3><p>El navegador envía una solicitud HTTP al servidor con método GET, POST, etc.</p></div>
+    <div class="step"><div class="step-num">2</div><h3>Servidor procesa</h3><p>El servidor recibe la solicitud, consulta la base de datos y prepara la respuesta.</p></div>
+    <div class="step"><div class="step-num">3</div><h3>Respuesta JSON</h3><p>El servidor responde con datos en formato JSON (o XML). El cliente los recibe.</p></div>
+    <div class="step"><div class="step-num">4</div><h3>UI se actualiza</h3><p>JavaScript procesa el JSON y actualiza el DOM sin recargar la página.</p></div>
+  </div>
+  <div class="highlight mt20"><strong>AJAX</strong> (Asynchronous JavaScript and XML): técnica que permite actualizar partes de la página <span class="js-yellow">sin recargarla completa</span>. XHR y Fetch son las herramientas que lo implementan.</div>
+</div>
+
+<!-- SLIDE 7 – XHR VS FETCH -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · XHR vs Fetch</span>
+  <h2>XHR vs Fetch API</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📟 XHR — Forma tradicional</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="kw">const</span> <span class="var">xhr</span> = <span class="kw">new</span> <span class="fn">XMLHttpRequest</span>();<br>
+        <span class="var">xhr</span>.<span class="fn">open</span>(<span class="str">"GET"</span>, <span class="str">"https://api.example.com/data"</span>);<br>
+        <span class="var">xhr</span>.onload = <span class="kw">function</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">xhr</span>.status <span class="op">===</span> <span class="num">200</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">datos</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">xhr</span>.responseText);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">datos</span>);<br>
+        &nbsp;&nbsp;}<br>
+        };<br>
+        <span class="var">xhr</span>.onerror = () <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error"</span>);<br>
+        <span class="var">xhr</span>.<span class="fn">send</span>();
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(247,223,30,.4);">
+      <h3 style="color:var(--js-yellow);">✅ Fetch — Forma moderna</h3>
+      <div class="code-block" style="font-size:.8rem;margin-top:10px;">
+        <span class="fn">fetch</span>(<span class="str">"https://api.example.com/data"</span>)<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="var">r</span>.<span class="fn">json</span>())<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">datos</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">datos</span>))<br>
+        &nbsp;&nbsp;.<span class="fn">catch</span>(<span class="var">e</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>));<br><br>
+        <span class="cm">// O con async/await</span><br>
+        <span class="kw">async function</span> <span class="fn">obtener</span>() {<br>
+        &nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span>     = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"..."</span>);<br>
+        &nbsp;&nbsp;<span class="kw">const</span> <span class="var">datos</span> = <span class="kw">await</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">Usar <span class="js-yellow">Fetch</span> para código moderno con Promesas. XHR solo cuando se necesita compatibilidad con IE.</div>
+</div>
+
+<!-- SLIDE 8 – APIs DEL BROWSER -->
+<div class="slide browser-bg">
+  <span class="section-label">Bloque 1 · APIs del Browser</span>
+  <h2>APIs del Navegador</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📍 Geolocation API</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="var">navigator</span>.geolocation.<span class="fn">getCurrentPosition</span>(<br>
+        &nbsp;&nbsp;<span class="var">pos</span> <span class="op">=></span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> { <span class="var">latitude</span>, <span class="var">longitude</span> } = <span class="var">pos</span>.coords;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">latitude</span>, <span class="var">longitude</span>);<br>
+        &nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;<span class="var">err</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">err</span>.message)<br>
+        );
+      </div>
+    </div>
+    <div class="card">
+      <h3>💾 Web Storage API</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="cm">// localStorage — persiste entre sesiones</span><br>
+        <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">"clave"</span>, <span class="str">"valor"</span>);<br>
+        <span class="var">localStorage</span>.<span class="fn">getItem</span>(<span class="str">"clave"</span>);<br>
+        <span class="var">localStorage</span>.<span class="fn">removeItem</span>(<span class="str">"clave"</span>);<br><br>
+        <span class="cm">// sessionStorage — solo en la sesión actual</span><br>
+        <span class="var">sessionStorage</span>.<span class="fn">setItem</span>(<span class="str">"temp"</span>, <span class="str">"dato"</span>);
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9 – CLIPBOARD Y NOTIFICATIONS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · APIs del Browser</span>
+  <h2>Clipboard y Notifications API</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📋 Clipboard API</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="cm">// Copiar texto al portapapeles</span><br>
+        <span class="var">navigator</span>.clipboard.<span class="fn">writeText</span>(<span class="str">"Texto copiado"</span>)<br>
+        &nbsp;&nbsp;.<span class="fn">then</span>(() <span class="op">=></span> <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"✅ Copiado"</span>));<br><br>
+        <span class="cm">// Pegar texto del portapapeles</span><br>
+        <span class="kw">const</span> <span class="var">texto</span> = <span class="kw">await</span> <span class="var">navigator</span>.clipboard.<span class="fn">readText</span>();<br>
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">texto</span>);
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔔 Notifications API</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        <span class="cm">// Solicitar permiso primero</span><br>
+        <span class="kw">const</span> <span class="var">permiso</span> = <span class="kw">await</span> <span class="fn">Notification</span>.<span class="fn">requestPermission</span>();<br><br>
+        <span class="kw">if</span> (<span class="var">permiso</span> <span class="op">===</span> <span class="str">"granted"</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">new</span> <span class="fn">Notification</span>(<span class="str">"¡Hola!"</span>, {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;body: <span class="str">"Esto es una notificación"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;icon: <span class="str">"icono.png"</span><br>
+        &nbsp;&nbsp;});<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BLOQUE 2 ═══ -->
+
+<!-- SLIDE 10 – FETCH + DOM -->
+<div class="slide">
+  <span class="section-label">Bloque 2 · Fetch y DOM</span>
+  <h2>Fetch + DOM: Mostrar Datos en Pantalla</h2>
+  <div class="code-block sm">
+    <span class="cm">// Versión con .then()</span><br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"btnCargar"</span>).<span class="fn">addEventListener</span>(<span class="str">"click"</span>, () <span class="op">=></span> {<br>
+    &nbsp;&nbsp;<span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/users"</span>)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> { <span class="kw">if</span> (!<span class="var">r</span>.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="var">r</span>.status); <span class="kw">return</span> <span class="var">r</span>.<span class="fn">json</span>(); })<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">then</span>(<span class="var">users</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">lista</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"lista"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">lista</span>.innerHTML = <span class="str">""</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">users</span>.<span class="fn">forEach</span>(<span class="var">u</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">div</span> = <span class="var">document</span>.<span class="fn">createElement</span>(<span class="str">"div"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">div</span>.innerHTML = <span class="str">`&lt;h3&gt;${<span class="var">u</span>.name}&lt;/h3&gt;&lt;p&gt;${<span class="var">u</span>.email}&lt;/p&gt;`</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">lista</span>.<span class="fn">appendChild</span>(<span class="var">div</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;})<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">catch</span>(<span class="var">e</span> <span class="op">=></span> <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Error:"</span>, <span class="var">e</span>.message));<br>
+    });
+  </div>
+</div>
+
+<!-- SLIDE 11 – ASYNC/AWAIT VERSION -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 2 · async/await</span>
+  <h2>La Misma Función con async/await</h2>
+  <div class="code-block sm">
+    <span class="kw">async function</span> <span class="fn">cargarUsuarios</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">lista</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"lista"</span>);<br>
+    &nbsp;&nbsp;<span class="var">lista</span>.innerHTML = <span class="str">"&lt;p&gt;Cargando...&lt;/p&gt;"</span>; <span class="cm">// loader simple</span><br><br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span>     = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://jsonplaceholder.typicode.com/users"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">r</span>.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Error HTTP: ${<span class="var">r</span>.status}`</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">users</span> = <span class="kw">await</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">lista</span>.innerHTML = <span class="str">""</span>;<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">users</span>.<span class="fn">forEach</span>(<span class="var">u</span> <span class="op">=></span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">card</span>        = <span class="var">document</span>.<span class="fn">createElement</span>(<span class="str">"div"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">card</span>.className   = <span class="str">"user-card"</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">card</span>.innerHTML   = <span class="str">`&lt;h3&gt;${<span class="var">u</span>.name}&lt;/h3&gt;&lt;p&gt;${<span class="var">u</span>.email}&lt;/p&gt;`</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">lista</span>.<span class="fn">appendChild</span>(<span class="var">card</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">lista</span>.innerHTML = <span class="str">`&lt;p style="color:red;"&gt;Error: ${<span class="var">e</span>.message}&lt;/p&gt;`</span>;<br>
+    &nbsp;&nbsp;}<br>
+    }<br>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"btnCargar"</span>).<span class="fn">addEventListener</span>(<span class="str">"click"</span>, <span class="fn">cargarUsuarios</span>);
+  </div>
+</div>
+
+<!-- SLIDE 12 – EJERCICIO 1 -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 25 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📍</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: APIs<br>del Navegador</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>✅ Botón que obtiene la ubicación con <code>navigator.geolocation</code></li>
+        <li>✅ Guardar coordenadas en <code>localStorage</code></li>
+        <li>✅ Si ya hay ubicación guardada, mostrarla sin pedir GPS nuevamente</li>
+        <li>✅ Mensaje en pantalla: "desde almacenamiento" vs "desde GPS"</li>
+        <li>⭐ Extra: botón para limpiar el localStorage y pedir ubicación nuevamente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – DESCANSO 30 MIN -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:4rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.5rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle class="bg"   cx="90" cy="90" r="80"/>
+        <circle class="prog" id="ring-circle" cx="90" cy="90" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:12px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BLOQUE 3 ═══ -->
+
+<!-- SLIDE 14 – TÍTULO BLOQUE 3 -->
+<div class="slide weather-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">🔑</div>
+  <h1 class="sm mt20">APIs de Terceros</h1>
+  <p class="subtitle">Qué son · API Keys · OpenWeather · Live Coding</p>
+</div>
+
+<!-- SLIDE 15 – QUÉ SON LAS APIs DE TERCEROS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · APIs de Terceros</span>
+  <h2>¿Qué son las APIs de Terceros?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>🌍 Definición</h3>
+      <p>Servicios desarrollados por <span class="accent">empresas externas</span> que exponen sus funcionalidades a través de una API.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">Permiten integrar funcionalidades complejas en nuestra app sin desarrollarlas desde cero: clima, mapas, pagos, traducción.</p>
+    </div>
+    <div class="card">
+      <h3>🏢 Ejemplos reales</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><span class="accent">OpenWeather</span> — datos del clima en tiempo real</li>
+        <li><span class="accent">Google Maps</span> — mapas, rutas, lugares</li>
+        <li><span class="accent">Stripe</span> — pagos con tarjeta de crédito</li>
+        <li><span class="accent">GitHub API</span> — repositorios, usuarios, commits</li>
+        <li><span class="accent">Spotify API</span> — canciones, álbumes, playlists</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16 – API KEYS: PASO A PASO OPENWEATHER -->
+<div class="slide key-bg">
+  <span class="section-label">Bloque 3 · API Key OpenWeather</span>
+  <h2>Obtener API Key — OpenWeather</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="key-step"><div class="key-num">1</div><p>Ir a <strong>openweathermap.org</strong> → <strong>Sign In</strong> → <strong>Create an Account</strong>. Completar nombre, email y contraseña.</p></div>
+    <div class="key-step"><div class="key-num">2</div><p>Confirmar el email recibido en la bandeja de entrada para activar la cuenta.</p></div>
+    <div class="key-step"><div class="key-num">3</div><p>Iniciar sesión → clic en el nombre de usuario (arriba a la derecha) → <strong>My API Keys</strong>.</p></div>
+    <div class="key-step"><div class="key-num">4</div><p>Copiar la key del campo <strong>Default</strong>. Es un string como <code>a1b2c3d4e5f6789...</code></p></div>
+    <div class="key-step"><div class="key-num">5</div><p>⏳ Esperar <strong>10 min a 2 horas</strong> para que se active. Probar en el navegador con: <code style="font-size:.85rem;">api.openweathermap.org/data/2.5/weather?q=Santiago&appid=TU_KEY&units=metric</code></p></div>
+  </div>
+</div>
+
+<!-- SLIDE 17 – OPENWEATHER: LA URL -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · OpenWeather</span>
+  <h2>Anatomía de la URL de OpenWeather</h2>
+  <div class="code-block" style="font-size:.9rem;line-height:2.2;max-width:1050px;">
+    https://api.openweathermap.org/data/2.5/weather<br>
+    &nbsp;&nbsp;?<span style="color:#79c0ff;">q</span>=<span class="str">Santiago</span>          <span class="cm">← nombre de la ciudad</span><br>
+    &nbsp;&nbsp;&amp;<span style="color:#79c0ff;">appid</span>=<span class="str">TU_API_KEY</span>    <span class="cm">← tu clave de autenticación</span><br>
+    &nbsp;&nbsp;&amp;<span style="color:#79c0ff;">units</span>=<span class="str">metric</span>        <span class="cm">← °C (metric) / °F (imperial)</span><br>
+    &nbsp;&nbsp;&amp;<span style="color:#79c0ff;">lang</span>=<span class="str">es</span>             <span class="cm">← descripción en español</span>
+  </div>
+  <div class="highlight mt20">El JSON de respuesta tiene: <span class="js-yellow">data.main.temp</span> · <span class="js-yellow">data.weather[0].description</span> · <span class="js-yellow">data.wind.speed</span> · <span class="js-yellow">data.name</span> · <span class="js-yellow">data.sys.country</span></div>
+</div>
+
+<!-- SLIDE 18 – LIVE CODING CLIMA -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌤️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>App del Clima</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear <code>index.html</code> con input de ciudad y botón buscar</li>
+        <li>2️⃣ Fetch a OpenWeather con la API Key configurada</li>
+        <li>3️⃣ Mostrar temperatura, condición y viento en el DOM</li>
+        <li>4️⃣ Manejar errores por ciudad incorrecta (404) y key inválida (401)</li>
+        <li>5️⃣ Agregar geolocalización automática como botón extra</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BLOQUE 4 ═══ -->
+
+<!-- SLIDE 19 – TÍTULO BLOQUE 4 -->
+<div class="slide error-bg">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">⚠️</div>
+  <h1 class="sm mt20">Errores y Límites</h1>
+  <p class="subtitle">Status codes · Manejo de errores · Rate limiting</p>
+</div>
+
+<!-- SLIDE 20 – STATUS CODES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Status codes</span>
+  <h2>Códigos de Estado HTTP</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="status-row"><span class="status-code s2">200</span><p><strong>OK</strong> — La solicitud fue exitosa. Datos disponibles.</p></div>
+    <div class="status-row"><span class="status-code s2">201</span><p><strong>Created</strong> — Recurso creado correctamente (POST exitoso).</p></div>
+    <div class="status-row"><span class="status-code s4">400</span><p><strong>Bad Request</strong> — La solicitud tiene errores de formato o datos inválidos.</p></div>
+    <div class="status-row"><span class="status-code s4">401</span><p><strong>Unauthorized</strong> — API Key faltante o incorrecta.</p></div>
+    <div class="status-row"><span class="status-code s4">403</span><p><strong>Forbidden</strong> — Autenticado pero sin permiso para ese recurso.</p></div>
+    <div class="status-row"><span class="status-code s4">404</span><p><strong>Not Found</strong> — La ciudad o recurso no existe.</p></div>
+    <div class="status-row"><span class="status-code s4">429</span><p><strong>Too Many Requests</strong> — Superaste el límite de peticiones (rate limiting).</p></div>
+    <div class="status-row"><span class="status-code s5">500</span><p><strong>Internal Server Error</strong> — Problema en el servidor de la API.</p></div>
+  </div>
+</div>
+
+<!-- SLIDE 21 – MANEJO DE ERRORES -->
+<div class="slide">
+  <span class="section-label">Bloque 4 · Manejo de errores</span>
+  <h2>Manejo de Errores en APIs</h2>
+  <div class="code-block sm">
+    <span class="kw">async function</span> <span class="fn">buscarClima</span>(<span class="var">ciudad</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">resultado</span> = <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">"resultado"</span>);<br>
+    &nbsp;&nbsp;<span class="kw">const</span> <span class="var">url</span> = <span class="str">`https://api.openweathermap.org/data/2.5/weather?q=${<span class="var">ciudad</span>}&appid=${<span class="var">API_KEY</span>}&units=metric&lang=es`</span>;<br><br>
+    &nbsp;&nbsp;<span class="kw">try</span> {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="var">url</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// Manejar errores específicos por código</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.status <span class="op">===</span> <span class="num">404</span>) { <span class="var">resultado</span>.innerHTML = <span class="str">"&lt;p&gt;❌ Ciudad no encontrada&lt;/p&gt;"</span>; <span class="kw">return</span>; }<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.status <span class="op">===</span> <span class="num">401</span>) { <span class="var">resultado</span>.innerHTML = <span class="str">"&lt;p&gt;🔑 API Key inválida&lt;/p&gt;"</span>;     <span class="kw">return</span>; }<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.status <span class="op">===</span> <span class="num">429</span>) { <span class="var">resultado</span>.innerHTML = <span class="str">"&lt;p&gt;⏳ Límite de peticiones alcanzado&lt;/p&gt;"</span>; <span class="kw">return</span>; }<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (!<span class="var">r</span>.ok)             <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Error ${<span class="var">r</span>.status}`</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">data</span> = <span class="kw">await</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">resultado</span>.innerHTML = <span class="str">`&lt;h2&gt;${<span class="var">data</span>.name}&lt;/h2&gt;&lt;p&gt;${<span class="var">data</span>.main.temp}°C · ${<span class="var">data</span>.weather[0].description}&lt;/p&gt;`</span>;<br><br>
+    &nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">resultado</span>.innerHTML = <span class="str">`&lt;p&gt;❌ Error de conexión: ${<span class="var">e</span>.message}&lt;/p&gt;`</span>;<br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+</div>
+
+<!-- SLIDE 22 – RATE LIMITING Y LÍMITES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · Límites</span>
+  <h2>Límites y Restricciones en las APIs</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>⏱️ Tipos de restricciones</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><span class="accent">Rate limiting</span>: máximo de peticiones por tiempo (ej. 60/hora)</li>
+        <li><span class="accent">Límite de datos</span>: archivos no mayores a X MB</li>
+        <li><span class="accent">Endpoints bloqueados</span>: features solo en plan pago</li>
+        <li><span class="accent">CORS</span>: acceso restringido por dominio de origen</li>
+      </ul>
+      <div class="highlight mt10" style="font-size:.9rem;">GitHub sin auth: 60 req/hora · Con OAuth: 5000 req/hora</div>
+    </div>
+    <div class="card">
+      <h3>🔄 Estrategia de reintento</h3>
+      <div class="code-block" style="font-size:.78rem;margin-top:10px;">
+        <span class="kw">async function</span> <span class="fn">fetchConReintento</span>(<span class="var">url</span>, <span class="var">intentos</span> = <span class="num">3</span>) {<br>
+        &nbsp;&nbsp;<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">intentos</span>; <span class="var">i</span><span class="op">++</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">try</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="var">url</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">r</span>.ok) <span class="kw">return</span> <span class="var">r</span>.<span class="fn">json</span>();<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;} <span class="kw">catch</span> (<span class="var">e</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> (<span class="var">i</span> <span class="op">===</span> <span class="var">intentos</span> <span class="op">-</span> <span class="num">1</span>) <span class="kw">throw</span> <span class="var">e</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">await new</span> <span class="fn">Promise</span>(<span class="var">r</span> <span class="op">=></span> <span class="fn">setTimeout</span>(<span class="var">r</span>, <span class="num">1000</span>));<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23 – EJERCICIO 2: CLIMA -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 30 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🌤️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: App<br>del Clima</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>✅ Input para ingresar ciudad + botón buscar</li>
+        <li>✅ Fetch a OpenWeather con tu API Key</li>
+        <li>✅ Mostrar: temperatura, condición, viento y país</li>
+        <li>✅ Manejo específico de errores 404, 401 y 429</li>
+        <li>⭐ Extra: botón de geolocalización automática</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24 – EJERCICIO 3: CLIPBOARD + NOTIFICATIONS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 3 · 20 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📋</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Clipboard<br>y Notificaciones</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>✅ Input donde el usuario escribe un texto</li>
+        <li>✅ Botón <strong>Copiar</strong>: copia el texto con <code>navigator.clipboard.writeText</code></li>
+        <li>✅ Botón <strong>Pegar</strong>: pega en un segundo input con <code>clipboard.readText</code></li>
+        <li>✅ Al copiar, disparar una notificación del browser: "¡Texto copiado!"</li>
+        <li>⭐ Extra: mostrar un toast visual en el DOM como feedback adicional</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>🌐 AE5.1 · APIs del Browser</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Qué es una API y para qué sirve</li>
+        <li>Tipos: Browser · Terceros · Librerías · Frameworks</li>
+        <li>AJAX y la comunicación cliente-servidor</li>
+        <li>XHR vs Fetch: diferencias y cuándo usar cada uno</li>
+        <li>Geolocation, localStorage, Clipboard, Notifications</li>
+        <li>Fetch + DOM: mostrar datos en pantalla dinámicamente</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔑 AE5.2 · APIs de Terceros</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Qué son las APIs de terceros y sus características</li>
+        <li>Cómo obtener y usar una API Key (OpenWeather)</li>
+        <li>Construir la URL con query params: q, appid, units, lang</li>
+        <li>Procesar el JSON de respuesta en el DOM</li>
+        <li>Status codes: 200 · 201 · 400 · 401 · 403 · 404 · 429 · 500</li>
+        <li>Manejo específico de errores y estrategia de reintento</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26 – CIERRE -->
+<div class="slide api-bg">
+  <div style="font-size:5rem;font-weight:900;color:var(--js-yellow);" class="float glow">API</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ya podés conectar tu aplicación con servicios del mundo real.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Fetch ✅</span><span class="pill">XHR ✅</span>
+    <span class="pill">Browser APIs ✅</span><span class="pill">API Keys ✅</span>
+    <span class="pill">OpenWeather ✅</span><span class="pill gold">Errores ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Node.js y Express</span> — crear tu propio servidor y API REST.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active'); slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER 30 min ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle  = document.getElementById('ring-circle');
+  const display = document.getElementById('timer-display');
+  const msg     = document.getElementById('timer-msg');
+  const CIRCUMF = 2 * Math.PI * 80;
+  circle.style.strokeDasharray = CIRCUMF; circle.style.strokeDashoffset = 0;
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS*.5 ? '#1e1e1e' : remaining > TOTAL_SECS*.2 ? '#e67e22' : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return; running = true; msg.textContent = '';
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); running = false; msg.textContent = '⏰ ¡Tiempo! Regresamos a clase.'; return; }
+      remaining--; updateRing();
+    }, 1000);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => { if (!running) return; clearInterval(timerInterval); running = false; });
+  document.getElementById('btn-reset').addEventListener('click', () => { clearInterval(timerInterval); running = false; remaining = TOTAL_SECS; circle.style.stroke = '#1e1e1e'; msg.textContent = ''; updateRing(); });
+  updateRing();
+</script>
+</body>
+</html>
