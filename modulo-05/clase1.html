@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bases de Datos Relacionales – AE1.1 / AE1.2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #667eea; --secondary: #764ba2; --accent: #FFD700;
+    --dark: #1e1e1e;
+    --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --js-yellow: #f7df1e; --js-dark: #323330;
+    --card-bg: rgba(255,255,255,0.1); --card-hover: rgba(255,255,255,0.16);
+  }
+  html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(--dark); color:#fff; }
+  .slider { width:100vw; height:100vh; overflow:hidden; position:relative; }
+  .slide {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:52px 58px; opacity:0; transform:translateX(100%);
+    transition:transform .5s ease, opacity .5s ease; background:var(--grad); overflow:hidden;
+  }
+  .slide.active { opacity:1; transform:translateX(0); }
+  .slide.prev   { opacity:0; transform:translateX(-100%); }
+
+  .slide.dark-bg    { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
+  .slide.db-bg      { background:linear-gradient(135deg,#0a1628 0%,#1a2f5e 100%); }
+  .slide.code-bg    { background:linear-gradient(135deg,#0d1117 0%,#161b22 100%); }
+  .slide.orange-bg  { background:linear-gradient(135deg,#f46b45 0%,#eea849 100%); }
+  .slide.break-bg   { background:linear-gradient(135deg,#11998e 0%,#38ef7d 100%); }
+  .slide.sql-bg     { background:linear-gradient(135deg,#1a237e 0%,#283593 100%); }
+  .slide.org-bg     { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+  .slide.rdbms-bg   { background:linear-gradient(135deg,#37474f 0%,#546e7a 100%); }
+  .slide.obj-bg     { background:linear-gradient(135deg,#4a0e8f 0%,#6a1fb5 100%); }
+  .slide.check-bg   { background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%); }
+  .slide.mysql-bg   { background:linear-gradient(135deg,#00695c 0%,#00897b 100%); }
+
+  #counter { position:fixed; top:30px; right:30px; background:rgba(0,0,0,0.45); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:8px 18px; font-size:.9rem; color:#fff; z-index:100; letter-spacing:1px; }
+  .nav-btns { position:fixed; bottom:30px; right:30px; display:flex; gap:12px; z-index:100; }
+  .nav-btn { background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); border:2px solid rgba(255,255,255,0.3); color:#fff; border-radius:50px; padding:12px 24px; font-size:1rem; cursor:pointer; transition:all .3s; }
+  .nav-btn:hover { background:rgba(255,255,255,0.2); transform:translateY(-3px); }
+  .progress-bar { position:fixed; bottom:0; left:0; height:4px; background:var(--js-yellow); transition:width .5s ease; z-index:200; }
+  .section-label { position:absolute; top:25px; left:40px; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:600; }
+
+  h1 { font-size:3.5rem; line-height:1.15; text-align:center; text-shadow:2px 4px 8px rgba(0,0,0,0.4); }
+  h1.sm { font-size:2.7rem; }
+  h2 { font-size:2.1rem; text-align:center; margin-bottom:22px; }
+  h3 { font-size:1.35rem; margin-bottom:10px; }
+  p, li { font-size:1.1rem; line-height:1.8; }
+  .subtitle { font-size:1.2rem; opacity:.85; text-align:center; margin-top:14px; }
+  .accent { color:var(--accent); }
+  .js-yellow { color:var(--js-yellow); }
+
+  .code-block { background:#0d1117; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:16px 22px; font-family:'Courier New',monospace; font-size:.93rem; line-height:1.8; width:100%; max-width:1100px; }
+  .code-block.sm { font-size:.82rem; line-height:1.65; }
+  .kw  { color:#ff7b72; } .fn  { color:#d2a8ff; } .str { color:#a8ff78; }
+  .num { color:#79c0ff; } .cm  { color:#8b949e; } .op  { color:#f0883e; }
+  .var { color:#ffa657; }
+
+  .card { background:var(--card-bg); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:20px 18px; transition:all .3s; }
+  .card:hover { background:var(--card-hover); transform:translateY(-5px); }
+  .card h3 { color:var(--accent); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:1200px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; width:100%; max-width:1200px; }
+  .grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; width:100%; max-width:1200px; }
+
+  .list-clean { list-style:none; }
+  .list-clean li { padding:4px 0; }
+  .list-clean li::before { content:"▸ "; color:var(--accent); }
+
+  .steps { display:flex; gap:13px; width:100%; max-width:1200px; }
+  .step { flex:1; background:var(--card-bg); backdrop-filter:blur(10px); border-radius:16px; padding:16px 12px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:all .3s; }
+  .step:hover { transform:translateY(-7px); }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+  .step h3 { font-size:.86rem; color:var(--accent); margin-bottom:4px; }
+  .step p  { font-size:.8rem; opacity:.9; line-height:1.45; }
+
+  .emoji-big { font-size:5.5rem; line-height:1; }
+  .mt10 { margin-top:10px; } .mt20 { margin-top:20px; }
+  .highlight { background:rgba(247,223,30,0.15); border:2px solid var(--js-yellow); border-radius:15px; padding:13px 22px; margin-top:13px; font-size:1.05rem; text-align:center; max-width:950px; }
+  .pill { display:inline-block; background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); border-radius:30px; padding:4px 13px; font-size:.86rem; margin:3px; }
+  .pill.gold  { background:rgba(247,223,30,0.2);  border-color:var(--js-yellow); color:var(--js-yellow); }
+  .pill.green { background:rgba(76,175,80,0.2);   border-color:#4CAF50; color:#a8ff78; }
+  .pill.red   { background:rgba(244,67,54,0.2);   border-color:#f44336; color:#ffab91; }
+  .pill.blue  { background:rgba(33,150,243,0.2);  border-color:#2196f3; color:#90caf9; }
+
+  table { width:100%; max-width:1150px; border-collapse:collapse; font-size:.92rem; }
+  th { background:rgba(102,126,234,0.55); padding:10px 14px; text-align:left; }
+  td { padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.1); font-size:.9rem; }
+  tr:hover td { background:rgba(255,255,255,0.05); }
+
+  .obj-card { display:flex; gap:14px; background:var(--card-bg); border-radius:14px; padding:14px 16px; margin-bottom:9px; border:1px solid rgba(255,255,255,0.15); align-items:flex-start; }
+  .obj-icon { font-size:2rem; flex-shrink:0; line-height:1; }
+  .obj-card h3 { font-size:1.1rem; color:var(--accent); margin-bottom:4px; }
+  .obj-card p  { font-size:.92rem; opacity:.9; line-height:1.5; }
+
+  .sched-row { display:flex; gap:12px; width:100%; max-width:950px; margin-bottom:10px; align-items:center; }
+  .sched-time { background:rgba(247,223,30,0.15); border:1px solid var(--js-yellow); border-radius:10px; padding:7px 14px; font-size:.9rem; white-space:nowrap; color:var(--js-yellow); font-weight:700; min-width:118px; text-align:center; }
+  .sched-label { flex:1; background:var(--card-bg); border-radius:10px; padding:7px 16px; font-size:.97rem; }
+  .sched-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+  .check-item { display:flex; align-items:flex-start; gap:14px; background:var(--card-bg); border-radius:14px; padding:14px 18px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.15); }
+  .check-num { min-width:34px; height:34px; border-radius:50%; background:var(--js-yellow); color:var(--js-dark); font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.95rem; flex-shrink:0; }
+  .check-item p { font-size:1.05rem; }
+
+  /* ── BREAK TIMER 30 min + hora regreso ── */
+  .timer-ring { position:relative; width:190px; height:190px; margin:10px auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle.bg   { fill:none; stroke:rgba(255,255,255,0.2); stroke-width:10; }
+  .timer-ring circle.prog { fill:none; stroke:#1e1e1e; stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; }
+  #timer-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.5rem; font-weight:800; color:var(--dark); font-family:'Courier New',monospace; white-space:nowrap; }
+  #timer-label   { font-size:1rem; color:var(--dark); opacity:.7; text-align:center; margin-top:2px; }
+  .timer-btn { background:var(--dark); color:#fff; border:none; border-radius:30px; padding:10px 28px; font-size:1rem; cursor:pointer; margin:5px; transition:all .3s; }
+  .timer-btn:hover { background:#333; transform:translateY(-2px); }
+  #timer-msg { font-size:1.4rem; font-weight:700; color:var(--dark); margin-top:4px; min-height:1.8rem; text-align:center; }
+  #return-time { font-size:1.6rem; font-weight:800; color:var(--dark); margin-top:6px; text-align:center; min-height:2.2rem; }
+
+  @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes glow   { 0%,100%{text-shadow:0 0 10px var(--js-yellow)} 50%{text-shadow:0 0 30px var(--js-yellow),0 0 60px var(--js-yellow)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
+  .float { animation:float 3s ease-in-out infinite; }
+  .glow  { animation:glow 2s ease-in-out infinite; }
+  .slide.active .card { animation:fadeUp .5s ease both; }
+  .slide.active .step { animation:fadeUp .5s ease both; }
+  .slide.active .card:nth-child(2) { animation-delay:.08s; }
+  .slide.active .card:nth-child(3) { animation-delay:.16s; }
+  .slide.active .card:nth-child(4) { animation-delay:.24s; }
+  .slide.active .step:nth-child(2) { animation-delay:.08s; }
+  .slide.active .step:nth-child(3) { animation-delay:.16s; }
+  .slide.active .step:nth-child(4) { animation-delay:.24s; }
+</style>
+</head>
+<body>
+
+<div id="counter">1 / 30</div>
+<div class="progress-bar" id="progress"></div>
+<div class="slider" id="slider">
+
+<!-- ══ SLIDE 1 – PORTADA ══ -->
+<div class="slide active db-bg">
+  <div style="font-size:5rem;line-height:1;" class="float">🗄️</div>
+  <h1 class="mt20">Bases de Datos<br><span class="js-yellow glow">Relacionales</span></h1>
+  <p class="subtitle mt20">AE1.1 · AE1.2 · Módulo: Fundamentos de Bases de Datos Relacionales</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">Tablas</span><span class="pill">PK / FK</span>
+    <span class="pill">SQL</span><span class="pill">RDBMS</span>
+    <span class="pill">MySQL</span><span class="pill gold">PostgreSQL</span>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 – CRONOGRAMA ══ -->
+<div class="slide dark-bg">
+  <span class="section-label">📅 Cronograma</span>
+  <h2>Distribución de la Clase</h2>
+  <div style="width:100%;max-width:950px;">
+    <div class="sched-row"><div class="sched-dot" style="background:#1a2f5e"></div><div class="sched-time">0:00 – 1:00</div><div class="sched-label">🗄️ <strong>Bloque 1</strong> · ¿Qué es una BD? · Tipos · BD Relacionales · Tablas · PK · FK · SQL</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#1a2f5e"></div><div class="sched-time">1:00 – 1:20</div><div class="sched-label">🏢 <strong>Bloque 2</strong> · Rol en la organización · Instalación MySQL · Ejercicio Google Sheets</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#FFD700"></div><div class="sched-time">1:20 – 1:50</div><div class="sched-label">☕ <strong>DESCANSO</strong> · 30 minutos</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#546e7a"></div><div class="sched-time">1:50 – 2:40</div><div class="sched-label">⚙️ <strong>Bloque 3</strong> · RDBMS: características y motores · Objetos de una BD</div></div>
+    <div class="sched-row"><div class="sched-dot" style="background:#6a1fb5"></div><div class="sched-time">2:40 – 4:00</div><div class="sched-label">💻 <strong>Bloque 4</strong> · SQLite Online · Live Coding · Ejercicio práctico</div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ -->
+<!-- BLOQUE 1 – QUÉ ES UNA BD    -->
+<!-- ════════════════════════════ -->
+
+<!-- SLIDE 3 – TÍTULO BLOQUE 1 -->
+<div class="slide db-bg">
+  <span class="section-label">Bloque 1 · 0:00 – 1:00</span>
+  <div class="emoji-big float">🗄️</div>
+  <h1 class="sm mt20">Bases de Datos Relacionales</h1>
+  <p class="subtitle">¿Qué son? · Tipos · Estructura · PK · FK · SQL</p>
+</div>
+
+<!-- SLIDE 4 – QUÉ ES UNA BASE DE DATOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · Definición</span>
+  <h2>¿Qué es una Base de Datos?</h2>
+  <div class="grid-2" style="max-width:1050px;">
+    <div class="card">
+      <h3>📋 Definición</h3>
+      <p>Colección <span class="accent">organizada de información</span> que se almacena y gestiona de manera estructurada para permitir su fácil acceso, manipulación y recuperación.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">Sistema que permite almacenar datos eficientemente y acceder a ellos de manera rápida y precisa.</p>
+    </div>
+    <div class="card">
+      <h3>💡 Analogía</h3>
+      <p>Como un <span class="accent">armario de archivos</span> perfectamente organizado: cada cajón tiene su categoría, cada carpeta tiene su etiqueta y cada documento ocupa exactamente su lugar.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">La diferencia: una base de datos puede manejar millones de registros y encontrar cualquiera en milisegundos.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Sin bases de datos no existirían: redes sociales, bancos, e-commerce, hospitales, ni ninguna aplicación moderna.</div>
+</div>
+
+<!-- SLIDE 5 – TIPOS DE BASES DE DATOS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Tipos</span>
+  <h2>Tipos de Bases de Datos más Utilizados</h2>
+  <div class="grid-3">
+    <div class="card" style="border-color:rgba(247,223,30,.4);">
+      <h3 style="color:var(--js-yellow);">📊 Relacionales (RDBMS)</h3>
+      <p>Datos organizados en <span class="accent">tablas</span> con filas y columnas. Se relacionan entre sí mediante claves.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill">MySQL</span><span class="pill">PostgreSQL</span>
+        <span class="pill">SQL Server</span><span class="pill">Oracle</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🍃 NoSQL</h3>
+      <p>Datos no estructurados o semi-estructurados. Flexibles para grandes volúmenes de datos variables.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill">MongoDB</span><span class="pill">Apache</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>⚡ En Memoria</h3>
+      <p>Almacenan datos en RAM para <span class="accent">acceso ultrarrápido</span>. Ideales para caché y sesiones.</p>
+      <div class="mt10" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <span class="pill">Redis</span><span class="pill">Memcached</span>
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">En este módulo nos enfocamos en las <span class="js-yellow">Bases de Datos Relacionales</span> — las más utilizadas en la industria.</div>
+</div>
+
+<!-- SLIDE 6 – QUÉ ES UNA BD RELACIONAL -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · BD Relacional</span>
+  <h2>¿Qué es una Base de Datos Relacional?</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🏗️ Estructura</h3>
+      <ul class="list-clean" style="font-size:1.05rem;">
+        <li>Datos organizados en <span class="accent">tablas</span></li>
+        <li>Cada <span class="accent">fila</span> = un registro único (tupla)</li>
+        <li>Cada <span class="accent">columna</span> = un atributo o campo</li>
+        <li>Las tablas se <span class="accent">relacionan entre sí</span> mediante claves</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🔗 Ejemplo de relaciones</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><strong>Clientes</strong> → <strong>Facturas</strong> por ID de cliente</li>
+        <li><strong>Facturas</strong> → <strong>Ventas</strong> por ID de factura</li>
+        <li><strong>Ventas</strong> → <strong>Productos</strong> por ID de producto</li>
+        <li><strong>Productos</strong> → <strong>Proveedores</strong> por ID de proveedor</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight mt20">El modelo relacional = <span class="js-yellow">tablas + atributos + tuplas + relaciones</span>. La tabla es el concepto central.</div>
+</div>
+
+<!-- SLIDE 7 – TABLAS, ATRIBUTOS Y TUPLAS -->
+<div class="slide">
+  <span class="section-label">Bloque 1 · Estructura</span>
+  <h2>Tablas · Atributos · Tuplas</h2>
+  <div class="grid-3">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3rem;">📋</div>
+      <h3>Tabla</h3>
+      <p>Estructura que representa una <span class="accent">entidad</span>. Conjunto de columnas y filas. Ejemplo: tabla <code>Clientes</code>.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3rem;">🏷️</div>
+      <h3>Atributo (columna)</h3>
+      <p>Hecho simple que describe o caracteriza una entidad. Ejemplo: <code>nombre</code>, <code>email</code>, <code>fecha_nacimiento</code>.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3rem;">📝</div>
+      <h3>Tupla (fila)</h3>
+      <p>Conjunto de valores que forman <span class="accent">una instancia</span> de la entidad. Ejemplo: los datos de un cliente específico.</p>
+    </div>
+  </div>
+  <div class="code-block mt20" style="max-width:900px;font-size:.88rem;">
+    <span class="cm">-- Tabla Clientes: cada fila es una tupla, cada columna es un atributo</span><br>
+    | id_cliente | nombre     | email              | ciudad     |<br>
+    |------------|------------|--------------------|------------|<br>
+    | 1          | Ana López  | ana@email.com      | Santiago   |<br>
+    | 2          | Luis Pérez | luis@email.com     | Valparaíso |
+  </div>
+</div>
+
+<!-- SLIDE 8 – CLAVE PRIMARIA Y CLAVE FORÁNEA -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 1 · PK y FK</span>
+  <h2>Clave Primaria y Clave Foránea</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card" style="border-color:rgba(247,223,30,.5);">
+      <h3 style="color:var(--js-yellow);">🔑 Clave Primaria (PK)</h3>
+      <p>Atributo o conjunto de atributos que <span class="accent">identifica de forma única</span> cada registro en una tabla. No puede repetirse ni ser nulo.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        | <span class="var">id_cliente</span> (PK) | nombre    | email          |<br>
+        | <span class="num">1</span>              | Ana López | ana@email.com  |<br>
+        | <span class="num">2</span>              | Luis P.   | luis@email.com |
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(102,126,234,.5);">
+      <h3>🔗 Clave Foránea (FK)</h3>
+      <p>Campo en una tabla que <span class="accent">referencia la PK de otra tabla</span>. Establece la relación entre tablas y garantiza la integridad referencial.</p>
+      <div class="code-block" style="font-size:.82rem;margin-top:10px;">
+        | id_factura (PK) | <span class="var">id_cliente</span> (FK) | total  |<br>
+        | <span class="num">101</span>            | <span class="num">1</span>              | $50.00 |<br>
+        | <span class="num">102</span>            | <span class="num">2</span>              | $80.00 |
+      </div>
+    </div>
+  </div>
+  <div class="highlight mt20">La FK en <code>Facturas</code> apunta a la PK de <code>Clientes</code>. Esto asegura que no exista una factura de un cliente que no existe.</div>
+</div>
+
+<!-- SLIDE 9 – SQL -->
+<div class="slide sql-bg">
+  <span class="section-label">Bloque 1 · SQL</span>
+  <h2>SQL — El Lenguaje de las BD Relacionales</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>📖 ¿Qué es SQL?</h3>
+      <p><strong>S</strong>tructured <strong>Q</strong>uery <strong>L</strong>anguage. Lenguaje estándar diseñado para trabajar con bases de datos relacionales.</p>
+      <ul class="list-clean" style="font-size:1rem;margin-top:10px;">
+        <li>Insertar datos nuevos</li>
+        <li>Consultar y filtrar información</li>
+        <li>Actualizar registros existentes</li>
+        <li>Eliminar datos</li>
+        <li>Crear y modificar estructuras</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>💻 Primeros comandos</h3>
+      <div class="code-block" style="font-size:.82rem;margin-top:8px;">
+        <span class="cm">-- Consultar todos los clientes</span><br>
+        <span class="kw">SELECT</span> * <span class="kw">FROM</span> clientes;<br><br>
+        <span class="cm">-- Insertar un cliente nuevo</span><br>
+        <span class="kw">INSERT INTO</span> clientes (nombre, email)<br>
+        <span class="kw">VALUES</span> (<span class="str">'Ana López'</span>, <span class="str">'ana@email.com'</span>);<br><br>
+        <span class="cm">-- Filtrar por ciudad</span><br>
+        <span class="kw">SELECT</span> * <span class="kw">FROM</span> clientes<br>
+        <span class="kw">WHERE</span> ciudad = <span class="str">'Santiago'</span>;
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10 – VERIFICACIÓN BLOQUE 1 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · Bloque 1</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>Con tus propias palabras: ¿Cuál es la diferencia entre una base de datos y una base de datos relacional?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Qué representa una fila (tupla) y qué representa una columna (atributo) en una tabla?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Para qué sirve la clave primaria? ¿Puede repetirse o ser nula?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Qué garantiza una clave foránea en una base de datos relacional?</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ -->
+<!-- BLOQUE 2 – ROL E INSTALACIÓN-->
+<!-- ════════════════════════════ -->
+
+<!-- SLIDE 11 – ROL EN LA ORGANIZACIÓN -->
+<div class="slide org-bg">
+  <span class="section-label">Bloque 2 · 1:00 – 1:20</span>
+  <h2>Rol en la Organización</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>🏢 ¿Por qué son esenciales?</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li><span class="accent">Integridad de datos</span>: reglas que evitan duplicados e inconsistencias</li>
+        <li><span class="accent">Relaciones</span>: conectar información de distintas áreas</li>
+        <li><span class="accent">Consultas y análisis</span>: extraer conocimiento del negocio</li>
+        <li><span class="accent">Escalabilidad</span>: crecer sin perder rendimiento</li>
+        <li><span class="accent">Seguridad</span>: control de acceso granular</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🌍 Empresas que las usan</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;">
+        <span class="pill gold">Amazon</span><span class="pill gold">Netflix</span>
+        <span class="pill gold">Walmart</span><span class="pill gold">IBM</span>
+        <span class="pill gold">JPMorgan</span><span class="pill gold">Coca-Cola</span>
+      </div>
+      <p class="mt10" style="font-size:.95rem;opacity:.85;">Todas usan bases de datos relacionales como componente central de sus operaciones y gestión de datos.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">Las BD son el <span class="js-yellow">corazón</span> de las operaciones comerciales: mejoran la toma de decisiones y garantizan la continuidad del negocio.</div>
+</div>
+
+<!-- SLIDE 12 – INSTALACIÓN MYSQL -->
+<div class="slide mysql-bg">
+  <span class="section-label">Bloque 2 · Instalación MySQL</span>
+  <h2>Instalación de MySQL — Paso a Paso</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">⬇️</div>
+      <h3>1. Descargar</h3>
+      <p>Ir a <strong>mysql.com</strong> → Downloads → MySQL Installer for Windows.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">⚙️</div>
+      <h3>2. Instalar</h3>
+      <p>Elegir <strong>Developer Default</strong> (incluye Workbench). Puerto: <strong>3306</strong>.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">🔐</div>
+      <h3>3. Seguridad</h3>
+      <p>Autenticación: <strong>Strong Password</strong>. Setear una contraseña <strong>root</strong> fuerte.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">✅</div>
+      <h3>4. Verificar</h3>
+      <p>Confirmar servicio <strong>MySQL80</strong> activo en <code>Services.msc</code>.</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:.75rem;">🔌</div>
+      <h3>5. Conectar</h3>
+      <p>Workbench o DBeaver: host <strong>localhost</strong>, puerto <strong>3306</strong>, usuario <strong>root</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13 – EJERCICIO GOOGLE SHEETS -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 1 · 45 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">📊</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: Mini BD<br>en Google Sheets</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Crear tabla de <strong>inventario</strong> con al menos 10 artículos del hogar</li>
+        <li>2️⃣ Definir columnas: nombre, categoría, precio, cantidad, etc.</li>
+        <li>3️⃣ Identificar cuál columna es la <strong>clave primaria</strong></li>
+        <li>4️⃣ Pensar en qué tablas hijas podrían derivarse (ventas, proveedores)</li>
+        <li>5️⃣ Presentar al grupo: estructura + atributos + relaciones posibles</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 14 – DESCANSO 30 MIN + HORA REGRESO ══ -->
+<div class="slide break-bg">
+  <div style="text-align:center;">
+    <div style="font-size:3.8rem;line-height:1;">☕</div>
+    <h1 class="mt10" style="color:var(--dark);font-size:3.2rem;">DESCANSO</h1>
+    <div class="timer-ring">
+      <svg width="190" height="190" viewBox="0 0 190 190">
+        <circle class="bg"   cx="95" cy="95" r="80"/>
+        <circle class="prog" id="ring-circle" cx="95" cy="95" r="80"/>
+      </svg>
+      <div id="timer-display">30:00</div>
+    </div>
+    <div id="timer-label">minutos restantes</div>
+    <div id="return-time"></div>
+    <div id="timer-msg"></div>
+    <div style="margin-top:10px;">
+      <button class="timer-btn" id="btn-start">▶ Iniciar</button>
+      <button class="timer-btn" id="btn-pause">⏸ Pausar</button>
+      <button class="timer-btn" id="btn-reset">↩ Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ -->
+<!-- BLOQUE 3 – RDBMS Y OBJETOS  -->
+<!-- ════════════════════════════ -->
+
+<!-- SLIDE 15 – TÍTULO BLOQUE 3 -->
+<div class="slide rdbms-bg">
+  <span class="section-label">Bloque 3 · 1:50 – 2:40</span>
+  <div class="emoji-big float">⚙️</div>
+  <h1 class="sm mt20">RDBMS y Objetos</h1>
+  <p class="subtitle">Características · Los 4 motores · Objetos de una BD</p>
+</div>
+
+<!-- SLIDE 16 – QUÉ ES UN RDBMS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · RDBMS</span>
+  <h2>¿Qué es un RDBMS?</h2>
+  <div class="grid-2" style="max-width:1100px;">
+    <div class="card">
+      <h3>⚙️ Definición</h3>
+      <p><strong>R</strong>elational <strong>D</strong>atabase <strong>M</strong>anagement <strong>S</strong>ystem. Software diseñado para gestionar y organizar datos en estructura tabular.</p>
+      <p class="mt10" style="font-size:1rem;opacity:.85;">Permite crear, modificar, almacenar, proteger y recuperar datos de una base de datos de forma eficiente.</p>
+    </div>
+    <div class="card">
+      <h3>✅ Características clave</h3>
+      <ul class="list-clean" style="font-size:1rem;">
+        <li>Cada tabla tiene un <span class="accent">nombre único</span></li>
+        <li>Cada fila en una tabla es <span class="accent">única</span></li>
+        <li>Todas las tablas tienen una <span class="accent">clave (ID)</span> para identificar filas</li>
+        <li>Cada columna se llama <span class="accent">campo</span></li>
+        <li>Aplica <span class="accent">integridad</span> y <span class="accent">normalización</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17 – LOS 4 MOTORES -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Motores RDBMS</span>
+  <h2>Los 4 Motores Principales</h2>
+  <div class="grid-4">
+    <div class="card" style="padding:16px 14px;">
+      <h3 style="font-size:1.1rem;">🪟 SQL Server</h3>
+      <ul class="list-clean" style="font-size:.88rem;margin-top:8px;">
+        <li>Ecosistema Microsoft</li>
+        <li>Integración con Azure, Power BI, Visual Studio</li>
+        <li>Herramienta: SSMS</li>
+        <li>Licencia comercial</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:16px 14px;">
+      <h3 style="font-size:1.1rem;">🏛️ Oracle DB</h3>
+      <ul class="list-clean" style="font-size:.88rem;margin-top:8px;">
+        <li>Más robusto del mercado</li>
+        <li>Misión crítica</li>
+        <li>Alta escalabilidad y fiabilidad</li>
+        <li>Usado en banca y telecomunicaciones</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:16px 14px;border-color:rgba(247,223,30,.4);">
+      <h3 style="font-size:1.1rem;color:var(--js-yellow);">🐬 MySQL</h3>
+      <ul class="list-clean" style="font-size:.88rem;margin-top:8px;">
+        <li>Más popular en la web</li>
+        <li>Rápido y ligero</li>
+        <li>Open source (GPL)</li>
+        <li>Integra con PHP y Python</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:16px 14px;">
+      <h3 style="font-size:1.1rem;">🐘 PostgreSQL</h3>
+      <ul class="list-clean" style="font-size:.88rem;margin-top:8px;">
+        <li>Avanzado y extensible</li>
+        <li>Soporta JSON y datos complejos</li>
+        <li>Open source (MIT)</li>
+        <li>Integridad referencial avanzada</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18 – COMPARATIVA -->
+<div class="slide">
+  <span class="section-label">Bloque 3 · Comparativa</span>
+  <h2>Comparativa de RDBMS</h2>
+  <table>
+    <thead>
+      <tr><th>RDBMS</th><th>Licencia</th><th>Fortaleza</th><th>Casos de uso</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>🪟 SQL Server</td><td>Comercial (Express gratis)</td><td>Ecosistema Microsoft, seguridad avanzada</td><td>Grandes empresas, sistemas Microsoft</td></tr>
+      <tr><td>🏛️ Oracle DB</td><td>Comercial (XE gratis)</td><td>Fiabilidad, transacciones avanzadas</td><td>Banca, telecomunicaciones, corporaciones</td></tr>
+      <tr><td>🐬 MySQL</td><td>Open source / Comercial</td><td>Ligero, rápido, fácil de usar</td><td>Startups, web, e-commerce</td></tr>
+      <tr><td>🐘 PostgreSQL</td><td>Open source (MIT)</td><td>Altamente extensible, tipos avanzados</td><td>Consultas complejas, big data, startups</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight mt20">En este curso trabajaremos con <span class="js-yellow">MySQL</span> y <span class="js-yellow">SQLite</span> — las opciones más accesibles para aprender.</div>
+</div>
+
+<!-- SLIDE 19 – OBJETOS DE UNA BD -->
+<div class="slide obj-bg">
+  <span class="section-label">Bloque 3 · Objetos</span>
+  <h2>Objetos Principales de una Base de Datos</h2>
+  <div style="width:100%;max-width:1100px;">
+    <div class="obj-card"><div class="obj-icon">📋</div><div><h3>Tablas</h3><p>Objeto central. Colección de datos en filas y columnas. Cada tabla representa una entidad.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">🔍</div><div><h3>Vistas (Views)</h3><p>Consultas almacenadas que generan resultados dinámicos. Ocultan complejidad o datos sensibles.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">📑</div><div><h3>Índices</h3><p>Estructuras auxiliares que aceleran las búsquedas. Como el índice de un libro — van directo a la página.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">⚙️</div><div><h3>Procedimientos Almacenados</h3><p>Scripts guardados en la BD con lógica de negocio compleja. Reutilizables y eficientes.</p></div></div>
+  </div>
+</div>
+
+<!-- SLIDE 20 – MÁS OBJETOS -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 3 · Objetos (cont.)</span>
+  <h2>Más Objetos de una BD</h2>
+  <div style="width:100%;max-width:1100px;">
+    <div class="obj-card"><div class="obj-icon">⚡</div><div><h3>Disparadores (Triggers)</h3><p>Se ejecutan automáticamente ante eventos: INSERT, UPDATE, DELETE. Como alarmas que reaccionan a cambios.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">🔑</div><div><h3>Claves Primarias y Foráneas</h3><p>PK identifica registros únicos. FK vincula tablas y garantiza integridad referencial.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">📁</div><div><h3>Esquemas</h3><p>Contenedores lógicos que agrupan objetos relacionados. Como carpetas que organizan tablas, vistas, etc.</p></div></div>
+    <div class="obj-card"><div class="obj-icon">🔢</div><div><h3>Secuencias / Auto-increment</h3><p>Generan valores únicos automáticamente para las claves primarias. Se incrementan solos con cada INSERT.</p></div></div>
+  </div>
+</div>
+
+<!-- SLIDE 21 – VERIFICACIÓN BLOQUE 3 -->
+<div class="slide check-bg">
+  <span class="section-label">✅ Verificación · Bloque 3</span>
+  <h2>¿Lo tenemos claro?</h2>
+  <div style="width:100%;max-width:900px;">
+    <div class="check-item"><div class="check-num">1</div><p>¿Qué es un RDBMS y cuál es su función principal?</p></div>
+    <div class="check-item"><div class="check-num">2</div><p>¿Cuál de los 4 motores usarías para una startup web y por qué?</p></div>
+    <div class="check-item"><div class="check-num">3</div><p>¿Cuál es la diferencia entre una tabla y una vista?</p></div>
+    <div class="check-item"><div class="check-num">4</div><p>¿Para qué sirve un índice y en qué situaciones lo usarías?</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════ -->
+<!-- BLOQUE 4 – SQLITE ONLINE    -->
+<!-- ════════════════════════════ -->
+
+<!-- SLIDE 22 – TÍTULO BLOQUE 4 -->
+<div class="slide db-bg">
+  <span class="section-label">Bloque 4 · 2:40 – 4:00</span>
+  <div class="emoji-big float">💻</div>
+  <h1 class="sm mt20">Manos a la Obra</h1>
+  <p class="subtitle">SQLite Online · Live Coding · Ejercicio Práctico</p>
+</div>
+
+<!-- SLIDE 23 – SQLITE ONLINE -->
+<div class="slide dark-bg">
+  <span class="section-label">Bloque 4 · SQLite Online</span>
+  <h2>SQLite Online — Primeros Pasos</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Acceder</h3>
+      <p>Abrir el navegador y escribir: <strong>sqliteonline.com</strong>. Presionar Enter.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Editor</h3>
+      <p>Área principal donde se escriben los comandos SQL. Soporta sintaxis completa.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Ejecutar</h3>
+      <p>Presionar el botón <strong>Run</strong> o <strong>F5</strong> para ejecutar la consulta seleccionada.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Resultados</h3>
+      <p>Aparecen debajo del editor en forma de tabla. Los errores se muestran en la consola.</p>
+    </div>
+  </div>
+  <div class="highlight mt20">URL directa: <span class="js-yellow">https://sqliteonline.com/</span> — No requiere instalación ni registro.</div>
+</div>
+
+<!-- SLIDE 24 – LIVE CODING -->
+<div class="slide orange-bg">
+  <span class="section-label">Live Coding · 15 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🛠️</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Live Coding:<br>Primera BD en SQL</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <ul style="list-style:none;font-size:1.05rem;line-height:1.9;color:#1e1e1e;">
+        <li>1️⃣ Explorar qué elementos básicos tiene una BD en SQLite Online</li>
+        <li>2️⃣ Ver las tablas existentes y sus datos</li>
+        <li>3️⃣ Identificar PK y FK en las relaciones entre tablas</li>
+        <li>4️⃣ Ejecutar un <code>SELECT *</code> básico</li>
+        <li>5️⃣ Observar cómo se relacionan las tablas entre sí</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25 – LIVE CODING SQL -->
+<div class="slide code-bg">
+  <span class="section-label">Live Coding · SQL</span>
+  <h2>Explorando la Base de Datos</h2>
+  <div class="code-block sm">
+    <span class="cm">-- 1. Ver todas las tablas disponibles</span><br>
+    <span class="kw">SELECT</span> name <span class="kw">FROM</span> sqlite_master <span class="kw">WHERE</span> type=<span class="str">'table'</span>;<br><br>
+    <span class="cm">-- 2. Ver todos los registros de una tabla</span><br>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> customers;<br><br>
+    <span class="cm">-- 3. Ver solo algunas columnas</span><br>
+    <span class="kw">SELECT</span> CustomerName, City, Country <span class="kw">FROM</span> customers;<br><br>
+    <span class="cm">-- 4. Filtrar por un valor específico</span><br>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> customers <span class="kw">WHERE</span> Country = <span class="str">'USA'</span>;<br><br>
+    <span class="cm">-- 5. Ver cuántos registros hay</span><br>
+    <span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> customers;<br><br>
+    <span class="cm">-- 6. Ordenar resultados</span><br>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> customers <span class="kw">ORDER BY</span> CustomerName <span class="kw">ASC</span>;
+  </div>
+</div>
+
+<!-- SLIDE 26 – EJERCICIO PRÁCTICO -->
+<div class="slide orange-bg">
+  <span class="section-label">Ejercicio 2 · 45 min</span>
+  <div class="emoji-big float" style="color:var(--dark);">🍕</div>
+  <h1 class="sm mt20" style="color:var(--dark);">Ejercicio: BD<br>Take Away</h1>
+  <div style="max-width:950px;margin-top:20px;">
+    <div class="card" style="background:rgba(0,0,0,0.2);border-color:rgba(0,0,0,0.2);">
+      <p style="color:#1e1e1e;font-size:1.05rem;line-height:1.9;">
+        Un cliente necesita organizar los datos de su emprendimiento gastronómico:<br>
+        ✅ Crear tabla <strong>Clientes</strong> con: id (PK), nombre, email, telefono<br>
+        ✅ Crear tabla <strong>Productos</strong> con: id (PK), nombre, precio, categoria<br>
+        ✅ Crear tabla <strong>Ordenes</strong> con: id (PK), id_cliente (FK), id_producto (FK), cantidad, fecha<br>
+        ✅ Insertar al menos 5 registros en cada tabla<br>
+        ⭐ Extra: consultar las órdenes mostrando nombre del cliente y producto
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 – SOLUCIÓN BASE -->
+<div class="slide code-bg">
+  <span class="section-label">Referencia · SQL Take Away</span>
+  <h2>Estructura Base del Ejercicio</h2>
+  <div class="code-block sm">
+    <span class="cm">-- Crear tabla Clientes</span><br>
+    <span class="kw">CREATE TABLE</span> Clientes (<br>
+    &nbsp;&nbsp;id_cliente  <span class="kw">INTEGER PRIMARY KEY AUTOINCREMENT</span>,<br>
+    &nbsp;&nbsp;nombre      <span class="kw">TEXT NOT NULL</span>,<br>
+    &nbsp;&nbsp;email       <span class="kw">TEXT UNIQUE</span>,<br>
+    &nbsp;&nbsp;telefono    <span class="kw">TEXT</span><br>
+    );<br><br>
+    <span class="cm">-- Crear tabla Productos</span><br>
+    <span class="kw">CREATE TABLE</span> Productos (<br>
+    &nbsp;&nbsp;id_producto <span class="kw">INTEGER PRIMARY KEY AUTOINCREMENT</span>,<br>
+    &nbsp;&nbsp;nombre      <span class="kw">TEXT NOT NULL</span>,<br>
+    &nbsp;&nbsp;precio      <span class="kw">REAL NOT NULL</span>,<br>
+    &nbsp;&nbsp;categoria   <span class="kw">TEXT</span><br>
+    );<br><br>
+    <span class="cm">-- Crear tabla Ordenes (con FK)</span><br>
+    <span class="kw">CREATE TABLE</span> Ordenes (<br>
+    &nbsp;&nbsp;id_orden    <span class="kw">INTEGER PRIMARY KEY AUTOINCREMENT</span>,<br>
+    &nbsp;&nbsp;id_cliente  <span class="kw">INTEGER REFERENCES</span> Clientes(id_cliente),<br>
+    &nbsp;&nbsp;id_producto <span class="kw">INTEGER REFERENCES</span> Productos(id_producto),<br>
+    &nbsp;&nbsp;cantidad    <span class="kw">INTEGER DEFAULT</span> <span class="num">1</span>,<br>
+    &nbsp;&nbsp;fecha       <span class="kw">TEXT DEFAULT</span> (<span class="fn">date</span>(<span class="str">'now'</span>))<br>
+    );
+  </div>
+</div>
+
+<!-- SLIDE 28 – RESUMEN -->
+<div class="slide dark-bg">
+  <span class="section-label">Cierre</span>
+  <h2>¿Qué Logramos Hoy?</h2>
+  <div class="grid-2" style="max-width:1150px;">
+    <div class="card">
+      <h3>🗄️ AE1.1 · Fundamentos</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Qué es una base de datos y sus tipos</li>
+        <li>Qué es una base de datos relacional</li>
+        <li>Tablas, atributos (columnas) y tuplas (filas)</li>
+        <li>Clave primaria (PK): identifica registros únicos</li>
+        <li>Clave foránea (FK): vincula tablas, integridad referencial</li>
+        <li>SQL: lenguaje estándar para BD relacionales</li>
+        <li>Rol de las BD en las organizaciones</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚙️ AE1.2 · RDBMS y Objetos</h3>
+      <ul class="list-clean" style="font-size:.98rem;">
+        <li>Qué es un RDBMS y sus características clave</li>
+        <li>Los 4 motores: SQL Server, Oracle, MySQL, PostgreSQL</li>
+        <li>Instalación de MySQL paso a paso</li>
+        <li>Objetos: tablas, vistas, índices, procedimientos, triggers, esquemas</li>
+        <li>SQLite Online: entorno de práctica sin instalación</li>
+        <li>Primeros comandos SQL: SELECT, WHERE, ORDER BY</li>
+        <li>CREATE TABLE con PK y FK</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29 – CIERRE -->
+<div class="slide db-bg">
+  <div style="font-size:5rem;line-height:1;" class="float glow">🗄️</div>
+  <h1 class="mt20">¡Excelente Trabajo!</h1>
+  <p class="subtitle mt20">Ahora conocen los fundamentos de las bases de datos relacionales.</p>
+  <div class="mt20" style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+    <span class="pill">BD Relacionales ✅</span><span class="pill">PK / FK ✅</span>
+    <span class="pill">SQL ✅</span><span class="pill">RDBMS ✅</span>
+    <span class="pill">Objetos ✅</span><span class="pill gold">SQLite ✅</span>
+  </div>
+  <div class="highlight mt20">Próxima clase: <span class="js-yellow">Consultas SQL</span> — SELECT avanzado, JOINs y filtros.</div>
+</div>
+
+</div><!-- end slider -->
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prev">← Anterior</button>
+  <button class="nav-btn" id="next">Siguiente →</button>
+</div>
+
+<script>
+  /* ── Navegación ── */
+  const slides   = document.querySelectorAll('.slide');
+  const counter  = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let current = 0;
+  const total = slides.length;
+  counter.textContent = `1 / ${total}`;
+  progress.style.width = `${(1/total)*100}%`;
+
+  function goTo(n) {
+    const prev = current;
+    slides[prev].classList.remove('active'); slides[prev].classList.add('prev');
+    current = ((n % total) + total) % total;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('prev'), 550);
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current+1)/total)*100}%`;
+  }
+  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+  });
+
+  /* ── BREAK TIMER 30 min + hora de regreso ── */
+  const TOTAL_SECS = 30 * 60;
+  const circle     = document.getElementById('ring-circle');
+  const display    = document.getElementById('timer-display');
+  const returnEl   = document.getElementById('return-time');
+  const msg        = document.getElementById('timer-msg');
+  const CIRCUMF    = 2 * Math.PI * 80;
+
+  circle.style.strokeDasharray  = CIRCUMF;
+  circle.style.strokeDashoffset = 0;
+
+  let remaining = TOTAL_SECS, timerInterval = null, running = false;
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+
+  function formatHora(date) {
+    return date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function updateRing() {
+    circle.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL_SECS);
+    circle.style.stroke = remaining > TOTAL_SECS * .5
+      ? '#1e1e1e'
+      : remaining > TOTAL_SECS * .2
+        ? '#e67e22'
+        : '#e74c3c';
+    display.textContent = formatTime(remaining);
+  }
+
+  document.getElementById('btn-start').addEventListener('click', () => {
+    if (running) return;
+    running = true;
+    msg.textContent = '';
+
+    // Calcular y mostrar hora de regreso
+    const ahora   = new Date();
+    const regreso = new Date(ahora.getTime() + remaining * 1000);
+    returnEl.textContent = `🕐 Regresamos a las ${formatHora(regreso)}`;
+
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        running = false;
+        msg.textContent        = '⏰ ¡Tiempo! Regresamos a clase.';
+        returnEl.textContent   = '';
+        return;
+      }
+      remaining--;
+      updateRing();
+    }, 1000);
+  });
+
+  document.getElementById('btn-pause').addEventListener('click', () => {
+    if (!running) return;
+    clearInterval(timerInterval);
+    running = false;
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    clearInterval(timerInterval);
+    running                   = false;
+    remaining                 = TOTAL_SECS;
+    circle.style.stroke       = '#1e1e1e';
+    msg.textContent           = '';
+    returnEl.textContent      = '';
+    updateRing();
+  });
+
+  updateRing();
+</script>
+</body>
+</html>
