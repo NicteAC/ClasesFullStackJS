@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultas a una o varias tablas | SENCE - Talento Digital</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  background: #1e1e1e;
+  color: white;
+}
+.slide {
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 60px;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 0; transform: translateX(100%);
+  overflow: hidden;
+}
+.slide.active { opacity: 1; transform: translateX(0); }
+.slide.prev { transform: translateX(-100%); }
+.slide-content { max-width: 1200px; width: 100%; text-align: center; }
+.slide.verificacion { background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%); }
+.slide.ejercicio { background: linear-gradient(135deg, #E65100 0%, #FF6F00 100%); }
+.slide.descanso { background: linear-gradient(135deg, #6A1B9A 0%, #AB47BC 100%); }
+.slide.livecoding { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+h1 { font-size: 4rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); }
+h2 { font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.3); }
+h3 { font-size: 2rem; margin-bottom: 20px; color: #FFD700; }
+p, li { font-size: 1.5rem; line-height: 1.8; }
+.subtitle { font-size: 1.8rem; opacity: 0.95; margin-bottom: 20px; }
+.accent { color: #FFD700; font-weight: bold; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+
+.slide-counter {
+  position: fixed; top: 30px; right: 30px;
+  background: rgba(0,0,0,0.4); padding: 10px 20px;
+  border-radius: 25px; font-size: 1rem; z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.progress-bar {
+  position: fixed; top: 0; left: 0;
+  height: 5px; background: #FFD700;
+  z-index: 100; transition: width 0.3s ease;
+  box-shadow: 0 0 10px #FFD700;
+}
+.nav-buttons {
+  position: fixed; bottom: 30px; right: 30px;
+  display: flex; gap: 10px; z-index: 100;
+}
+.nav-btn {
+  background: rgba(255,255,255,0.2); border: 2px solid white;
+  color: white; padding: 12px 24px; font-size: 1rem;
+  cursor: pointer; border-radius: 25px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.4); transform: translateY(-3px); }
+
+.badge-ae {
+  display: inline-block; background: #FFD700; color: #1e1e1e;
+  padding: 8px 20px; border-radius: 20px; font-weight: bold;
+  font-size: 1rem; margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-top: 30px; }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 25px; }
+
+.card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(15px);
+  padding: 30px; border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+.card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.18); }
+.card h3 { font-size: 1.6rem; margin-bottom: 15px; }
+.card p, .card li { font-size: 1.15rem; text-align: left; }
+.card ul { text-align: left; padding-left: 20px; }
+.emoji-big { font-size: 4rem; margin-bottom: 15px; display: block; }
+
+.code-block {
+  background: #1e1e1e; color: #f7df1e;
+  font-family: 'Courier New', monospace;
+  padding: 25px; border-radius: 15px;
+  text-align: left; font-size: 1.15rem;
+  border-left: 5px solid #FFD700;
+  margin: 20px 0; overflow-x: auto;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+.code-block .keyword { color: #ff79c6; font-weight: bold; }
+.code-block .string { color: #50fa7b; }
+.code-block .comment { color: #6272a4; font-style: italic; }
+
+.cronograma-table {
+  width: 100%; margin-top: 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px; overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.cronograma-table th, .cronograma-table td {
+  padding: 15px 20px; text-align: left;
+  font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.cronograma-table th { background: rgba(255,215,0,0.2); font-size: 1.3rem; color: #FFD700; }
+.cronograma-table tr.descanso-row { background: rgba(255,107,107,0.2); font-weight: bold; }
+
+.check-list { text-align: left; max-width: 800px; margin: 20px auto; }
+.check-list li {
+  list-style: none; padding: 12px 0 12px 40px;
+  position: relative; font-size: 1.4rem;
+}
+.check-list li:before {
+  content: '✓'; position: absolute; left: 0;
+  color: #FFD700; font-weight: bold; font-size: 1.8rem;
+}
+
+.question-mark {
+  display: inline-block; font-size: 3rem; color: #FFD700;
+  animation: pulse 1.5s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(255,215,0,0.6);
+}
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+@keyframes glow { 0%,100%{text-shadow:0 0 10px #FFD700;} 50%{text-shadow:0 0 30px #FFD700, 0 0 40px #FFD700;} }
+.floating { animation: float 3s ease-in-out infinite; }
+
+/* Timer Descanso */
+.timer-container {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 25px; margin-top: 20px;
+}
+.timer-svg { width: 280px; height: 280px; }
+.timer-circle-bg { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 12; }
+.timer-circle-fg {
+  fill: none; stroke: #FFD700; stroke-width: 12;
+  stroke-linecap: round; transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 10px #FFD700);
+}
+.timer-text {
+  font-size: 3.5rem; font-weight: bold; fill: white;
+  font-family: 'Courier New', monospace;
+}
+.timer-controls { display: flex; gap: 15px; }
+.timer-btn {
+  padding: 14px 28px; font-size: 1.2rem;
+  border: 2px solid white; background: rgba(255,255,255,0.2);
+  color: white; border-radius: 30px; cursor: pointer;
+  backdrop-filter: blur(10px); transition: all 0.3s;
+  font-weight: bold;
+}
+.timer-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.05); }
+.hora-regreso {
+  font-size: 2rem; color: #FFD700;
+  animation: glow 2s ease-in-out infinite;
+  margin-top: 15px; font-weight: bold;
+}
+
+.roadmap { display: flex; justify-content: space-between; gap: 20px; margin-top: 30px; }
+.roadmap-item {
+  flex: 1; background: rgba(255,255,255,0.1);
+  padding: 25px 15px; border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.roadmap-item.current {
+  background: rgba(255,215,0,0.25);
+  border: 3px solid #FFD700;
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(255,215,0,0.3);
+}
+.roadmap-number {
+  font-size: 3rem; color: #FFD700; font-weight: bold;
+  display: block; margin-bottom: 10px;
+}
+.roadmap-item p { font-size: 1rem; }
+
+.two-col-list {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 20px 40px; text-align: left; max-width: 1000px; margin: 20px auto;
+}
+.two-col-list li {
+  list-style: none; padding-left: 30px; position: relative;
+  margin-bottom: 12px; font-size: 1.2rem;
+}
+.two-col-list li:before {
+  content: '▸'; position: absolute; left: 0;
+  color: #FFD700; font-weight: bold;
+}
+
+.tabla-relacional {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;
+}
+.mini-tabla {
+  background: rgba(0,0,0,0.3); border-radius: 12px;
+  padding: 15px; text-align: left;
+}
+.mini-tabla h4 { color: #FFD700; margin-bottom: 10px; font-size: 1.2rem; }
+.mini-tabla code {
+  display: block; font-family: 'Courier New', monospace;
+  color: #f7df1e; font-size: 0.95rem; padding: 3px 0;
+}
+
+.warning-box {
+  background: rgba(255,107,107,0.2);
+  border-left: 5px solid #FF6B6B;
+  padding: 20px; border-radius: 10px;
+  margin-top: 20px; text-align: left;
+}
+.info-box {
+  background: rgba(255,215,0,0.15);
+  border-left: 5px solid #FFD700;
+  padding: 20px; border-radius: 10px;
+  margin-top: 20px; text-align: left;
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">1</span></div>
+
+<!-- SLIDE 1: PORTADA -->
+<div class="slide active">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🗄️</div>
+    <h1>Consultas a una o<br>varias tablas</h1>
+    <p class="subtitle"><span class="accent">AE2</span> · Módulo de Bases de Datos Relacionales</p>
+    <p style="font-size: 1.2rem; margin-top: 30px; opacity: 0.9;">
+      Desarrollo de Aplicaciones Full Stack JavaScript Trainee V2<br>
+      SENCE · Talento Digital · Instituto ISEG
+    </p>
+    <p style="font-size: 1.1rem; margin-top: 20px; opacity: 0.8;">Duración: 4 horas</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: CRONOGRAMA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>📅 Cronograma de la clase</h2>
+    <table class="cronograma-table">
+      <thead>
+        <tr><th>Bloque</th><th>Tema</th><th>Duración</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Introducción y fundamentos SQL</td><td>30 min</td></tr>
+        <tr><td>2</td><td>Recuperar información de una tabla + Live Coding</td><td>45 min</td></tr>
+        <tr><td>3</td><td>Modelo de datos · Claves primarias y foráneas</td><td>30 min</td></tr>
+        <tr class="descanso-row"><td>☕</td><td>DESCANSO</td><td>30 min</td></tr>
+        <tr><td>4</td><td>Consultas anidadas (Subqueries) + Live Coding</td><td>45 min</td></tr>
+        <tr><td>5</td><td>Funciones de agregación y JOINs + Live Coding</td><td>50 min</td></tr>
+        <tr><td>6</td><td>Resumen y cierre</td><td>10 min</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SLIDE 3: ROADMAP -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🗺️ Roadmap de lecciones</h2>
+    <p class="subtitle">¿Dónde estamos en este módulo?</p>
+    <div class="roadmap">
+      <div class="roadmap-item"><span class="roadmap-number">1</span><p>Bases de datos relacionales</p></div>
+      <div class="roadmap-item current"><span class="roadmap-number">2</span><p>Consultas a una o varias tablas</p></div>
+      <div class="roadmap-item"><span class="roadmap-number">3</span><p>Manipulación de datos y transaccionalidad</p></div>
+      <div class="roadmap-item"><span class="roadmap-number">4</span><p>Definición de tablas</p></div>
+      <div class="roadmap-item"><span class="roadmap-number">5</span><p>Modelo entidad-relación</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: OBJETIVOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🎯 Objetivos de aprendizaje</h2>
+    <p class="subtitle">¿Qué aprenderás hoy?</p>
+    <ul class="check-list">
+      <li>Definir el Lenguaje Estructurado de Consultas <span class="accent">SQL</span></li>
+      <li>Conocer los diferentes tipos de cláusulas SQL para recuperar datos</li>
+      <li>Recuperar información de una tabla utilizando consultas SQL</li>
+      <li>Comprender el concepto de <span class="accent">modelo de datos</span>, PK y FK</li>
+      <li>Realizar consultas <span class="accent">anidadas (subqueries)</span></li>
+      <li>Usar funciones de agregación y <span class="accent">JOINs</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 5: REPASO -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🔙 Repaso clase anterior</h2>
+    <p class="subtitle">¿Quedó alguna duda?</p>
+    <div class="grid-2" style="margin-top: 40px;">
+      <div class="card">
+        <span class="emoji-big">🏛️</span>
+        <h3>¿Qué es un RDBMS?</h3>
+        <p>Sistema de Gestión de Bases de Datos Relacionales que organiza datos en tablas relacionadas.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📦</span>
+        <h3>Objetos principales</h3>
+        <p>Tablas, vistas, índices, procedimientos almacenados, triggers y usuarios.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: MOMENTO DE PREGUNTAS -->
+<div class="slide">
+  <div class="slide-content">
+    <div style="font-size: 8rem;" class="floating">🤔</div>
+    <h2>#MomentoDePreguntas</h2>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card"><span class="question-mark">?</span><p>¿Qué es SQL?</p></div>
+      <div class="card"><span class="question-mark">?</span><p>¿Qué es un modelo de datos?</p></div>
+      <div class="card"><span class="question-mark">?</span><p>¿Qué es una clave primaria?</p></div>
+      <div class="card"><span class="question-mark">?</span><p>¿Qué es una clave externa?</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: BLOQUE 1 - SQL -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 2.1 · Bloque 1</div>
+    <h2>El Lenguaje Estructurado<br>de Consultas <span class="accent">(SQL)</span></h2>
+    <p class="subtitle" style="margin-top: 40px;">Structured Query Language</p>
+    <p style="max-width: 900px; margin: 30px auto;">
+      Lenguaje de programación utilizado para gestionar y manipular <span class="accent">bases de datos relacionales</span>.
+      Desarrollado originalmente por <span class="accent">IBM en los años 70</span>, hoy es el estándar de la industria.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 8: OPERACIONES SQL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Qué podemos hacer con SQL?</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card"><span class="emoji-big">🔍</span><h3>Consulta</h3><p>Reportes, dashboards, estadísticas de ventas.</p></div>
+      <div class="card"><span class="emoji-big">➕</span><h3>Inserción</h3><p>Registrar clientes, ventas o entradas nuevas.</p></div>
+      <div class="card"><span class="emoji-big">✏️</span><h3>Actualización</h3><p>Modificar direcciones, estados de orden.</p></div>
+      <div class="card"><span class="emoji-big">🗑️</span><h3>Eliminación</h3><p>Borrar registros antiguos o productos descontinuados.</p></div>
+      <div class="card"><span class="emoji-big">🏗️</span><h3>Definir esquemas</h3><p>Crear tablas, relaciones y reglas de negocio.</p></div>
+      <div class="card"><span class="emoji-big">🔐</span><h3>Gestionar permisos</h3><p>Roles, seguridad y accesos.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: SUB-SETS SQL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Las 4 familias de sentencias SQL</h2>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card">
+        <h3>🏗️ DDL <span style="font-size:1rem;color:white;">(Data Definition Language)</span></h3>
+        <p>Crear y modificar objetos de la base de datos.</p>
+        <div class="code-block" style="font-size: 1rem;">CREATE, ALTER, DROP</div>
+      </div>
+      <div class="card">
+        <h3>📝 DML <span style="font-size:1rem;color:white;">(Data Manipulation Language)</span></h3>
+        <p>Consultar y manipular los datos.</p>
+        <div class="code-block" style="font-size: 1rem;">SELECT, INSERT, UPDATE, DELETE</div>
+      </div>
+      <div class="card">
+        <h3>🔐 DCL <span style="font-size:1rem;color:white;">(Data Control Language)</span></h3>
+        <p>Controlar el acceso a los objetos.</p>
+        <div class="code-block" style="font-size: 1rem;">GRANT, REVOKE</div>
+      </div>
+      <div class="card">
+        <h3>💼 TCL <span style="font-size:1rem;color:white;">(Transaction Control Language)</span></h3>
+        <p>Gestionar transacciones.</p>
+        <div class="code-block" style="font-size: 1rem;">COMMIT, ROLLBACK, SAVEPOINT</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: VERIFICACION 1 -->
+<div class="slide verificacion">
+  <div class="slide-content">
+    <div style="font-size: 6rem;">✅</div>
+    <h2>Verificación</h2>
+    <p class="subtitle">Comprobemos lo aprendido</p>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card"><h3>1️⃣</h3><p>¿A qué familia pertenece <code>SELECT</code>?</p></div>
+      <div class="card"><h3>2️⃣</h3><p>¿Qué significan las siglas SQL?</p></div>
+      <div class="card"><h3>3️⃣</h3><p>Nombra 2 tareas que se pueden hacer con SQL</p></div>
+      <div class="card"><h3>4️⃣</h3><p>¿DDL o DML para crear tablas?</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: BLOQUE 2 -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 2</div>
+    <h2>Recuperar información<br>de una tabla</h2>
+    <p style="max-width: 900px; margin: 30px auto; font-size: 1.4rem;">
+      Solicitar y obtener información específica almacenada en una base de datos relacional
+      mediante la ejecución de una <span class="accent">consulta SQL</span>.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 12: PROCESO 4 PASOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Proceso para recuperar datos</h2>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card">
+        <h3><span class="accent">1.</span> Escribir la consulta</h3>
+        <p>Redactar SQL que especifique qué datos deseas obtener.</p>
+      </div>
+      <div class="card">
+        <h3><span class="accent">2.</span> Cláusula SELECT</h3>
+        <p>Define las columnas específicas que deseas recuperar.</p>
+      </div>
+      <div class="card">
+        <h3><span class="accent">3.</span> Especificar tabla (FROM)</h3>
+        <p>Indica la tabla de la cual recuperar datos.</p>
+      </div>
+      <div class="card">
+        <h3><span class="accent">4.</span> Filtrar y ordenar</h3>
+        <p>Usa WHERE para filtrar y ORDER BY para ordenar.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: CLAUSULAS PRINCIPALES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Cláusulas SQL principales</h2>
+    <div class="code-block" style="font-size: 1.3rem;">
+<span class="keyword">SELECT</span> nombre, precio
+<span class="keyword">FROM</span> productos
+<span class="keyword">WHERE</span> precio &gt; <span class="string">100</span>
+<span class="keyword">ORDER BY</span> precio <span class="keyword">DESC</span>
+<span class="keyword">LIMIT</span> <span class="string">10</span>;
+    </div>
+    <div class="two-col-list" style="margin-top: 30px;">
+      <li><b class="accent">SELECT</b> → columnas a recuperar</li>
+      <li><b class="accent">FROM</b> → tabla origen</li>
+      <li><b class="accent">WHERE</b> → filtro de registros</li>
+      <li><b class="accent">ORDER BY</b> → orden ASC / DESC</li>
+      <li><b class="accent">LIMIT</b> → cantidad máxima de filas</li>
+      <li><b class="accent">EXISTS</b> → verifica existencia en subconsulta</li>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: FUNCIONES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Funciones dentro de consultas</h2>
+    <p class="subtitle">Modifican o analizan valores sin alterar los datos originales</p>
+    <div class="grid-4" style="margin-top: 25px;">
+      <div class="card"><h3>UPPER()</h3><p>Convierte texto a MAYÚSCULAS</p><div class="code-block" style="font-size:1rem;">UPPER('hola') → 'HOLA'</div></div>
+      <div class="card"><h3>LOWER()</h3><p>Convierte texto a minúsculas</p><div class="code-block" style="font-size:1rem;">LOWER('HOLA') → 'hola'</div></div>
+      <div class="card"><h3>LENGTH()</h3><p>Cantidad de caracteres</p><div class="code-block" style="font-size:1rem;">LENGTH('hola') → 4</div></div>
+      <div class="card"><h3>ROUND()</h3><p>Redondea números</p><div class="code-block" style="font-size:1rem;">ROUND(3.7) → 4</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: FUNCIONES DE AGREGACION -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Funciones de agregación</h2>
+    <p class="subtitle">Resumen información operando sobre <span class="accent">conjuntos de filas</span></p>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card"><span class="emoji-big">🔢</span><h3>COUNT()</h3><p>Cuenta registros</p></div>
+      <div class="card"><span class="emoji-big">➕</span><h3>SUM()</h3><p>Suma valores</p></div>
+      <div class="card"><span class="emoji-big">📊</span><h3>AVG()</h3><p>Calcula promedios</p></div>
+      <div class="card"><span class="emoji-big">⬇️</span><h3>MIN()</h3><p>Valor mínimo</p></div>
+      <div class="card"><span class="emoji-big">⬆️</span><h3>MAX()</h3><p>Valor máximo</p></div>
+      <div class="card"><span class="emoji-big">🗂️</span><h3>GROUP BY</h3><p>Agrupa por categoría</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: LIVE CODING 1 -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #1</h2>
+    <h3 style="color: white;">Caso de estudio: Tienda en línea</h3>
+    <p style="margin-top: 20px;">🗂️ Dataset: <span class="accent">E-commerce data (Kaggle)</span></p>
+    <div class="tabla-relacional" style="margin-top: 30px;">
+      <div class="mini-tabla">
+        <h4>📋 Clientes</h4>
+        <code>id_cliente (PK)</code><code>nombre</code><code>email</code><code>país</code>
+      </div>
+      <div class="mini-tabla">
+        <h4>📦 Productos</h4>
+        <code>id_producto (PK)</code><code>nombre</code><code>categoría</code><code>precio</code>
+      </div>
+      <div class="mini-tabla">
+        <h4>🧾 Órdenes</h4>
+        <code>id_orden (PK)</code><code>fecha</code><code>id_cliente (FK)</code>
+      </div>
+      <div class="mini-tabla">
+        <h4>📝 DetalleOrden</h4>
+        <code>id_orden (FK)</code><code>id_producto (FK)</code><code>cantidad</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: EJERCICIO 1 -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">💪</div>
+    <h2>Ejercicio N° 1</h2>
+    <p class="subtitle">Tiempo: <span class="accent">30 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 20px auto;">
+      <p style="font-size: 1.25rem;">Escribe consultas SQL para:</p>
+      <ol style="text-align: left; padding-left: 30px; margin-top: 10px;">
+        <li>Obtener el nombre y email de todos los clientes registrados.</li>
+        <li>Obtener nombre y categoría de productos con precio &gt; 100.</li>
+        <li>Obtener clientes y órdenes realizadas en el año 2024.</li>
+        <li>Recuperar el producto más caro de la tabla Productos.</li>
+        <li>Recuperar el número total de órdenes.</li>
+        <li>Total vendido por producto de la categoría "Electrónica" (mayor a menor).</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18: BLOQUE 3 - MODELO DE DATOS -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 3</div>
+    <h2>¿Qué es un modelo de datos?</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.4rem;">
+      La <span class="accent">estructura y organización</span> de los datos en una base de datos.
+      Define cómo se almacenan, acceden y relacionan los datos.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 19: MODELOS COMUNES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Modelos de datos más comunes</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card">
+        <span class="emoji-big">🔗</span>
+        <h3>Modelo Relacional</h3>
+        <p>Tablas con filas y columnas. Relaciones vía claves primarias y foráneas. <b class="accent">(El más usado en SQL)</b></p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🕸️</span>
+        <h3>Entidad-Relación (ER)</h3>
+        <p>Entidades representan objetos del mundo real. Relaciones conectan esas entidades.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📄</span>
+        <h3>Orientado a Documentos</h3>
+        <p>Datos en formatos como JSON o XML. Mayor flexibilidad estructural.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20: CLAVE PRIMARIA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🔑 Clave primaria <span class="accent">(PK)</span></h2>
+    <p style="max-width: 900px; margin: 20px auto;">
+      Campo o conjunto de campos que <span class="accent">identifica de manera única</span> cada registro dentro de una tabla.
+    </p>
+    <div class="grid-3" style="margin-top: 20px;">
+      <div class="card"><h3>Unicidad</h3><p>Cada valor debe ser único en toda la tabla.</p></div>
+      <div class="card"><h3>No nulidad</h3><p>Los valores no pueden ser NULL.</p></div>
+      <div class="card"><h3>Identificación</h3><p>Identifica cada registro de forma inequívoca.</p></div>
+    </div>
+    <div class="code-block" style="max-width: 700px; margin: 20px auto; font-size: 1.2rem;">
+<span class="keyword">CREATE TABLE</span> clientes (
+  id_cliente <span class="keyword">INT PRIMARY KEY</span>,
+  nombre <span class="keyword">VARCHAR</span>(<span class="string">100</span>)
+);
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 21: CLAVE EXTERNA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🔗 Clave externa <span class="accent">(FK)</span></h2>
+    <p style="max-width: 900px; margin: 20px auto;">
+      Campo que establece una <span class="accent">relación entre dos tablas</span>. Referencia a la clave primaria de otra tabla.
+    </p>
+    <div class="code-block" style="max-width: 800px; margin: 20px auto; font-size: 1.15rem;">
+<span class="keyword">CREATE TABLE</span> ordenes (
+  id_orden <span class="keyword">INT PRIMARY KEY</span>,
+  fecha <span class="keyword">DATE</span>,
+  id_cliente <span class="keyword">INT</span>,
+  <span class="keyword">FOREIGN KEY</span> (id_cliente) <span class="keyword">REFERENCES</span> clientes(id_cliente)
+);
+    </div>
+    <div class="info-box" style="max-width: 800px; margin: 15px auto;">
+      <p>Las FK garantizan la <span class="accent">integridad referencial</span> y permiten realizar uniones entre tablas.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 22: CONSULTAS PK/FK -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Consultas con PK y FK</h2>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="card">
+        <h3>Usando PK</h3>
+        <p style="margin-bottom: 10px;">Obtener info de un cliente específico:</p>
+        <div class="code-block" style="font-size:1rem;"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> clientes
+<span class="keyword">WHERE</span> id_cliente = <span class="string">5</span>;</div>
+      </div>
+      <div class="card">
+        <h3>Usando FK</h3>
+        <p style="margin-bottom: 10px;">Obtener órdenes de ese cliente:</p>
+        <div class="code-block" style="font-size:1rem;"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ordenes
+<span class="keyword">WHERE</span> id_cliente = <span class="string">5</span>;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23: VERIFICACION 2 -->
+<div class="slide verificacion">
+  <div class="slide-content">
+    <div style="font-size: 6rem;">✅</div>
+    <h2>Verificación</h2>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card"><h3>1️⃣</h3><p>¿Puede una PK tener valores NULL?</p></div>
+      <div class="card"><h3>2️⃣</h3><p>¿Qué garantizan las FK?</p></div>
+      <div class="card"><h3>3️⃣</h3><p>¿Cuántas PK puede tener una tabla?</p></div>
+      <div class="card"><h3>4️⃣</h3><p>¿A qué apunta una FK?</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24: DESCANSO -->
+<div class="slide descanso">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">☕</div>
+    <h2>Momento: Descanso</h2>
+    <p class="subtitle">30 minutos para estirar las piernas 🚶‍♀️</p>
+    <div class="timer-container">
+      <svg class="timer-svg" viewBox="0 0 200 200">
+        <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="timer-circle-fg" id="timerCircle" cx="100" cy="100" r="90"
+          stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+        <text class="timer-text" x="100" y="115" text-anchor="middle" id="timerText">30:00</text>
+      </svg>
+      <div class="timer-controls">
+        <button class="timer-btn" onclick="iniciarTimer()">▶ Iniciar</button>
+        <button class="timer-btn" onclick="pausarTimer()">⏸ Pausar</button>
+        <button class="timer-btn" onclick="reiniciarTimer()">↩ Reiniciar</button>
+      </div>
+      <div class="hora-regreso" id="horaRegreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25: BLOQUE 4 - CONSULTAS ANIDADAS -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 2.2 · Bloque 4</div>
+    <h2>Consultas anidadas<br><span class="accent">(Subqueries)</span></h2>
+    <p style="max-width: 950px; margin: 30px auto;">
+      Consultas que se encuentran <span class="accent">dentro de otra consulta principal</span>.
+      La subconsulta se ejecuta primero, y su resultado se usa en la consulta externa.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 26: ANATOMIA DE UNA SUBQUERY -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Anatomía de una subquery</h2>
+    <div class="code-block" style="font-size: 1.2rem; max-width: 900px; margin: 30px auto;">
+<span class="comment">-- Consulta principal (externa)</span>
+<span class="keyword">SELECT</span> nombre <span class="keyword">FROM</span> empleados
+<span class="keyword">WHERE</span> salario &gt; (
+  <span class="comment">-- Subconsulta (interna): se ejecuta PRIMERO</span>
+  <span class="keyword">SELECT</span> <span class="keyword">AVG</span>(salario) <span class="keyword">FROM</span> empleados
+);
+    </div>
+    <div class="info-box" style="max-width: 900px; margin: 20px auto;">
+      <p>🔹 La subconsulta calcula el promedio de todos los salarios.</p>
+      <p>🔹 La consulta principal devuelve empleados con salario mayor a ese promedio.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27: DONDE USAR SUBQUERIES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Dónde pueden ir las subconsultas?</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card"><h3>SELECT</h3><p>Como valor calculado dentro de una columna.</p></div>
+      <div class="card"><h3>FROM</h3><p>Como tabla derivada (temporal).</p></div>
+      <div class="card"><h3>WHERE</h3><p>Como valor de comparación en el filtro.</p></div>
+      <div class="card"><h3>HAVING</h3><p>Como filtro después de un GROUP BY.</p></div>
+      <div class="card"><h3>IN / NOT IN</h3><p>Como lista de valores permitidos.</p></div>
+      <div class="card"><h3>EXISTS</h3><p>Para verificar si retornó filas.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 28: EJEMPLO SUBQUERY -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo práctico</h2>
+    <p class="subtitle">Estudiantes inscritos en "Matemáticas Avanzadas"</p>
+    <div class="code-block" style="font-size: 1.15rem; max-width: 900px; margin: 20px auto;">
+<span class="keyword">SELECT</span> nombre
+<span class="keyword">FROM</span> estudiantes
+<span class="keyword">WHERE</span> id_estudiante <span class="keyword">IN</span> (
+  <span class="keyword">SELECT</span> id_estudiante
+  <span class="keyword">FROM</span> inscripciones
+  <span class="keyword">WHERE</span> id_curso = (
+    <span class="keyword">SELECT</span> id_curso
+    <span class="keyword">FROM</span> cursos
+    <span class="keyword">WHERE</span> nombre = <span class="string">'Matemáticas Avanzadas'</span>
+  )
+);
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29: LIVE CODING 2 -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #2</h2>
+    <h3 style="color: white;">Empleados y Departamentos</h3>
+    <div class="tabla-relacional" style="margin-top: 30px;">
+      <div class="mini-tabla">
+        <h4>👥 Empleados</h4>
+        <code>id_empleado (PK)</code><code>nombre, apellido</code><code>salario</code><code>id_departamento (FK)</code>
+      </div>
+      <div class="mini-tabla">
+        <h4>🏢 Departamentos</h4>
+        <code>id_departamento (PK)</code><code>nombre_departamento</code><code>ubicacion</code>
+      </div>
+    </div>
+    <p style="margin-top: 25px;">Tareas: subconsultas simples, correlacionadas y con agregación.</p>
+  </div>
+</div>
+
+<!-- SLIDE 30: EJERCICIO 2 - SUBQUERIES -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">🎯</div>
+    <h2>Ejercicio N° 2 · Subqueries</h2>
+    <p class="subtitle">Tiempo: <span class="accent">20 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 20px auto;">
+      <p style="font-size: 1.2rem;">Resolver <b>solo con subconsultas</b> (¡no JOINs!):</p>
+      <ol style="text-align: left; padding-left: 30px; margin-top: 10px;">
+        <li>Género menos frecuente: mostrar todos los títulos del género con menor cantidad de libros.</li>
+        <li>Autores "prolíficos recientes": autores cuya fecha promedio de publicación sea posterior al promedio global.</li>
+        <li>Top-3 géneros por cantidad de libros usando ORDER BY + LIMIT.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 31: BLOQUE 5 - AGREGACION -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 5</div>
+    <h2>Consultas con funciones<br>de agregación + GROUP BY</h2>
+    <div class="code-block" style="max-width: 800px; margin: 30px auto; font-size: 1.2rem;">
+<span class="keyword">SELECT</span> categoria, <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> total,
+       <span class="keyword">AVG</span>(precio) <span class="keyword">AS</span> promedio
+<span class="keyword">FROM</span> productos
+<span class="keyword">GROUP BY</span> categoria
+<span class="keyword">HAVING</span> <span class="keyword">COUNT</span>(*) &gt; <span class="string">5</span>;
+    </div>
+    <p style="max-width: 900px; margin: 20px auto;">
+      <b class="accent">GROUP BY</b> agrupa registros · <b class="accent">HAVING</b> filtra grupos (no filas)
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 32: JOINS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Qué son las operaciones JOIN?</h2>
+    <p style="max-width: 950px; margin: 20px auto;">
+      Combinan datos de <span class="accent">dos o más tablas</span> en función de una relación entre ellas.
+      Permiten unir información dividida en distintos conjuntos.
+    </p>
+    <div class="grid-4" style="margin-top: 25px;">
+      <div class="card"><h3>INNER JOIN</h3><p>Solo registros que <b class="accent">coinciden</b> en ambas tablas.</p></div>
+      <div class="card"><h3>LEFT JOIN</h3><p>Todos los de la <b class="accent">izquierda</b> + coincidencias derecha.</p></div>
+      <div class="card"><h3>RIGHT JOIN</h3><p>Todos los de la <b class="accent">derecha</b> + coincidencias izquierda.</p></div>
+      <div class="card"><h3>FULL JOIN</h3><p><b class="accent">Todos</b> los registros de ambas tablas.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 33: EJEMPLO INNER JOIN -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo: INNER JOIN</h2>
+    <div class="code-block" style="font-size: 1.15rem; max-width: 900px; margin: 25px auto;">
+<span class="keyword">SELECT</span> c.nombre, p.numero_pedido
+<span class="keyword">FROM</span> clientes c
+<span class="keyword">INNER JOIN</span> pedidos p <span class="keyword">ON</span> c.id_cliente = p.id_cliente;
+    </div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>🔹 Combina las tablas <b>clientes</b> y <b>pedidos</b> por <code>id_cliente</code>.</p>
+      <p>🔹 El resultado: cada cliente con los números de pedido correspondientes.</p>
+      <p>🔹 Los clientes sin pedidos <b>NO aparecen</b>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 34: JOIN + AGREGACION -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>JOIN + Agregación + HAVING</h2>
+    <p class="subtitle">Autores con más de 3 libros publicados desde 2020</p>
+    <div class="code-block" style="font-size: 1.1rem; max-width: 900px; margin: 20px auto;">
+<span class="keyword">SELECT</span> a.nombre, a.apellido, <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> total_libros
+<span class="keyword">FROM</span> autores a
+<span class="keyword">INNER JOIN</span> libros l <span class="keyword">ON</span> a.id_autor = l.id_autor
+<span class="keyword">WHERE</span> l.anio_publicacion &gt;= <span class="string">2020</span>
+<span class="keyword">GROUP BY</span> a.id_autor, a.nombre, a.apellido
+<span class="keyword">HAVING</span> <span class="keyword">COUNT</span>(*) &gt; <span class="string">3</span>
+<span class="keyword">ORDER BY</span> total_libros <span class="keyword">DESC</span>;
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 35: LIVE CODING 3 -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #3</h2>
+    <h3 style="color: white;">Películas y Actores</h3>
+    <p style="margin-top: 25px;">Escribir consultas SQL usando JOIN para:</p>
+    <ul style="text-align: left; max-width: 900px; margin: 20px auto; font-size: 1.2rem;">
+      <li>Título de películas + nombre del actor principal.</li>
+      <li>Nombre de actores + número de películas (ordenado desc.).</li>
+      <li>Películas cuyo actor principal tenga el mismo género que la película.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 36: EJERCICIO JOINS -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">🚀</div>
+    <h2>Ejercicio N° 3 · JOINs</h2>
+    <p class="subtitle">Tiempo: <span class="accent">20 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 20px auto;">
+      <p style="font-size: 1.2rem;">Tablas: <b>Libros, Generos, Autores, Editoriales</b></p>
+      <ol style="text-align: left; padding-left: 30px; margin-top: 10px;">
+        <li><b>Catálogo detallado:</b> titulo + nombre_genero + autor (nombre+apellido) + editorial usando INNER JOIN.</li>
+        <li><b>Géneros huérfanos:</b> géneros sin libros asociados (LEFT JOIN + IS NULL).</li>
+        <li><b>Conteo por autor (incluye 0):</b> autor + cantidad de libros publicados. Deben aparecer también autores sin libros.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 37: VERIFICACION FINAL -->
+<div class="slide verificacion">
+  <div class="slide-content">
+    <div style="font-size: 6rem;">✅</div>
+    <h2>Verificación final</h2>
+    <div class="grid-2" style="margin-top: 30px;">
+      <div class="card"><h3>1️⃣</h3><p>Diferencia entre WHERE y HAVING</p></div>
+      <div class="card"><h3>2️⃣</h3><p>¿Cuándo usar LEFT JOIN vs INNER JOIN?</p></div>
+      <div class="card"><h3>3️⃣</h3><p>¿Qué es una subquery correlacionada?</p></div>
+      <div class="card"><h3>4️⃣</h3><p>¿Para qué sirve GROUP BY?</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 38: RESUMEN -->
+<div class="slide">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">🎓</div>
+    <h2>Resumen de la clase</h2>
+    <ul class="check-list" style="max-width: 900px;">
+      <li>Definimos el concepto <span class="accent">SQL</span> y sus familias (DDL, DML, DCL, TCL)</li>
+      <li>Recuperamos información con SELECT, FROM, WHERE, ORDER BY, LIMIT</li>
+      <li>Comprendimos qué es un <span class="accent">modelo de datos</span></li>
+      <li>Aprendimos claves primarias (PK) y foráneas (FK)</li>
+      <li>Realizamos consultas <span class="accent">anidadas (subqueries)</span></li>
+      <li>Usamos funciones de agregación con GROUP BY y HAVING</li>
+      <li>Combinamos tablas con distintos tipos de <span class="accent">JOIN</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 39: CIERRE -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🚀</div>
+    <h1>¡Nos vemos<br>en la próxima clase!</h1>
+    <p class="subtitle" style="margin-top: 30px;">
+      Próxima lección: <span class="accent">Sentencias para la manipulación de datos y transaccionalidad</span>
+    </p>
+    <p style="margin-top: 30px; font-size: 1.2rem; opacity: 0.9;">💬 ¿Alguna consulta final?</p>
+  </div>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" onclick="cambiarSlide(-1)">← Anterior</button>
+  <button class="nav-btn" onclick="cambiarSlide(1)">Siguiente →</button>
+</div>
+
+<script>
+// ==================== NAVEGACIÓN DE SLIDES ====================
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlideIndex = 0;
+document.getElementById('totalSlides').textContent = totalSlides;
+
+function mostrarSlide(index) {
+  slides.forEach((slide, i) => {
+    slide.classList.remove('active', 'prev');
+    if (i === index) slide.classList.add('active');
+    else if (i < index) slide.classList.add('prev');
+  });
+  document.getElementById('currentSlide').textContent = index + 1;
+  document.getElementById('progressBar').style.width = ((index + 1) / totalSlides * 100) + '%';
+}
+
+function cambiarSlide(direccion) {
+  const nuevo = currentSlideIndex + direccion;
+  if (nuevo >= 0 && nuevo < totalSlides) {
+    currentSlideIndex = nuevo;
+    mostrarSlide(currentSlideIndex);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); cambiarSlide(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); cambiarSlide(-1); }
+});
+
+mostrarSlide(0);
+
+// ==================== TIMER DESCANSO ====================
+const DURACION_MINUTOS = 30;
+let tiempoRestante = DURACION_MINUTOS * 60;
+let intervalTimer = null;
+let timerActivo = false;
+const CIRCUNFERENCIA = 2 * Math.PI * 90;
+
+function formatearTiempo(segundos) {
+  const min = Math.floor(segundos / 60);
+  const sec = segundos % 60;
+  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function actualizarTimerUI() {
+  document.getElementById('timerText').textContent = formatearTiempo(tiempoRestante);
+  const progreso = tiempoRestante / (DURACION_MINUTOS * 60);
+  const offset = CIRCUNFERENCIA * (1 - progreso);
+  document.getElementById('timerCircle').style.strokeDashoffset = offset;
+}
+
+function iniciarTimer() {
+  if (timerActivo) return;
+  timerActivo = true;
+
+  // Calcular y mostrar hora real de regreso
+  const ahora = new Date();
+  const regreso = new Date(ahora.getTime() + tiempoRestante * 1000);
+  const horaFormateada = regreso.toLocaleTimeString('es-CL', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  });
+  document.getElementById('horaRegreso').textContent = `🕐 Regresamos a las ${horaFormateada}`;
+
+  intervalTimer = setInterval(() => {
+    if (tiempoRestante > 0) {
+      tiempoRestante--;
+      actualizarTimerUI();
+    } else {
+      clearInterval(intervalTimer);
+      timerActivo = false;
+      document.getElementById('horaRegreso').textContent = '⏰ ¡Descanso terminado! Retomamos la clase';
+    }
+  }, 1000);
+}
+
+function pausarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+}
+
+function reiniciarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+  tiempoRestante = DURACION_MINUTOS * 60;
+  actualizarTimerUI();
+  document.getElementById('horaRegreso').textContent = '';
+}
+
+// Inicializar el círculo del timer
+document.getElementById('timerCircle').style.strokeDasharray = CIRCUNFERENCIA;
+actualizarTimerUI();
+</script>
+</body>
+</html>
