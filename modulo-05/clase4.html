@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentencias para la definición de tablas | SENCE - Talento Digital</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  background: #1e1e1e;
+  color: white;
+}
+.slide {
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 60px;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 0; transform: translateX(100%);
+  overflow: hidden;
+}
+.slide.active { opacity: 1; transform: translateX(0); }
+.slide.prev { transform: translateX(-100%); }
+.slide-content { max-width: 1200px; width: 100%; text-align: center; }
+.slide.verificacion { background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%); }
+.slide.ejercicio { background: linear-gradient(135deg, #E65100 0%, #FF6F00 100%); }
+.slide.descanso { background: linear-gradient(135deg, #6A1B9A 0%, #AB47BC 100%); }
+.slide.livecoding { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+.slide.ae-slide { background: linear-gradient(135deg, #0D47A1 0%, #1976D2 100%); }
+h1 { font-size: 4rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); }
+h2 { font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.3); }
+h3 { font-size: 2rem; margin-bottom: 20px; color: #FFD700; }
+p, li { font-size: 1.5rem; line-height: 1.8; }
+.subtitle { font-size: 1.8rem; opacity: 0.95; margin-bottom: 20px; }
+.accent { color: #FFD700; font-weight: bold; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+
+.slide-counter {
+  position: fixed; top: 30px; right: 30px;
+  background: rgba(0,0,0,0.4); padding: 10px 20px;
+  border-radius: 25px; font-size: 1rem; z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.progress-bar {
+  position: fixed; top: 0; left: 0;
+  height: 5px; background: #FFD700;
+  z-index: 100; transition: width 0.3s ease;
+  box-shadow: 0 0 10px #FFD700;
+}
+.nav-buttons {
+  position: fixed; bottom: 30px; right: 30px;
+  display: flex; gap: 10px; z-index: 100;
+}
+.nav-btn {
+  background: rgba(255,255,255,0.2); border: 2px solid white;
+  color: white; padding: 12px 24px; font-size: 1rem;
+  cursor: pointer; border-radius: 25px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.4); transform: translateY(-3px); }
+
+.badge-ae {
+  display: inline-block; background: #FFD700; color: #1e1e1e;
+  padding: 8px 20px; border-radius: 20px; font-weight: bold;
+  font-size: 1rem; margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-top: 30px; }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 25px; }
+
+.card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(15px);
+  padding: 30px; border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+.card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.18); }
+.card h3 { font-size: 1.5rem; margin-bottom: 15px; }
+.card p, .card li { font-size: 1.15rem; text-align: left; }
+.card ul { text-align: left; padding-left: 20px; }
+.emoji-big { font-size: 4rem; margin-bottom: 15px; display: block; }
+
+.code-block {
+  background: #1e1e1e; color: #d4d4d4;
+  font-family: 'Consolas', 'Courier New', monospace;
+  padding: 22px; border-radius: 15px;
+  text-align: left; font-size: 1.05rem;
+  border-left: 5px solid #FFD700;
+  margin: 15px 0; overflow-x: auto;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  white-space: pre;
+  line-height: 1.5;
+}
+.code-block .keyword { color: #569cd6; font-weight: bold; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; font-style: italic; }
+.code-block .number { color: #b5cea8; }
+.code-block .type { color: #4ec9b0; }
+.code-block .func { color: #dcdcaa; }
+
+.cronograma-table {
+  width: 100%; margin-top: 20px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px; overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.cronograma-table th, .cronograma-table td {
+  padding: 13px 18px; text-align: left;
+  font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.cronograma-table th { background: rgba(255,215,0,0.2); font-size: 1.2rem; color: #FFD700; }
+.cronograma-table tr.descanso-row { background: rgba(255,107,107,0.2); font-weight: bold; }
+
+.check-list { text-align: left; max-width: 800px; margin: 20px auto; }
+.check-list li {
+  list-style: none; padding: 10px 0 10px 40px;
+  position: relative; font-size: 1.3rem;
+}
+.check-list li:before {
+  content: '✓'; position: absolute; left: 0;
+  color: #FFD700; font-weight: bold; font-size: 1.6rem;
+}
+
+.question-mark {
+  display: inline-block; font-size: 3rem; color: #FFD700;
+  animation: pulse 1.5s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(255,215,0,0.6);
+}
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+@keyframes glow { 0%,100%{text-shadow:0 0 10px #FFD700;} 50%{text-shadow:0 0 30px #FFD700, 0 0 40px #FFD700;} }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+.floating { animation: float 3s ease-in-out infinite; }
+
+.timer-container {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 25px; margin-top: 20px;
+}
+.timer-svg { width: 280px; height: 280px; }
+.timer-circle-bg { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 12; }
+.timer-circle-fg {
+  fill: none; stroke: #FFD700; stroke-width: 12;
+  stroke-linecap: round; transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 10px #FFD700);
+}
+.timer-text {
+  font-size: 3.5rem; font-weight: bold; fill: white;
+  font-family: 'Courier New', monospace;
+}
+.timer-controls { display: flex; gap: 15px; }
+.timer-btn {
+  padding: 14px 28px; font-size: 1.2rem;
+  border: 2px solid white; background: rgba(255,255,255,0.2);
+  color: white; border-radius: 30px; cursor: pointer;
+  backdrop-filter: blur(10px); transition: all 0.3s;
+  font-weight: bold;
+}
+.timer-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.05); }
+.hora-regreso {
+  font-size: 2rem; color: #FFD700;
+  animation: glow 2s ease-in-out infinite;
+  margin-top: 15px; font-weight: bold;
+}
+
+.roadmap-ae {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 15px; margin-top: 30px;
+}
+.roadmap-item {
+  background: rgba(255,255,255,0.1);
+  padding: 20px 12px; border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+.roadmap-item.current {
+  background: rgba(255,215,0,0.25);
+  border: 3px solid #FFD700;
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(255,215,0,0.3);
+}
+.roadmap-number {
+  font-size: 2.5rem; color: #FFD700; font-weight: bold;
+  display: block; margin-bottom: 10px;
+}
+.roadmap-item p { font-size: 0.95rem; }
+
+.warning-box {
+  background: rgba(255,107,107,0.2);
+  border-left: 5px solid #FF6B6B;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+.info-box {
+  background: rgba(255,215,0,0.15);
+  border-left: 5px solid #FFD700;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+.success-box {
+  background: rgba(76,175,80,0.2);
+  border-left: 5px solid #4CAF50;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+
+.tabla-simple {
+  width: 100%; margin-top: 15px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px; overflow: hidden;
+}
+.tabla-simple th, .tabla-simple td {
+  padding: 12px 15px; text-align: left;
+  font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.tabla-simple th { background: rgba(255,215,0,0.2); color: #FFD700; font-weight: bold; }
+.tabla-simple code { color: #f7df1e; font-family: 'Courier New', monospace; }
+
+.vs-container {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 30px; align-items: center; margin-top: 30px;
+}
+.vs-box {
+  background: rgba(255,255,255,0.12);
+  padding: 25px; border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.2);
+  text-align: left;
+}
+.vs-box h3 { text-align: center; }
+.vs-symbol {
+  font-size: 3rem; color: #FFD700;
+  font-weight: bold; animation: pulse 2s ease-in-out infinite;
+}
+
+.badge-comparison {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-right: 8px;
+}
+.badge-drop { background: #FF6B6B; color: white; }
+.badge-truncate { background: #FFD700; color: #1e1e1e; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">1</span></div>
+
+<!-- SLIDE 1: PORTADA -->
+<div class="slide active">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🏗️</div>
+    <h1>Sentencias para la<br>definición de tablas</h1>
+    <p class="subtitle"><span class="accent">AE4</span> · Módulo de Bases de Datos Relacionales</p>
+    <p style="font-size: 1.2rem; margin-top: 30px; opacity: 0.9;">
+      Desarrollo de Aplicaciones Full Stack JavaScript Trainee V2<br>
+      SENCE · Talento Digital · Instituto ISEG
+    </p>
+    <p style="font-size: 1.1rem; margin-top: 20px; opacity: 0.8;">Duración: 4 horas</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: OBJETIVOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🎯 Objetivos de aprendizaje</h2>
+    <p class="subtitle">¿Qué aprenderás hoy?</p>
+    <ul class="check-list">
+      <li>Definir el <span class="accent">Lenguaje de Definición de Datos (DDL)</span></li>
+      <li>Diferenciar los distintos tipos de datos que existen</li>
+      <li>Crear tablas usando <span class="accent">CREATE TABLE</span></li>
+      <li>Aplicar la <span class="accent">restricción de nulidad</span> (NOT NULL / NULL)</li>
+      <li>Modificar tablas con <span class="accent">ALTER TABLE</span></li>
+      <li>Eliminar tablas con <span class="accent">DROP TABLE</span></li>
+      <li>Truncar tablas con <span class="accent">TRUNCATE</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 3: BLOQUE 1 - DDL -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 4.1 · Bloque 1</div>
+    <h2>Lenguaje de Definición<br>de Datos <span class="accent">(DDL)</span></h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.35rem;">
+      Conjunto de comandos utilizados para <span class="accent">definir, modificar y gestionar</span>
+      la estructura de las bases de datos.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 4: ¿QUÉ ES DDL? -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Qué es DDL?</h2>
+    <p style="max-width: 950px; margin: 20px auto;">
+      DDL (<span class="accent">Data Definition Language</span>) describe cómo crear, alterar o eliminar
+      los elementos que componen una base de datos.
+    </p>
+    <div class="grid-4" style="margin-top: 25px;">
+      <div class="card"><span class="emoji-big">📋</span><h3>Tablas</h3><p>Estructuras principales para almacenar información</p></div>
+      <div class="card"><span class="emoji-big">🔍</span><h3>Índices</h3><p>Mejoran el rendimiento de las consultas</p></div>
+      <div class="card"><span class="emoji-big">👁️</span><h3>Vistas</h3><p>Representaciones lógicas de datos</p></div>
+      <div class="card"><span class="emoji-big">🔒</span><h3>Restricciones</h3><p>Reglas para mantener la integridad</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: DDL vs DML -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>DDL vs DML</h2>
+    <p class="subtitle">Dos componentes fundamentales de SQL</p>
+    <div class="vs-container">
+      <div class="vs-box">
+        <h3>🏗️ DDL</h3>
+        <p style="text-align: center; margin-bottom: 15px;"><b>Definición</b></p>
+        <p>Crear, modificar y eliminar <b>objetos</b>: tablas, índices, vistas, restricciones.</p>
+<div class="code-block" style="font-size: 0.95rem;"><span class="keyword">CREATE</span>
+<span class="keyword">ALTER</span>
+<span class="keyword">DROP</span>
+<span class="keyword">TRUNCATE</span></div>
+      </div>
+      <div class="vs-symbol">≠</div>
+      <div class="vs-box">
+        <h3>📝 DML</h3>
+        <p style="text-align: center; margin-bottom: 15px;"><b>Manipulación</b></p>
+        <p>Insertar, actualizar, eliminar y consultar <b>registros</b>.</p>
+<div class="code-block" style="font-size: 0.95rem;"><span class="keyword">SELECT</span>
+<span class="keyword">INSERT</span>
+<span class="keyword">UPDATE</span>
+<span class="keyword">DELETE</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: USOS DE DDL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Para qué se usa DDL?</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card">
+        <span class="emoji-big">🏗️</span>
+        <h3>Definir estructura</h3>
+        <p>Crear tablas con columnas, tipos de datos y restricciones</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">✏️</span>
+        <h3>Modificar estructura</h3>
+        <p>Añadir, eliminar o modificar columnas de tablas existentes</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔍</span>
+        <h3>Gestionar índices</h3>
+        <p>Crear índices para mejorar el rendimiento</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">👁️</span>
+        <h3>Crear vistas</h3>
+        <p>Representaciones lógicas que simplifican consultas</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔒</span>
+        <h3>Establecer reglas</h3>
+        <p>Definir claves primarias, foráneas y restricciones</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔐</span>
+        <h3>Autorizaciones</h3>
+        <p>Controlar quién puede acceder a qué partes</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: SENTENCIAS DDL COMUNES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Sentencias DDL más comunes</h2>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="card">
+        <h3>📌 CREATE TABLE</h3>
+        <p style="margin-bottom: 10px;">Crea una nueva tabla</p>
+<div class="code-block" style="font-size: 0.9rem;"><span class="keyword">CREATE TABLE</span> Empleados (
+  id_empleado <span class="type">INT PRIMARY KEY</span>,
+  nombre      <span class="type">VARCHAR</span>(<span class="number">100</span>),
+  salario     <span class="type">DECIMAL</span>(<span class="number">10</span>,<span class="number">2</span>)
+);</div>
+      </div>
+      <div class="card">
+        <h3>✏️ ALTER TABLE</h3>
+        <p style="margin-bottom: 10px;">Modifica la estructura</p>
+<div class="code-block" style="font-size: 0.9rem;"><span class="keyword">ALTER TABLE</span> Empleados
+<span class="keyword">ADD</span> fecha_ingreso <span class="type">DATE</span>;</div>
+      </div>
+      <div class="card">
+        <h3>🗑️ DROP TABLE</h3>
+        <p style="margin-bottom: 10px;">Elimina una tabla</p>
+<div class="code-block" style="font-size: 0.9rem;"><span class="keyword">DROP TABLE IF EXISTS</span>
+  Empleados_backup;</div>
+      </div>
+      <div class="card">
+        <h3>🔍 CREATE INDEX</h3>
+        <p style="margin-bottom: 10px;">Crea un nuevo índice</p>
+<div class="code-block" style="font-size: 0.9rem;"><span class="keyword">CREATE INDEX</span> idx_salario
+<span class="keyword">ON</span> Empleados (salario);</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: BLOQUE 2 - TIPOS DE DATOS -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 2</div>
+    <h2>Tipos de datos</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.35rem;">
+      Definen el <span class="accent">formato y el rango de valores</span> que pueden almacenarse
+      en las columnas de una tabla.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 9: CATEGORÍAS DE TIPOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Categorías de tipos de datos</h2>
+    <div class="grid-3" style="margin-top: 25px;">
+      <div class="card"><span class="emoji-big">🔢</span><h3>Numéricos</h3><p>INT, FLOAT, DECIMAL</p></div>
+      <div class="card"><span class="emoji-big">📝</span><h3>Caracteres</h3><p>CHAR, VARCHAR, TEXT</p></div>
+      <div class="card"><span class="emoji-big">📅</span><h3>Fecha y hora</h3><p>DATE, TIME, DATETIME</p></div>
+      <div class="card"><span class="emoji-big">☑️</span><h3>Booleanos</h3><p>BOOLEAN, BOOL</p></div>
+      <div class="card"><span class="emoji-big">🔑</span><h3>Valores únicos</h3><p>SERIAL, AUTO_INCREMENT</p></div>
+      <div class="card"><span class="emoji-big">📦</span><h3>Especializados</h3><p>JSON, XML, ARRAY, BLOB</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: NUMÉRICOS Y CARACTERES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Tipos numéricos y de caracteres</h2>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="card">
+        <h3>🔢 Numéricos</h3>
+        <table class="tabla-simple" style="font-size: 0.95rem;">
+          <tr><th>Tipo</th><th>Uso</th></tr>
+          <tr><td><code>INT</code></td><td>Números enteros</td></tr>
+          <tr><td><code>FLOAT</code></td><td>Decimales (baja precisión)</td></tr>
+          <tr><td><code>DECIMAL(10,2)</code></td><td>Decimales exactos (dinero)</td></tr>
+          <tr><td><code>BIGINT</code></td><td>Enteros muy grandes</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>📝 Caracteres</h3>
+        <table class="tabla-simple" style="font-size: 0.95rem;">
+          <tr><th>Tipo</th><th>Uso</th></tr>
+          <tr><td><code>CHAR(n)</code></td><td>Longitud fija</td></tr>
+          <tr><td><code>VARCHAR(n)</code></td><td>Longitud variable (máx n)</td></tr>
+          <tr><td><code>TEXT</code></td><td>Texto largo (hasta 65KB)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: FECHA Y BOOLEANOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Tipos de fecha y booleanos</h2>
+    <div class="grid-2" style="margin-top: 20px;">
+      <div class="card">
+        <h3>📅 Fecha y hora</h3>
+        <table class="tabla-simple" style="font-size: 0.95rem;">
+          <tr><th>Tipo</th><th>Formato</th></tr>
+          <tr><td><code>DATE</code></td><td>YYYY-MM-DD</td></tr>
+          <tr><td><code>TIME</code></td><td>HH:MM:SS</td></tr>
+          <tr><td><code>DATETIME</code></td><td>Fecha + hora</td></tr>
+          <tr><td><code>TIMESTAMP</code></td><td>Marca temporal</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>☑️ Booleanos y únicos</h3>
+        <table class="tabla-simple" style="font-size: 0.95rem;">
+          <tr><th>Tipo</th><th>Valores</th></tr>
+          <tr><td><code>BOOLEAN</code></td><td>TRUE / FALSE</td></tr>
+          <tr><td><code>AUTO_INCREMENT</code></td><td>1, 2, 3... automático</td></tr>
+          <tr><td><code>SERIAL</code></td><td>Igual (PostgreSQL)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: LIVE CODING 1 - MONEDA -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #1</h2>
+    <h3 style="color: white;">Diversidad de datos para tu wallet virtual</h3>
+    <p style="margin-top: 25px;">✅ Crear tabla <code>Moneda</code></p>
+    <p>✅ Columnas: currency_id, currency_name, currency_symbol</p>
+    <p>✅ Asignar los tipos de datos que correspondan</p>
+    <p>✅ Verificar la estructura con DESCRIBE</p>
+  </div>
+</div>
+
+<!-- SLIDE 13: BLOQUE 3 - CREATE TABLE -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 3</div>
+    <h2>Crear una tabla<br>con <span class="accent">CREATE TABLE</span></h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Especifica la <span class="accent">estructura</span> de la tabla: nombres de columnas,
+      tipos de datos y restricciones.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 14: SINTAXIS CREATE TABLE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Sintaxis de CREATE TABLE</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">CREATE TABLE</span> Libros (
+  id             <span class="type">INT PRIMARY KEY</span>,
+  titulo         <span class="type">VARCHAR</span>(<span class="number">100</span>),
+  autor          <span class="type">VARCHAR</span>(<span class="number">50</span>),
+  ano_publicacion <span class="type">INT</span>,
+  disponible     <span class="type">BOOLEAN</span>
+);</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 Cada columna define: <b>nombre</b> → <b>tipo de dato</b> → <b>restricciones opcionales</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: ANATOMÍA DE CREATE TABLE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Anatomía de la tabla Libros</h2>
+    <table class="tabla-simple">
+      <tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr>
+      <tr><td><code>id</code></td><td><code>INT PRIMARY KEY</code></td><td>Identificador único de cada libro</td></tr>
+      <tr><td><code>titulo</code></td><td><code>VARCHAR(100)</code></td><td>Título del libro (máx. 100 caracteres)</td></tr>
+      <tr><td><code>autor</code></td><td><code>VARCHAR(50)</code></td><td>Nombre del autor</td></tr>
+      <tr><td><code>ano_publicacion</code></td><td><code>INT</code></td><td>Año de publicación</td></tr>
+      <tr><td><code>disponible</code></td><td><code>BOOLEAN</code></td><td>¿Está disponible en la biblioteca?</td></tr>
+    </table>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 Al crear una tabla, elegimos los tipos de datos apropiados según qué información almacenaremos.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: LIVE CODING 2 - TIENDA ONLINE -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #2</h2>
+    <h3 style="color: white;">Diseñar tablas para una tienda online</h3>
+    <p style="margin-top: 25px;">✅ Crear tabla <code>Categorias</code> con: id_categoria (PK), nombre_categoria</p>
+    <p>✅ Crear tabla <code>Productos</code> con: id_producto (PK), nombre, precio, id_categoria (FK)</p>
+    <p>✅ Insertar datos de ejemplo para probar las relaciones</p>
+  </div>
+</div>
+
+<!-- SLIDE 17: BLOQUE 4 - RESTRICCIÓN NULIDAD -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 4</div>
+    <h2>Restricción de nulidad</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Especifica si una columna puede tener <span class="accent">valores nulos</span> (ausentes)
+      o si debe contener siempre un valor válido.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 18: NOT NULL vs NULL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>NOT NULL vs NULL</h2>
+    <div class="vs-container">
+      <div class="vs-box">
+        <h3>🔒 NOT NULL</h3>
+        <p><b>Obligatorio</b>: la columna NO puede estar vacía. Cada registro debe tener un valor válido.</p>
+<div class="code-block" style="font-size: 0.9rem;">nombre <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span></div>
+      </div>
+      <div class="vs-symbol">vs</div>
+      <div class="vs-box">
+        <h3>🕳️ NULL (por defecto)</h3>
+        <p><b>Opcional</b>: la columna puede estar vacía. Los registros pueden tener o no valor.</p>
+<div class="code-block" style="font-size: 0.9rem;">telefono <span class="type">VARCHAR</span>(<span class="number">20</span>)
+<span class="comment">-- por defecto acepta NULL</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19: EJEMPLO CON NOT NULL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo con NOT NULL</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="keyword">CREATE TABLE</span> Empleados (
+  id      <span class="type">INT PRIMARY KEY</span>,
+  nombre  <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,
+  salario <span class="type">DECIMAL</span>(<span class="number">10</span>, <span class="number">2</span>)
+);</div>
+    <div class="success-box" style="max-width: 900px; margin: 15px auto;">
+      <p>✅ La columna <b>nombre</b> tiene NOT NULL, todos los registros deben tener nombre.</p>
+      <p>⚠️ La columna <b>salario</b> puede quedar vacía si aún no se ha asignado.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20: EJEMPLO SIN NOT NULL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo permitiendo NULL</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="keyword">CREATE TABLE</span> Clientes (
+  id       <span class="type">INT PRIMARY KEY</span>,
+  nombre   <span class="type">VARCHAR</span>(<span class="number">50</span>),
+  telefono <span class="type">VARCHAR</span>(<span class="number">20</span>)
+);</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 Sin la palabra clave <b>NOT NULL</b>, las columnas aceptan valores nulos por defecto.</p>
+      <p>Los registros pueden crearse aunque falten <b>nombre</b> o <b>telefono</b>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 21: LIVE CODING 3 - RESTRICCIÓN -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #3</h2>
+    <h3 style="color: white;">Probar la restricción de nulidad</h3>
+    <p style="margin-top: 25px;">✅ Crear tabla Productos con nombre NOT NULL</p>
+    <p>✅ Insertar un registro válido (con nombre)</p>
+    <p>✅ Intentar insertar un registro sin nombre → ver el error</p>
+    <p>✅ Explicar el mensaje "Column cannot be null"</p>
+  </div>
+</div>
+
+<!-- SLIDE 22: DESCANSO 30 MIN -->
+<div class="slide descanso">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">☕</div>
+    <h2>Momento: Descanso</h2>
+    <p class="subtitle">30 minutos para estirar las piernas 🚶‍♀️</p>
+    <div class="timer-container">
+      <svg class="timer-svg" viewBox="0 0 200 200">
+        <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="timer-circle-fg" id="timerCircle" cx="100" cy="100" r="90"
+          stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+        <text class="timer-text" x="100" y="115" text-anchor="middle" id="timerText">30:00</text>
+      </svg>
+      <div class="timer-controls">
+        <button class="timer-btn" onclick="iniciarTimer()">▶ Iniciar</button>
+        <button class="timer-btn" onclick="pausarTimer()">⏸ Pausar</button>
+        <button class="timer-btn" onclick="reiniciarTimer()">↩ Reiniciar</button>
+      </div>
+      <div class="hora-regreso" id="horaRegreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23: BLOQUE 5 - ALTER TABLE -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 4.2 · Bloque 5</div>
+    <h2>Modificar una tabla<br>con <span class="accent">ALTER TABLE</span></h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Permite <span class="accent">modificar la estructura</span> de una tabla ya existente:
+      agregar, modificar o eliminar columnas.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 24: AGREGAR COLUMNA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Agregar una columna</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto; font-size: 1.15rem;"><span class="keyword">ALTER TABLE</span> empleados
+<span class="keyword">ADD</span> fecha_de_nacimiento <span class="type">DATE</span>;</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 <b>ALTER TABLE</b> + nombre de la tabla, seguido de la acción a realizar.</p>
+      <p>En este caso: <b>ADD</b> + nombre de la nueva columna + tipo de dato.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 25: RENOMBRAR COLUMNA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Renombrar una columna</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto; font-size: 1.1rem;"><span class="keyword">ALTER TABLE</span> empleados
+<span class="keyword">CHANGE</span> nombre_antiguo_columna nombre_nuevo_columna <span class="type">VARCHAR</span>(<span class="number">50</span>);</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 <b>CHANGE</b> requiere: nombre antiguo + nombre nuevo + tipo de dato (incluso si no cambia).</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26: MODIFICAR TIPO -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Modificar el tipo de dato</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto; font-size: 1.15rem;"><span class="keyword">ALTER TABLE</span> nombre_de_tabla
+<span class="keyword">MODIFY</span> nombre_de_columna nuevo_tipo_de_dato;</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 <b>MODIFY</b> cambia el tipo o restricciones de una columna existente sin cambiar su nombre.</p>
+    </div>
+<div class="code-block" style="max-width: 900px; margin: 15px auto; font-size: 1.1rem;"><span class="comment">-- Ejemplo real: cambiar INT a DECIMAL para precios</span>
+<span class="keyword">ALTER TABLE</span> Productos
+<span class="keyword">MODIFY</span> precio <span class="type">DECIMAL</span>(<span class="number">10</span>, <span class="number">2</span>);</div>
+  </div>
+</div>
+
+<!-- SLIDE 27: MODIFICAR NULIDAD -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Modificar restricción de nulidad</h2>
+    <p class="subtitle">Cambiar una columna que permitía NULL a NOT NULL</p>
+<div class="code-block" style="max-width: 900px; margin: 20px auto; font-size: 1.05rem;"><span class="comment">-- Paso 1: la tabla original permite NULL en email</span>
+<span class="keyword">CREATE TABLE</span> clientes (
+  id     <span class="type">INT PRIMARY KEY</span>,
+  nombre <span class="type">VARCHAR</span>(<span class="number">50</span>),
+  email  <span class="type">VARCHAR</span>(<span class="number">100</span>)
+);
+
+<span class="comment">-- Paso 2: hacer que email sea obligatorio</span>
+<span class="keyword">ALTER TABLE</span> clientes
+<span class="keyword">MODIFY COLUMN</span> email <span class="type">VARCHAR</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span>;</div>
+  </div>
+</div>
+
+<!-- SLIDE 28: MODIFICAR RESTRICCIÓN -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Agregar / eliminar restricciones</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto; font-size: 1.05rem;"><span class="comment">-- Eliminar una restricción existente</span>
+<span class="keyword">ALTER TABLE</span> nombre_de_tabla
+<span class="keyword">DROP CONSTRAINT</span> nombre_de_restriccion;
+
+<span class="comment">-- Agregar una nueva restricción</span>
+<span class="keyword">ALTER TABLE</span> nombre_de_tabla
+<span class="keyword">ADD CONSTRAINT</span> nueva_restriccion ...;</div>
+    <div class="warning-box" style="max-width: 900px; margin: 15px auto;">
+      <p>⚠️ <b>Importante:</b> la sintaxis puede variar según el sistema (MySQL, PostgreSQL, SQL Server). Antes de modificar una tabla en producción, siempre hacer <b>backup</b>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29: LIVE CODING 4 - ALTER -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #4</h2>
+    <h3 style="color: white;">Modificar tablas Usuario y Transacción</h3>
+    <p style="margin-top: 25px;">✅ Crear tabla Productos y Transaccion</p>
+    <p>✅ Cambiar el nombre de la columna "valor" a "importe"</p>
+    <p>✅ Modificar el tipo de datos de INT a DECIMAL(10,2)</p>
+    <p>✅ Agregar columnas faltantes</p>
+  </div>
+</div>
+
+<!-- SLIDE 30: BLOQUE 6 - DROP TABLE -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 6</div>
+    <h2>Eliminar una tabla<br>con <span class="accent">DROP TABLE</span></h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Elimina completamente la tabla y <span class="accent">todos sus datos</span> de la base de datos.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 31: SINTAXIS DROP -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Sintaxis de DROP TABLE</h2>
+<div class="code-block" style="max-width: 800px; margin: 20px auto; font-size: 1.3rem;"><span class="keyword">DROP TABLE</span> nombre_de_tabla;</div>
+    <div class="warning-box" style="max-width: 900px; margin: 20px auto;">
+      <p>⚠️ <b>¡CUIDADO!</b> Esta instrucción elimina la tabla y <b>TODOS sus datos</b> de forma permanente. Úsala con precaución.</p>
+    </div>
+<div class="code-block" style="max-width: 900px; margin: 15px auto; font-size: 1.1rem;"><span class="comment">-- Versión más segura (no falla si no existe)</span>
+<span class="keyword">DROP TABLE IF EXISTS</span> Productos_backup;</div>
+  </div>
+</div>
+
+<!-- SLIDE 32: LIVE CODING 5 - DROP -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #5</h2>
+    <h3 style="color: white;">Eliminar una tabla</h3>
+    <p style="margin-top: 25px;">✅ Crear la tabla Productos con CREATE TABLE</p>
+    <p>✅ Insertar algunos datos (Laptop, Mouse, Teclado)</p>
+    <p>✅ Verificar con SELECT * FROM Productos</p>
+    <p>✅ Eliminar la tabla con DROP TABLE</p>
+    <p>✅ Intentar acceder → ver el error "Table doesn't exist"</p>
+  </div>
+</div>
+
+<!-- SLIDE 33: BLOQUE 7 - TRUNCATE -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 7</div>
+    <h2>Truncar una tabla<br>con <span class="accent">TRUNCATE</span></h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Elimina todos los <span class="accent">datos</span> de la tabla, pero mantiene su
+      <span class="accent">estructura y definición</span> intactas.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 34: DROP vs TRUNCATE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>DROP vs TRUNCATE</h2>
+    <p class="subtitle">La diferencia clave</p>
+    <div class="vs-container">
+      <div class="vs-box">
+        <h3><span class="badge-comparison badge-drop">DROP</span>TABLE</h3>
+        <p>❌ Elimina la tabla completa</p>
+        <p>❌ Elimina la estructura</p>
+        <p>❌ Elimina los datos</p>
+        <p>❌ Elimina los índices</p>
+        <p style="margin-top: 10px;"><b>Resultado:</b> la tabla ya no existe</p>
+      </div>
+      <div class="vs-symbol">vs</div>
+      <div class="vs-box">
+        <h3><span class="badge-comparison badge-truncate">TRUNCATE</span>TABLE</h3>
+        <p>✅ Mantiene la tabla</p>
+        <p>✅ Mantiene la estructura</p>
+        <p>❌ Elimina los datos</p>
+        <p>✅ Mantiene los índices</p>
+        <p style="margin-top: 10px;"><b>Resultado:</b> la tabla existe pero está vacía</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 35: SINTAXIS TRUNCATE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Sintaxis de TRUNCATE TABLE</h2>
+<div class="code-block" style="max-width: 800px; margin: 20px auto; font-size: 1.3rem;"><span class="keyword">TRUNCATE TABLE</span> productos;</div>
+    <div class="info-box" style="max-width: 900px; margin: 20px auto;">
+      <p>💡 Todos los registros se eliminan, pero la <b>estructura</b> de la tabla permanece intacta.</p>
+      <p>Es <b>mucho más rápido</b> que DELETE FROM cuando queremos vaciar toda una tabla.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 36: LIVE CODING 6 - TRUNCATE -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #6</h2>
+    <h3 style="color: white;">Truncar una tabla</h3>
+    <p style="margin-top: 25px;">✅ Crear tabla Registros con id, nombre y fecha</p>
+    <p>✅ Insertar 3 registros (Usuario1, Usuario2, Usuario3)</p>
+    <p>✅ Verificar con SELECT *</p>
+    <p>✅ Ejecutar TRUNCATE TABLE Registros</p>
+    <p>✅ Verificar que la tabla queda vacía pero existe</p>
+  </div>
+</div>
+
+<!-- SLIDE 37: EJERCICIO FINAL - LIBRERÍA -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">📚</div>
+    <h2>Ejercicio Final · Librería</h2>
+    <p class="subtitle">Tiempo: <span class="accent">40 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 15px auto;">
+      <p><b>Contexto:</b> La librería "Lectura Global" quiere organizar sus datos.</p>
+      <p style="margin-top: 10px;"><b>Crear 4 tablas:</b></p>
+      <ul style="text-align: left; padding-left: 30px; margin-top: 5px; font-size: 1.15rem;">
+        <li><b>Autores:</b> autor_id (PK), nombre, nacionalidad</li>
+        <li><b>Categorias:</b> categoria_id (PK), nombre</li>
+        <li><b>Libros:</b> libro_id (PK), titulo, autor_id (FK), categoria_id (FK), precio, stock</li>
+        <li><b>Ventas:</b> venta_id (PK), libro_id (FK), cantidad, fecha_venta</li>
+      </ul>
+      <p style="margin-top: 10px;">✅ Aplicar restricciones NOT NULL y DEFAULT · Insertar datos de prueba</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 38: RESUMEN -->
+<div class="slide">
+  <div class="slide-content">
+    <div style="font-size: 4rem;">🎓</div>
+    <h2>Resumen de la clase</h2>
+    <ul class="check-list" style="max-width: 900px;">
+      <li>Comprendimos el <span class="accent">Lenguaje de Definición de Datos (DDL)</span></li>
+      <li>Diferenciamos los distintos <span class="accent">tipos de datos</span></li>
+      <li>Creamos tablas con <span class="accent">CREATE TABLE</span></li>
+      <li>Aplicamos la <span class="accent">restricción NOT NULL</span></li>
+      <li>Modificamos tablas con <span class="accent">ALTER TABLE</span></li>
+      <li>Eliminamos tablas con <span class="accent">DROP TABLE</span></li>
+      <li>Truncamos tablas con <span class="accent">TRUNCATE</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 39: CIERRE -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🚀</div>
+    <h1>¡Excelente clase!</h1>
+    <p class="subtitle" style="margin-top: 30px;">
+      Próxima lección: <span class="accent">El Modelo Entidad-Relación</span>
+    </p>
+    <p style="margin-top: 30px; font-size: 1.2rem; opacity: 0.9;">💬 ¿Alguna consulta final?</p>
+  </div>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" onclick="cambiarSlide(-1)">← Anterior</button>
+  <button class="nav-btn" onclick="cambiarSlide(1)">Siguiente →</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlideIndex = 0;
+document.getElementById('totalSlides').textContent = totalSlides;
+
+function mostrarSlide(index) {
+  slides.forEach((slide, i) => {
+    slide.classList.remove('active', 'prev');
+    if (i === index) slide.classList.add('active');
+    else if (i < index) slide.classList.add('prev');
+  });
+  document.getElementById('currentSlide').textContent = index + 1;
+  document.getElementById('progressBar').style.width = ((index + 1) / totalSlides * 100) + '%';
+}
+
+function cambiarSlide(direccion) {
+  const nuevo = currentSlideIndex + direccion;
+  if (nuevo >= 0 && nuevo < totalSlides) {
+    currentSlideIndex = nuevo;
+    mostrarSlide(currentSlideIndex);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); cambiarSlide(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); cambiarSlide(-1); }
+});
+
+mostrarSlide(0);
+
+// ==================== TIMER DESCANSO 30 MIN ====================
+const DURACION_MINUTOS = 30;
+let tiempoRestante = DURACION_MINUTOS * 60;
+let intervalTimer = null;
+let timerActivo = false;
+const CIRCUNFERENCIA = 2 * Math.PI * 90;
+
+function formatearTiempo(segundos) {
+  const min = Math.floor(segundos / 60);
+  const sec = segundos % 60;
+  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function actualizarTimerUI() {
+  document.getElementById('timerText').textContent = formatearTiempo(tiempoRestante);
+  const progreso = tiempoRestante / (DURACION_MINUTOS * 60);
+  const offset = CIRCUNFERENCIA * (1 - progreso);
+  document.getElementById('timerCircle').style.strokeDashoffset = offset;
+}
+
+function iniciarTimer() {
+  if (timerActivo) return;
+  timerActivo = true;
+
+  const ahora = new Date();
+  const regreso = new Date(ahora.getTime() + tiempoRestante * 1000);
+  const horaFormateada = regreso.toLocaleTimeString('es-CL', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  });
+  document.getElementById('horaRegreso').textContent = `🕐 Regresamos a las ${horaFormateada}`;
+
+  intervalTimer = setInterval(() => {
+    if (tiempoRestante > 0) {
+      tiempoRestante--;
+      actualizarTimerUI();
+    } else {
+      clearInterval(intervalTimer);
+      timerActivo = false;
+      document.getElementById('horaRegreso').textContent = '⏰ ¡Descanso terminado!';
+    }
+  }, 1000);
+}
+
+function pausarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+}
+
+function reiniciarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+  tiempoRestante = DURACION_MINUTOS * 60;
+  actualizarTimerUI();
+  document.getElementById('horaRegreso').textContent = '';
+}
+
+document.getElementById('timerCircle').style.strokeDasharray = CIRCUNFERENCIA;
+actualizarTimerUI();
+</script>
+</body>
+</html>
