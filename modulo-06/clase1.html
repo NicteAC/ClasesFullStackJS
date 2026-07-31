@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conociendo Node y Express | SENCE - Talento Digital</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  background: #1e1e1e;
+  color: white;
+}
+.slide {
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 60px;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+  opacity: 0; transform: translateX(100%);
+  overflow: hidden;
+}
+.slide.active { opacity: 1; transform: translateX(0); }
+.slide.prev { transform: translateX(-100%); }
+.slide-content { max-width: 1200px; width: 100%; text-align: center; }
+.slide.verificacion { background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%); }
+.slide.ejercicio { background: linear-gradient(135deg, #E65100 0%, #FF6F00 100%); }
+.slide.descanso { background: linear-gradient(135deg, #6A1B9A 0%, #AB47BC 100%); }
+.slide.livecoding { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+.slide.ae-slide { background: linear-gradient(135deg, #0D47A1 0%, #1976D2 100%); }
+h1 { font-size: 4rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); }
+h2 { font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.3); }
+h3 { font-size: 2rem; margin-bottom: 20px; color: #FFD700; }
+p, li { font-size: 1.5rem; line-height: 1.8; }
+.subtitle { font-size: 1.8rem; opacity: 0.95; margin-bottom: 20px; }
+.accent { color: #FFD700; font-weight: bold; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+
+.slide-counter {
+  position: fixed; top: 30px; right: 30px;
+  background: rgba(0,0,0,0.4); padding: 10px 20px;
+  border-radius: 25px; font-size: 1rem; z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.progress-bar {
+  position: fixed; top: 0; left: 0;
+  height: 5px; background: #FFD700;
+  z-index: 100; transition: width 0.3s ease;
+  box-shadow: 0 0 10px #FFD700;
+}
+.nav-buttons {
+  position: fixed; bottom: 30px; right: 30px;
+  display: flex; gap: 10px; z-index: 100;
+}
+.nav-btn {
+  background: rgba(255,255,255,0.2); border: 2px solid white;
+  color: white; padding: 12px 24px; font-size: 1rem;
+  cursor: pointer; border-radius: 25px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.4); transform: translateY(-3px); }
+
+.badge-ae {
+  display: inline-block; background: #FFD700; color: #1e1e1e;
+  padding: 8px 20px; border-radius: 20px; font-weight: bold;
+  font-size: 1rem; margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-top: 30px; }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 25px; }
+
+.card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(15px);
+  padding: 30px; border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+.card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.18); }
+.card h3 { font-size: 1.5rem; margin-bottom: 15px; }
+.card p, .card li { font-size: 1.15rem; text-align: left; }
+.card ul { text-align: left; padding-left: 20px; }
+.emoji-big { font-size: 4rem; margin-bottom: 15px; display: block; }
+
+.code-block {
+  background: #1e1e1e; color: #d4d4d4;
+  font-family: 'Consolas', 'Courier New', monospace;
+  padding: 22px; border-radius: 15px;
+  text-align: left; font-size: 1.05rem;
+  border-left: 5px solid #FFD700;
+  margin: 15px 0; overflow-x: auto;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  white-space: pre;
+  line-height: 1.5;
+}
+.code-block .keyword { color: #569cd6; font-weight: bold; }
+.code-block .string { color: #ce9178; }
+.code-block .comment { color: #6a9955; font-style: italic; }
+.code-block .number { color: #b5cea8; }
+.code-block .type { color: #4ec9b0; }
+.code-block .func { color: #dcdcaa; }
+.code-block .method { color: #4ec9b0; }
+
+.check-list { text-align: left; max-width: 900px; margin: 20px auto; }
+.check-list li {
+  list-style: none; padding: 10px 0 10px 40px;
+  position: relative; font-size: 1.3rem;
+}
+.check-list li:before {
+  content: '✓'; position: absolute; left: 0;
+  color: #FFD700; font-weight: bold; font-size: 1.6rem;
+}
+
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+@keyframes glow { 0%,100%{text-shadow:0 0 10px #FFD700;} 50%{text-shadow:0 0 30px #FFD700, 0 0 40px #FFD700;} }
+.floating { animation: float 3s ease-in-out infinite; }
+
+.timer-container {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 25px; margin-top: 20px;
+}
+.timer-svg { width: 280px; height: 280px; }
+.timer-circle-bg { fill: none; stroke: rgba(255,255,255,0.15); stroke-width: 12; }
+.timer-circle-fg {
+  fill: none; stroke: #FFD700; stroke-width: 12;
+  stroke-linecap: round; transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 10px #FFD700);
+}
+.timer-text {
+  font-size: 3.5rem; font-weight: bold; fill: white;
+  font-family: 'Courier New', monospace;
+}
+.timer-controls { display: flex; gap: 15px; }
+.timer-btn {
+  padding: 14px 28px; font-size: 1.2rem;
+  border: 2px solid white; background: rgba(255,255,255,0.2);
+  color: white; border-radius: 30px; cursor: pointer;
+  backdrop-filter: blur(10px); transition: all 0.3s;
+  font-weight: bold;
+}
+.timer-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.05); }
+.hora-regreso {
+  font-size: 2rem; color: #FFD700;
+  animation: glow 2s ease-in-out infinite;
+  margin-top: 15px; font-weight: bold;
+}
+
+.warning-box {
+  background: rgba(255,107,107,0.2);
+  border-left: 5px solid #FF6B6B;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+.info-box {
+  background: rgba(255,215,0,0.15);
+  border-left: 5px solid #FFD700;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+.success-box {
+  background: rgba(76,175,80,0.2);
+  border-left: 5px solid #4CAF50;
+  padding: 18px; border-radius: 10px;
+  margin-top: 15px; text-align: left;
+}
+
+.tabla-simple {
+  width: 100%; margin-top: 15px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px; overflow: hidden;
+}
+.tabla-simple th, .tabla-simple td {
+  padding: 12px 15px; text-align: left;
+  font-size: 1.05rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.tabla-simple th { background: rgba(255,215,0,0.2); color: #FFD700; font-weight: bold; }
+.tabla-simple code { color: #f7df1e; font-family: 'Courier New', monospace; }
+
+.vs-container {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 30px; align-items: center; margin-top: 25px;
+}
+.vs-box {
+  background: rgba(255,255,255,0.12);
+  padding: 25px; border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.2);
+  text-align: left;
+}
+.vs-box h3 { text-align: center; }
+.vs-symbol {
+  font-size: 3rem; color: #FFD700;
+  font-weight: bold; animation: pulse 2s ease-in-out infinite;
+}
+
+.node-logo {
+  display: inline-block;
+  background: #339933; color: white;
+  padding: 20px 40px; border-radius: 15px;
+  font-weight: bold; font-size: 2.5rem;
+  box-shadow: 0 10px 40px rgba(51,153,51,0.4);
+  transform: rotate(-3deg);
+}
+.express-logo {
+  display: inline-block;
+  background: #000000; color: white;
+  padding: 15px 30px; border-radius: 15px;
+  font-weight: bold; font-size: 2rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  border: 2px solid #FFD700;
+}
+
+.event-loop-phase {
+  background: rgba(255,255,255,0.1);
+  border: 2px solid #FFD700;
+  padding: 15px 25px;
+  border-radius: 15px;
+  margin: 8px 0;
+  display: flex; align-items: center; gap: 20px;
+  text-align: left;
+}
+.phase-number {
+  background: #FFD700; color: #1e1e1e;
+  width: 45px; height: 45px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 1.3rem;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">1</span></div>
+
+<!-- SLIDE 1: PORTADA -->
+<div class="slide active">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🚀</div>
+    <h1>Conociendo<br>Node y Express</h1>
+    <p class="subtitle"><span class="accent">AE1</span> · Desarrollo de Aplicaciones Web Node Express</p>
+    <p style="font-size: 1.2rem; margin-top: 30px; opacity: 0.9;">
+      Desarrollo de Aplicaciones Full Stack JavaScript Trainee V2<br>
+      SENCE · Talento Digital · Instituto ISEG
+    </p>
+    <p style="font-size: 1.1rem; margin-top: 20px; opacity: 0.8;">Duración: 4 horas</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: OBJETIVOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🎯 Objetivos de aprendizaje</h2>
+    <p class="subtitle">¿Qué aprenderás hoy?</p>
+    <ul class="check-list">
+      <li>Comprender qué es <span class="accent">Node.js</span> y cómo funciona en el backend</li>
+      <li>Explorar la arquitectura de Node.js y su modelo <span class="accent">asincrónico</span></li>
+      <li>Identificar las ventajas de usar <span class="accent">Express.js</span> como framework</li>
+      <li>Entender el <span class="accent">Event Loop</span> y su importancia</li>
+      <li>Implementar programación asíncrona con <span class="accent">callbacks, Promises y async/await</span></li>
+      <li>Aplicar estrategias de escalabilidad: <span class="accent">Clustering y Load Balancing</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 3: BLOQUE 1 - ¿QUÉ ES NODE.JS? -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 1.1 · Bloque 1</div>
+    <div class="node-logo">Node.js</div>
+    <h2 style="margin-top: 30px;">¿Qué es Node.js?</h2>
+    <p style="max-width: 950px; margin: 20px auto; font-size: 1.3rem;">
+      Entorno de ejecución de JavaScript <span class="accent">basado en el motor V8</span>
+      de Google Chrome, para ejecutar código en el <span class="accent">servidor</span>.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 4: HISTORIA -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>📜 Historia y evolución</h2>
+    <div class="grid-2" style="margin-top: 25px;">
+      <div class="card">
+        <span class="emoji-big">👨‍💻</span>
+        <h3>Creado en 2009</h3>
+        <p>Por <b>Ryan Dahl</b> con el objetivo de ofrecer una alternativa eficiente y no bloqueante para manejar múltiples conexiones simultáneas.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">⚡</span>
+        <h3>Motor V8</h3>
+        <p>Usa el mismo motor de JavaScript que <b>Google Chrome</b>, lo que le da un rendimiento excepcional.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🌐</span>
+        <h3>Del cliente al servidor</h3>
+        <p>Antes JavaScript solo vivía en el navegador. Node.js lo llevó al <b>servidor</b>.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📈</span>
+        <h3>Estándar en la industria</h3>
+        <p>Usado por Netflix, PayPal, LinkedIn, Uber, NASA, entre miles más.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: CARACTERÍSTICAS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>✨ Características de Node.js</h2>
+    <div class="grid-4" style="margin-top: 25px;">
+      <div class="card">
+        <span class="emoji-big">⚡</span>
+        <h3>Asíncrono y No Bloqueante</h3>
+        <p>Usa eventos y promesas para manejar tareas sin bloquear la ejecución.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🚀</span>
+        <h3>Motor V8</h3>
+        <p>Optimizado para ejecutar JavaScript con alto rendimiento.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📦</span>
+        <h3>Ecosistema NPM</h3>
+        <p>Más de 1 millón de paquetes y módulos disponibles.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔧</span>
+        <h3>Microservicios</h3>
+        <p>Facilita la creación de aplicaciones escalables.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: EJEMPLO BÁSICO -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>💻 Tu primer código en Node.js</h2>
+    <p style="max-width: 900px; margin: 20px auto;">
+      Node.js ejecuta JavaScript <span class="accent">fuera del navegador</span>, directamente en tu computador.
+    </p>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="comment">// archivo: app.js</span>
+<span class="method">console</span>.<span class="func">log</span>(<span class="string">"Hola desde Node.js"</span>);
+
+<span class="comment">// Ejecutar desde terminal:</span>
+<span class="comment">// $ node app.js</span></div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 A diferencia del navegador, Node.js <b>no tiene DOM</b>, pero sí tiene acceso al sistema de archivos, red y procesos.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: ¿QUÉ PODEMOS HACER? -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>¿Qué podemos hacer con Node.js?</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card"><span class="emoji-big">🌐</span><h3>Servidores web</h3><p>Aplicaciones web completas del lado del servidor</p></div>
+      <div class="card"><span class="emoji-big">🔌</span><h3>APIs REST</h3><p>Interfaces para conectar frontends con datos</p></div>
+      <div class="card"><span class="emoji-big">💬</span><h3>Tiempo real</h3><p>Chats, notificaciones, sockets bidireccionales</p></div>
+      <div class="card"><span class="emoji-big">⌨️</span><h3>CLIs</h3><p>Aplicaciones de línea de comandos</p></div>
+      <div class="card"><span class="emoji-big">📁</span><h3>Manejo de archivos</h3><p>Lectura, escritura y procesamiento de archivos</p></div>
+      <div class="card"><span class="emoji-big">🎬</span><h3>Streaming</h3><p>Video, audio y contenido bajo demanda</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: BENEFICIOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🎁 Beneficios de Node.js</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card">
+        <span class="emoji-big">⚡</span>
+        <h3>Eficiencia</h3>
+        <p>Modelo no bloqueante que maneja múltiples solicitudes sin sobrecargar el sistema.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📈</span>
+        <h3>Escalabilidad</h3>
+        <p>Ideal para aplicaciones que requieren alta concurrencia.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📦</span>
+        <h3>Ecosistema NPM</h3>
+        <p>Más de 1 millón de módulos disponibles listos para usar.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: SERVIDOR BÁSICO -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🖥️ Servidor básico con Node.js puro</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">const</span> http = <span class="func">require</span>(<span class="string">'http'</span>);
+
+<span class="keyword">const</span> servidor = http.<span class="func">createServer</span>((req, res) => {
+  res.<span class="func">writeHead</span>(<span class="number">200</span>, { <span class="string">'Content-Type'</span>: <span class="string">'text/plain'</span> });
+  res.<span class="func">end</span>(<span class="string">'Hola desde el servidor Node.js!'</span>);
+});
+
+servidor.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="method">console</span>.<span class="func">log</span>(<span class="string">'Servidor corriendo en http://localhost:3000'</span>);
+});</div>
+    <div class="warning-box" style="max-width: 900px; margin: 15px auto;">
+      <p>⚠️ Este es Node.js <b>puro</b>. Funciona, pero para aplicaciones reales usaremos <b>Express</b> que lo simplifica muchísimo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: BLOQUE 2 - EXPRESS -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 2</div>
+    <div class="express-logo">Express.js</div>
+    <h2 style="margin-top: 30px;">¿Qué es Express.js?</h2>
+    <p style="max-width: 950px; margin: 20px auto; font-size: 1.3rem;">
+      <span class="accent">Framework minimalista</span> para Node.js que facilita la creación de
+      aplicaciones web y APIs.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 11: VENTAJAS EXPRESS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🎁 Ventajas de Express sobre Node puro</h2>
+    <div class="grid-2" style="margin-top: 25px;">
+      <div class="card">
+        <span class="emoji-big">✨</span>
+        <h3>Código más limpio</h3>
+        <p>Estructura simple y clara para escribir servidores en menos líneas de código.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🛣️</span>
+        <h3>Manejo de rutas simplificado</h3>
+        <p>Sistema de enrutamiento potente e intuitivo con métodos HTTP.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔗</span>
+        <h3>Middlewares</h3>
+        <p>Sistema modular para procesar peticiones antes de llegar a la ruta.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔌</span>
+        <h3>Integración fácil</h3>
+        <p>Compatible con bases de datos, autenticación, plantillas y más.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: INSTALACIÓN -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>📥 Instalación de Express</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="comment"># Paso 1: Crear el proyecto</span>
+$ mkdir mi-proyecto
+$ cd mi-proyecto
+$ npm init -y
+
+<span class="comment"># Paso 2: Instalar Express</span>
+$ npm install express
+
+<span class="comment"># Paso 3: Verificar package.json</span>
+$ cat package.json</div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 <b>npm init -y</b> crea un package.json con valores por defecto sin hacer preguntas.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: SERVIDOR EXPRESS BÁSICO -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🚀 Servidor básico con Express</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="comment">// archivo: server.js</span>
+<span class="keyword">const</span> express = <span class="func">require</span>(<span class="string">'express'</span>);
+<span class="keyword">const</span> app = <span class="func">express</span>();
+
+app.<span class="func">get</span>(<span class="string">'/'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">'¡Hola Mundo con Express!'</span>);
+});
+
+app.<span class="func">listen</span>(<span class="number">3000</span>, () => {
+  <span class="method">console</span>.<span class="func">log</span>(<span class="string">'Servidor en puerto 3000'</span>);
+});</div>
+    <div class="success-box" style="max-width: 900px; margin: 15px auto;">
+      <p>✅ ¡Mucho más simple que Node puro! Solo 6 líneas vs 8.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: LIVE CODING 1 -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #1</h2>
+    <h3 style="color: white;">Primer servidor Express desde cero</h3>
+    <p style="margin-top: 25px;">✅ Crear proyecto con npm init</p>
+    <p>✅ Instalar Express</p>
+    <p>✅ Crear server.js con ruta GET</p>
+    <p>✅ Ejecutar con <code>node server.js</code></p>
+    <p>✅ Probar en el navegador</p>
+  </div>
+</div>
+
+<!-- SLIDE 15: BLOQUE 3 - MIDDLEWARE -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 3</div>
+    <h2>Middleware en Express</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Funciones que <span class="accent">procesan las solicitudes</span> antes de llegar a la ruta final.
+      Tienen acceso a <code>req</code>, <code>res</code> y <code>next</code>.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 16: TIPOS DE MIDDLEWARE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>3 tipos de middleware</h2>
+    <div class="grid-3" style="margin-top: 25px;">
+      <div class="card">
+        <span class="emoji-big">🌐</span>
+        <h3>De aplicación</h3>
+        <p>Se ejecuta en <b>TODAS</b> las solicitudes.</p>
+<div class="code-block" style="font-size: 0.9rem;">app.<span class="func">use</span>((req, res, next) => {
+  <span class="method">console</span>.<span class="func">log</span>(<span class="string">'Log'</span>);
+  <span class="func">next</span>();
+});</div>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🛣️</span>
+        <h3>De ruta</h3>
+        <p>Solo en rutas <b>específicas</b>.</p>
+<div class="code-block" style="font-size: 0.9rem;">app.<span class="func">get</span>(<span class="string">'/admin'</span>,
+  verificarAuth,
+  (req, res) => {...}
+);</div>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📦</span>
+        <h3>De terceros</h3>
+        <p>Librerías externas.</p>
+<div class="code-block" style="font-size: 0.9rem;">app.<span class="func">use</span>(<span class="func">cors</span>());
+app.<span class="func">use</span>(express.<span class="func">json</span>());</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: EJEMPLO MIDDLEWARE -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo: middleware de logging</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">const</span> express = <span class="func">require</span>(<span class="string">'express'</span>);
+<span class="keyword">const</span> app = <span class="func">express</span>();
+
+<span class="comment">// Middleware que registra cada solicitud</span>
+app.<span class="func">use</span>((req, res, next) => {
+  <span class="method">console</span>.<span class="func">log</span>(<span class="string">`${req.method} ${req.url} - ${<span class="keyword">new</span> <span class="func">Date</span>().toISOString()}`</span>);
+  <span class="func">next</span>();  <span class="comment">// ← IMPORTANTE: pasar al siguiente middleware</span>
+});
+
+app.<span class="func">get</span>(<span class="string">'/'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">'Página principal'</span>);
+});
+
+app.<span class="func">listen</span>(<span class="number">3000</span>);</div>
+    <div class="warning-box" style="max-width: 900px; margin: 15px auto;">
+      <p>⚠️ Si olvidas llamar a <code>next()</code>, la solicitud se queda colgada para siempre.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18: BLOQUE 4 - RUTAS -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 4</div>
+    <h2>Manejo de rutas en Express</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Express permite definir rutas con diferentes <span class="accent">métodos HTTP</span>:
+      GET, POST, PUT, DELETE.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 19: MÉTODOS HTTP -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Los 4 métodos HTTP principales</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="comment">// GET - Obtener datos</span>
+app.<span class="func">get</span>(<span class="string">'/usuarios'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">'Lista de usuarios'</span>);
+});
+
+<span class="comment">// POST - Crear datos</span>
+app.<span class="func">post</span>(<span class="string">'/usuarios'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">'Usuario creado'</span>);
+});
+
+<span class="comment">// PUT - Actualizar datos</span>
+app.<span class="func">put</span>(<span class="string">'/usuarios/:id'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">`Usuario ${req.params.id} actualizado`</span>);
+});
+
+<span class="comment">// DELETE - Eliminar datos</span>
+app.<span class="func">delete</span>(<span class="string">'/usuarios/:id'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">`Usuario ${req.params.id} eliminado`</span>);
+});</div>
+  </div>
+</div>
+
+<!-- SLIDE 20: PARÁMETROS EN RUTAS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>📌 Parámetros en rutas</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="comment">// Parámetro de ruta con ":"</span>
+app.<span class="func">get</span>(<span class="string">'/usuario/:id'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">`Usuario con ID: ${req.params.id}`</span>);
+});
+
+<span class="comment">// Ejemplo: GET /usuario/42</span>
+<span class="comment">// req.params.id === "42"</span>
+
+<span class="comment">// Múltiples parámetros</span>
+app.<span class="func">get</span>(<span class="string">'/producto/:categoria/:id'</span>, (req, res) => {
+  <span class="keyword">const</span> { categoria, id } = req.params;
+  res.<span class="func">send</span>(<span class="string">`Categoría: ${categoria}, ID: ${id}`</span>);
+});
+
+<span class="comment">// Query strings (después del ?)</span>
+app.<span class="func">get</span>(<span class="string">'/buscar'</span>, (req, res) => {
+  res.<span class="func">send</span>(<span class="string">`Buscando: ${req.query.q}`</span>);
+  <span class="comment">// GET /buscar?q=notebook → req.query.q === "notebook"</span>
+});</div>
+  </div>
+</div>
+
+<!-- SLIDE 21: ARCHIVOS ESTÁTICOS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>📂 Servir archivos estáticos</h2>
+    <p style="max-width: 900px; margin: 20px auto;">
+      Express puede servir HTML, CSS, JS e imágenes con <code>express.static()</code>
+    </p>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;">app.<span class="func">use</span>(express.<span class="func">static</span>(<span class="string">'public'</span>));
+
+<span class="comment">// Estructura del proyecto:</span>
+<span class="comment">// mi-proyecto/</span>
+<span class="comment">// ├── public/</span>
+<span class="comment">// │   ├── index.html</span>
+<span class="comment">// │   ├── style.css</span>
+<span class="comment">// │   └── script.js</span>
+<span class="comment">// ├── server.js</span>
+<span class="comment">// └── package.json</span>
+
+<span class="comment">// Ahora los archivos son accesibles así:</span>
+<span class="comment">// http://localhost:3000/index.html</span>
+<span class="comment">// http://localhost:3000/style.css</span></div>
+  </div>
+</div>
+
+<!-- SLIDE 22: EJERCICIO 1 - DETECTAR NODE -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">🔍</div>
+    <h2>Ejercicio N° 1 · Detectar Node.js en la web</h2>
+    <p class="subtitle">Tiempo: <span class="accent">40 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 15px auto;">
+      <p><b>Contexto:</b> Explorar herramientas para identificar si un sitio usa Node.js/Express.</p>
+      <p style="margin-top: 15px;"><b>Herramientas a instalar en Chrome:</b></p>
+      <ul style="text-align: left; padding-left: 30px; margin-top: 10px; font-size: 1.1rem;">
+        <li><b>Wappalyzer</b> - detecta tecnologías del sitio</li>
+        <li><b>Lighthouse</b> - auditoría de rendimiento</li>
+        <li><b>Postman Interceptor</b> - captura solicitudes HTTP</li>
+        <li><b>JSON Formatter</b> - formatea respuestas JSON</li>
+      </ul>
+      <p style="margin-top: 15px;"><b>Práctica:</b> analizar sitios como Netflix, PayPal, Twitter. Verificar el encabezado <code>X-Powered-By: Express</code> en F12 → Red.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 23: DESCANSO 30 MIN -->
+<div class="slide descanso">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">☕</div>
+    <h2>Momento: Descanso</h2>
+    <p class="subtitle">30 minutos para estirar las piernas 🚶‍♀️</p>
+    <div class="timer-container">
+      <svg class="timer-svg" viewBox="0 0 200 200">
+        <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+        <circle class="timer-circle-fg" id="timerCircle" cx="100" cy="100" r="90"
+          stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+        <text class="timer-text" x="100" y="115" text-anchor="middle" id="timerText">30:00</text>
+      </svg>
+      <div class="timer-controls">
+        <button class="timer-btn" onclick="iniciarTimer()">▶ Iniciar</button>
+        <button class="timer-btn" onclick="pausarTimer()">⏸ Pausar</button>
+        <button class="timer-btn" onclick="reiniciarTimer()">↩ Reiniciar</button>
+      </div>
+      <div class="hora-regreso" id="horaRegreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 24: BLOQUE 5 - ARQUITECTURA -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">AE 1.2 · Bloque 5</div>
+    <h2>Arquitectura y flujo<br>de trabajo</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Node.js usa un modelo <span class="accent">single-thread</span> con
+      <span class="accent">I/O no bloqueante</span>. Vamos a entender cómo funciona por dentro.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 25: SINGLE THREAD -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Modelo Single-Thread vs Multi-Thread</h2>
+    <div class="vs-container">
+      <div class="vs-box">
+        <h3>⛔ Modelo tradicional</h3>
+        <p><b>Multi-thread:</b> un hilo nuevo por cada solicitud.</p>
+        <ul style="text-align: left; margin-top: 10px;">
+          <li>Alto consumo de memoria</li>
+          <li>Bloqueos frecuentes</li>
+          <li>Difícil de escalar</li>
+        </ul>
+      </div>
+      <div class="vs-symbol">vs</div>
+      <div class="vs-box">
+        <h3>✅ Node.js</h3>
+        <p><b>Single-thread + no bloqueante:</b> un solo hilo para todo.</p>
+        <ul style="text-align: left; margin-top: 10px;">
+          <li>Bajo consumo de memoria</li>
+          <li>Sin bloqueos gracias al Event Loop</li>
+          <li>Excelente para alta concurrencia</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26: EJEMPLO ASYNC -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>💡 Non-blocking en acción</h2>
+<div class="code-block" style="max-width: 900px; margin: 20px auto;"><span class="method">console</span>.<span class="func">log</span>(<span class="string">"Inicio"</span>);
+
+<span class="func">setTimeout</span>(() => {
+  <span class="method">console</span>.<span class="func">log</span>(<span class="string">"Proceso asíncrono"</span>);
+}, <span class="number">2000</span>);
+
+<span class="method">console</span>.<span class="func">log</span>(<span class="string">"Fin"</span>);
+
+<span class="comment">// ⚡ Salida esperada:</span>
+<span class="comment">// Inicio</span>
+<span class="comment">// Fin</span>
+<span class="comment">// Proceso asíncrono   ← aparece 2 segundos después</span></div>
+    <div class="info-box" style="max-width: 900px; margin: 15px auto;">
+      <p>💡 Node.js NO espera los 2 segundos. Ejecuta el resto del código y <b>vuelve al setTimeout cuando termine</b>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27: BLOQUE 6 - EVENT LOOP -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 6</div>
+    <h2>El Event Loop</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Mecanismo que permite a Node.js manejar múltiples operaciones <span class="accent">asíncronas</span>
+      sin bloquear el hilo principal.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 28: FASES EVENT LOOP -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🔄 Las 6 fases del Event Loop</h2>
+    <div style="max-width: 900px; margin: 20px auto;">
+      <div class="event-loop-phase">
+        <div class="phase-number">1</div>
+        <div><b class="accent">Timers</b> → Ejecuta callbacks de <code>setTimeout()</code> y <code>setInterval()</code></div>
+      </div>
+      <div class="event-loop-phase">
+        <div class="phase-number">2</div>
+        <div><b class="accent">I/O Callbacks</b> → Maneja operaciones de entrada/salida (archivos, red)</div>
+      </div>
+      <div class="event-loop-phase">
+        <div class="phase-number">3</div>
+        <div><b class="accent">Idle, Prepare</b> → Uso interno de Node.js</div>
+      </div>
+      <div class="event-loop-phase">
+        <div class="phase-number">4</div>
+        <div><b class="accent">Poll</b> → Maneja nuevas conexiones y operaciones en espera</div>
+      </div>
+      <div class="event-loop-phase">
+        <div class="phase-number">5</div>
+        <div><b class="accent">Check</b> → Ejecuta callbacks de <code>setImmediate()</code></div>
+      </div>
+      <div class="event-loop-phase">
+        <div class="phase-number">6</div>
+        <div><b class="accent">Close Callbacks</b> → Ejecuta callbacks de cierre (<code>socket.on('close')</code>)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29: EJEMPLO EVENT LOOP -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Ejemplo: lectura de archivo asíncrona</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">const</span> fs = <span class="func">require</span>(<span class="string">'fs'</span>);
+
+fs.<span class="func">readFile</span>(<span class="string">'archivo.txt'</span>, <span class="string">'utf8'</span>, (err, data) => {
+  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;
+  <span class="method">console</span>.<span class="func">log</span>(data);
+});
+
+<span class="method">console</span>.<span class="func">log</span>(<span class="string">'Leyendo archivo...'</span>);
+
+<span class="comment">// ⚡ Salida esperada:</span>
+<span class="comment">// Leyendo archivo...</span>
+<span class="comment">// (contenido del archivo)</span></div>
+    <div class="success-box" style="max-width: 900px; margin: 15px auto;">
+      <p>✅ Node.js <b>no espera</b> a que readFile() termine para ejecutar la siguiente línea.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30: BLOQUE 7 - ASINCRONISMO -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 7</div>
+    <h2>Callbacks, Promises<br>y async/await</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Tres formas de manejar código asíncrono en JavaScript, evolucionando desde
+      <span class="accent">menos legible a más legible</span>.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 31: CALLBACKS -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>1️⃣ Callbacks (la forma antigua)</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">function</span> <span class="func">obtenerDatos</span>(callback) {
+  <span class="func">setTimeout</span>(() => {
+    <span class="func">callback</span>(<span class="keyword">null</span>, <span class="string">"Datos obtenidos"</span>);
+  }, <span class="number">2000</span>);
+}
+
+<span class="func">obtenerDatos</span>((error, datos) => {
+  <span class="keyword">if</span> (error) {
+    <span class="method">console</span>.<span class="func">error</span>(error);
+  } <span class="keyword">else</span> {
+    <span class="method">console</span>.<span class="func">log</span>(datos);
+  }
+});</div>
+    <div class="warning-box" style="max-width: 900px; margin: 15px auto;">
+      <p>⚠️ El uso excesivo de callbacks anidados genera el <b>"Callback Hell"</b> 🔥, código difícil de mantener.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 32: PROMISES -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>2️⃣ Promises (mejora)</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">function</span> <span class="func">obtenerDatos</span>() {
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="func">Promise</span>((resolve, reject) => {
+    <span class="func">setTimeout</span>(() => {
+      <span class="func">resolve</span>(<span class="string">"Datos obtenidos"</span>);
+    }, <span class="number">2000</span>);
+  });
+}
+
+<span class="func">obtenerDatos</span>()
+  .<span class="func">then</span>(datos => <span class="method">console</span>.<span class="func">log</span>(datos))
+  .<span class="func">catch</span>(error => <span class="method">console</span>.<span class="func">error</span>(error));</div>
+    <div class="success-box" style="max-width: 900px; margin: 15px auto;">
+      <p>✅ Más limpio que callbacks. Se pueden encadenar con <code>.then()</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 33: ASYNC AWAIT -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>3️⃣ async/await (el estándar moderno)</h2>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">function</span> <span class="func">obtenerDatos</span>() {
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="func">Promise</span>((resolve) => {
+    <span class="func">setTimeout</span>(() => <span class="func">resolve</span>(<span class="string">"Datos obtenidos"</span>), <span class="number">2000</span>);
+  });
+}
+
+<span class="keyword">async function</span> <span class="func">mostrarDatos</span>() {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> datos = <span class="keyword">await</span> <span class="func">obtenerDatos</span>();
+    <span class="method">console</span>.<span class="func">log</span>(datos);
+  } <span class="keyword">catch</span> (error) {
+    <span class="method">console</span>.<span class="func">error</span>(error);
+  }
+}
+
+<span class="func">mostrarDatos</span>();</div>
+    <div class="success-box" style="max-width: 900px; margin: 15px auto;">
+      <p>✅ Sintaxis más limpia, parece código síncrono. Es lo que se usa hoy en día.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 34: LIVE CODING 2 -->
+<div class="slide livecoding">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">&lt;/&gt;</div>
+    <h2 class="accent">LIVE CODING #2</h2>
+    <h3 style="color: white;">Servidor Express con middleware</h3>
+    <p style="margin-top: 25px;">✅ Crear servidor Express con múltiples rutas</p>
+    <p>✅ Agregar middleware de logging</p>
+    <p>✅ Agregar middleware para JSON</p>
+    <p>✅ Manejar parámetros y query strings</p>
+    <p>✅ Servir archivos estáticos desde /public</p>
+  </div>
+</div>
+
+<!-- SLIDE 35: BLOQUE 8 - ESCALABILIDAD -->
+<div class="slide ae-slide">
+  <div class="slide-content">
+    <div class="badge-ae">Bloque 8</div>
+    <h2>Escalabilidad</h2>
+    <p style="max-width: 950px; margin: 30px auto; font-size: 1.3rem;">
+      Capacidad de una aplicación para manejar <span class="accent">más carga</span>
+      sin comprometer el rendimiento.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 36: VERTICAL VS HORIZONTAL -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Vertical vs Horizontal</h2>
+    <div class="vs-container">
+      <div class="vs-box">
+        <h3>⬆️ Escalabilidad Vertical</h3>
+        <p>Mejorar el <b>hardware</b> del servidor existente.</p>
+        <ul style="text-align: left; margin-top: 10px;">
+          <li>Más CPU, más RAM</li>
+          <li>Más disco SSD</li>
+          <li>Simple pero con límites</li>
+        </ul>
+      </div>
+      <div class="vs-symbol">vs</div>
+      <div class="vs-box">
+        <h3>➡️ Escalabilidad Horizontal</h3>
+        <p>Agregar <b>más servidores</b> y distribuir la carga.</p>
+        <ul style="text-align: left; margin-top: 10px;">
+          <li>Múltiples instancias</li>
+          <li>Escalable "infinitamente"</li>
+          <li>Requiere balanceo de carga</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 37: CLUSTERING -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🖥️ Clustering en Node.js</h2>
+    <p style="max-width: 950px; margin: 20px auto;">
+      Permite ejecutar <span class="accent">múltiples procesos</span> de Node.js en el mismo servidor,
+      aprovechando todos los núcleos de la CPU.
+    </p>
+<div class="code-block" style="max-width: 950px; margin: 20px auto;"><span class="keyword">const</span> cluster = <span class="func">require</span>(<span class="string">'cluster'</span>);
+<span class="keyword">const</span> os = <span class="func">require</span>(<span class="string">'os'</span>);
+<span class="keyword">const</span> http = <span class="func">require</span>(<span class="string">'http'</span>);
+
+<span class="keyword">if</span> (cluster.isMaster) {
+  <span class="keyword">const</span> numCPUs = os.<span class="func">cpus</span>().length;
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; numCPUs; i++) {
+    cluster.<span class="func">fork</span>();  <span class="comment">// Crear un worker por cada CPU</span>
+  }
+} <span class="keyword">else</span> {
+  http.<span class="func">createServer</span>((req, res) => {
+    res.<span class="func">end</span>(<span class="string">`Respuesta del worker ${process.pid}`</span>);
+  }).<span class="func">listen</span>(<span class="number">3000</span>);
+}</div>
+  </div>
+</div>
+
+<!-- SLIDE 38: LOAD BALANCING -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>⚖️ Load Balancing</h2>
+    <p style="max-width: 950px; margin: 20px auto;">
+      Estrategia para <span class="accent">distribuir el tráfico</span> entre múltiples instancias del servidor.
+    </p>
+    <div class="grid-3" style="margin-top: 25px;">
+      <div class="card">
+        <span class="emoji-big">🔄</span>
+        <h3>Round Robin</h3>
+        <p>Distribuye solicitudes de forma <b>equitativa</b> entre servidores, uno tras otro.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">📊</span>
+        <h3>Least Connections</h3>
+        <p>Envía al servidor con <b>menos conexiones activas</b> en ese momento.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">🔒</span>
+        <h3>IP Hash</h3>
+        <p>Usa la <b>IP del cliente</b> para siempre enviarlo al mismo servidor.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 39: HERRAMIENTAS LOAD BALANCING -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>🛠️ Herramientas para Load Balancing</h2>
+    <div class="grid-3" style="margin-top: 30px;">
+      <div class="card">
+        <span class="emoji-big">🌐</span>
+        <h3>NGINX</h3>
+        <p>Servidor proxy inverso que distribuye tráfico a múltiples instancias de Node.js.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">⚙️</span>
+        <h3>PM2</h3>
+        <p>Manejador de procesos con balanceo de carga usando clustering interno.</p>
+      </div>
+      <div class="card">
+        <span class="emoji-big">☁️</span>
+        <h3>AWS ELB</h3>
+        <p>Servicio de balanceo de carga en la nube de Amazon Web Services.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 40: CLUSTERING VS LOAD BALANCING -->
+<div class="slide">
+  <div class="slide-content">
+    <h2>Clustering vs Load Balancing</h2>
+    <table class="tabla-simple">
+      <tr><th>Estrategia</th><th>¿Cómo funciona?</th><th>¿Cuándo usarla?</th></tr>
+      <tr>
+        <td><b>Clustering</b></td>
+        <td>Múltiples procesos en el <b>mismo servidor</b></td>
+        <td>Cuando queremos aprovechar todos los núcleos de la CPU en un solo servidor</td>
+      </tr>
+      <tr>
+        <td><b>Load Balancing</b></td>
+        <td>Distribuye tráfico entre <b>varios servidores</b></td>
+        <td>Cuando la demanda de usuarios es muy alta y necesitamos múltiples servidores</td>
+      </tr>
+    </table>
+    <div class="info-box" style="max-width: 900px; margin: 20px auto;">
+      <p>💡 En la práctica, se combinan: cada servidor tiene clustering interno, y un load balancer distribuye entre los servidores.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 41: EJERCICIO FINAL - ARQUITECTURA -->
+<div class="slide ejercicio">
+  <div class="slide-content">
+    <div style="font-size: 5rem;">☕</div>
+    <h2>Ejercicio Final · La cafetería asíncrona</h2>
+    <p class="subtitle">Tiempo: <span class="accent">35 minutos</span></p>
+    <div class="info-box" style="max-width: 950px; margin: 15px auto;">
+      <p><b>Contexto:</b> Imagina una cafetería con un solo barista atendiendo. En lugar de hacer un café a la vez, toma múltiples órdenes, empieza a prepararlos, y sigue tomando pedidos sin detenerse. <b>Así funciona el Event Loop</b>.</p>
+      <p style="margin-top: 15px;"><b>Analiza y responde:</b></p>
+      <ul style="text-align: left; padding-left: 30px; margin-top: 10px; font-size: 1.1rem;">
+        <li>¿Cómo administra el Event Loop las tareas?</li>
+        <li>¿Por qué Node.js no se bloquea con múltiples solicitudes?</li>
+        <li>¿Cómo podemos comparar esto con procesos del mundo real (pizzería, construcción, parque de diversiones)?</li>
+        <li>¿Cómo afecta la falta de asincronismo a la experiencia del usuario?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 42: RESUMEN -->
+<div class="slide">
+  <div class="slide-content">
+    <div style="font-size: 4rem;">🎓</div>
+    <h2>Resumen de la clase</h2>
+    <ul class="check-list" style="max-width: 950px;">
+      <li>Comprendimos qué es <span class="accent">Node.js</span> y su modelo de ejecución</li>
+      <li>Aprendimos a usar <span class="accent">Express.js</span> como framework</li>
+      <li>Creamos servidores con rutas GET, POST, PUT, DELETE</li>
+      <li>Trabajamos con <span class="accent">middleware</span> de aplicación, ruta y terceros</li>
+      <li>Entendimos el <span class="accent">Event Loop</span> y sus 6 fases</li>
+      <li>Manejamos asincronismo con callbacks, Promises y async/await</li>
+      <li>Conocimos estrategias de escalabilidad: <span class="accent">Clustering y Load Balancing</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 43: CIERRE -->
+<div class="slide">
+  <div class="slide-content">
+    <div class="floating" style="font-size: 6rem;">🚀</div>
+    <h1>¡Excelente clase!</h1>
+    <p class="subtitle" style="margin-top: 30px;">
+      Próxima lección: <span class="accent">Instalación y configuración de Node</span>
+    </p>
+    <p style="margin-top: 30px; font-size: 1.2rem; opacity: 0.9;">💬 ¿Alguna consulta final?</p>
+    <p style="margin-top: 20px; font-size: 1rem; opacity: 0.7;">Practica en casa: nodejs.org · expressjs.com · npmjs.com</p>
+  </div>
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" onclick="cambiarSlide(-1)">← Anterior</button>
+  <button class="nav-btn" onclick="cambiarSlide(1)">Siguiente →</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let currentSlideIndex = 0;
+document.getElementById('totalSlides').textContent = totalSlides;
+
+function mostrarSlide(index) {
+  slides.forEach((slide, i) => {
+    slide.classList.remove('active', 'prev');
+    if (i === index) slide.classList.add('active');
+    else if (i < index) slide.classList.add('prev');
+  });
+  document.getElementById('currentSlide').textContent = index + 1;
+  document.getElementById('progressBar').style.width = ((index + 1) / totalSlides * 100) + '%';
+}
+
+function cambiarSlide(direccion) {
+  const nuevo = currentSlideIndex + direccion;
+  if (nuevo >= 0 && nuevo < totalSlides) {
+    currentSlideIndex = nuevo;
+    mostrarSlide(currentSlideIndex);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); cambiarSlide(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); cambiarSlide(-1); }
+});
+
+mostrarSlide(0);
+
+// ==================== TIMER DESCANSO 30 MIN ====================
+const DURACION_MINUTOS = 30;
+let tiempoRestante = DURACION_MINUTOS * 60;
+let intervalTimer = null;
+let timerActivo = false;
+const CIRCUNFERENCIA = 2 * Math.PI * 90;
+
+function formatearTiempo(segundos) {
+  const min = Math.floor(segundos / 60);
+  const sec = segundos % 60;
+  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function actualizarTimerUI() {
+  document.getElementById('timerText').textContent = formatearTiempo(tiempoRestante);
+  const progreso = tiempoRestante / (DURACION_MINUTOS * 60);
+  const offset = CIRCUNFERENCIA * (1 - progreso);
+  document.getElementById('timerCircle').style.strokeDashoffset = offset;
+}
+
+function iniciarTimer() {
+  if (timerActivo) return;
+  timerActivo = true;
+
+  const ahora = new Date();
+  const regreso = new Date(ahora.getTime() + tiempoRestante * 1000);
+  const horaFormateada = regreso.toLocaleTimeString('es-CL', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  });
+  document.getElementById('horaRegreso').textContent = `🕐 Regresamos a las ${horaFormateada}`;
+
+  intervalTimer = setInterval(() => {
+    if (tiempoRestante > 0) {
+      tiempoRestante--;
+      actualizarTimerUI();
+    } else {
+      clearInterval(intervalTimer);
+      timerActivo = false;
+      document.getElementById('horaRegreso').textContent = '⏰ ¡Descanso terminado!';
+    }
+  }, 1000);
+}
+
+function pausarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+}
+
+function reiniciarTimer() {
+  clearInterval(intervalTimer);
+  timerActivo = false;
+  tiempoRestante = DURACION_MINUTOS * 60;
+  actualizarTimerUI();
+  document.getElementById('horaRegreso').textContent = '';
+}
+
+document.getElementById('timerCircle').style.strokeDasharray = CIRCUNFERENCIA;
+actualizarTimerUI();
+</script>
+</body>
+</html>
