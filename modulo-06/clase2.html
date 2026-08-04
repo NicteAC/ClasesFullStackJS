@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instalación y Configuración de Node.js</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e1e; color: #ffffff;
+  }
+  .presentation { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateX(50px);
+  }
+  .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
+  .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+  .slide-content.left { text-align: left; }
+
+  /* Header */
+  .slide-counter {
+    position: fixed; top: 30px; right: 30px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    padding: 12px 22px; border-radius: 25px;
+    font-size: 1.1rem; font-weight: 600;
+    z-index: 100; border: 2px solid rgba(255,255,255,0.3);
+  }
+  .slide-counter .current { color: #FFD700; }
+
+  /* Navegación */
+  .nav-buttons {
+    position: fixed; bottom: 30px; right: 30px;
+    display: flex; gap: 12px; z-index: 100;
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+    color: #fff; border: 2px solid rgba(255,255,255,0.3);
+    padding: 12px 22px; border-radius: 25px; font-size: 1rem; cursor: pointer;
+    font-weight: 600; transition: all 0.3s ease;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-3px); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Tipografía */
+  h1 { font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); line-height: 1.2; }
+  h1.hero { font-size: 4rem; }
+  h2 { font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); line-height: 1.2; }
+  h3 { font-size: 2rem; margin-bottom: 20px; color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+  p, li { font-size: 1.4rem; line-height: 1.8; }
+  .subtitle { font-size: 1.6rem; color: rgba(255,255,255,0.9); margin-bottom: 15px; }
+  .accent { color: #FFD700; font-weight: 700; }
+  .highlight-yellow { color: #FFD700; font-weight: 700; text-shadow: 0 0 15px rgba(255,215,0,0.4); }
+
+  /* Cards */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; margin-top: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; width: 100%; margin-top: 20px; }
+  .card {
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(15px);
+    padding: 30px 35px; border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border: 2px solid rgba(255,255,255,0.15);
+    transition: all 0.3s ease; text-align: left;
+  }
+  .card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.18); }
+  .card h3 { font-size: 1.6rem; margin-bottom: 15px; }
+  .card p, .card li { font-size: 1.15rem; line-height: 1.6; }
+  .card .icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+
+  /* Emojis grandes */
+  .big-emoji { font-size: 6rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+  /* Listas */
+  ul.custom { list-style: none; padding: 0; text-align: left; }
+  ul.custom li {
+    position: relative; padding-left: 40px; margin-bottom: 15px; font-size: 1.3rem;
+  }
+  ul.custom li:before {
+    content: "▸"; position: absolute; left: 10px; color: #FFD700;
+    font-size: 1.5rem; font-weight: bold;
+  }
+
+  /* Código */
+  .code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    border-radius: 12px; padding: 25px 30px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 1.05rem; line-height: 1.6;
+    text-align: left; white-space: pre;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    border-left: 4px solid #FFD700;
+    overflow-x: auto; margin: 15px 0;
+  }
+  .code-inline {
+    background: rgba(0,0,0,0.4); padding: 3px 10px; border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #FFD700; font-size: 0.95em;
+  }
+  .kw { color: #569cd6; }         /* keywords: const, function, return */
+  .str { color: #ce9178; }         /* strings */
+  .num { color: #b5cea8; }         /* numbers */
+  .fn { color: #dcdcaa; }          /* functions */
+  .cm { color: #6a9955; font-style: italic; } /* comments */
+  .var { color: #9cdcfe; }         /* variables */
+  .op { color: #d4d4d4; }
+  .cls { color: #4ec9b0; }
+  .prompt { color: #4ec9b0; }
+  .warn-color { color: #FF6B6B; }
+  .ok-color { color: #4CAF50; }
+
+  /* Portada */
+  .hero-slide { text-align: center; }
+  .hero-slide h1 { font-size: 4.2rem; margin-bottom: 25px; }
+  .hero-slide .subtitle { font-size: 1.7rem; margin-bottom: 20px; }
+  .hero-slide .instructor { font-size: 1.3rem; margin-top: 40px; opacity: 0.9; }
+
+  /* Cronograma */
+  .schedule-item {
+    display: grid; grid-template-columns: 200px 1fr 120px; gap: 20px;
+    align-items: center; padding: 18px 28px; margin: 12px 0;
+    background: rgba(255,255,255,0.1); border-radius: 15px;
+    border-left: 5px solid #FFD700;
+    transition: all 0.3s;
+  }
+  .schedule-item:hover { background: rgba(255,255,255,0.18); transform: translateX(8px); }
+  .schedule-item.break { border-left-color: #FF6B6B; background: rgba(255,107,107,0.15); }
+  .schedule-time { font-family: 'Consolas', monospace; font-weight: 700; color: #FFD700; font-size: 1.15rem; }
+  .schedule-topic { text-align: left; font-size: 1.15rem; }
+  .schedule-duration { font-size: 1rem; opacity: 0.85; text-align: right; }
+
+  /* BREAK slide */
+  .break-slide { text-align: center; }
+  .break-slide h2 { font-size: 4rem; margin-bottom: 30px; }
+  .timer-container {
+    position: relative; width: 300px; height: 300px; margin: 25px auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .timer-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .timer-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 12; }
+  .timer-progress { fill: none; stroke: #FFD700; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .timer-text {
+    font-size: 3.5rem; font-weight: 700; color: #FFD700;
+    font-family: 'Consolas', monospace; text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    z-index: 2;
+  }
+  .return-time {
+    font-size: 2rem; color: #fff; margin-top: 20px;
+  }
+  .return-time strong { color: #FFD700; font-family: 'Consolas', monospace; }
+  .break-emoji { font-size: 5rem; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+
+  /* Aprendizajes */
+  .learning-item {
+    display: flex; align-items: center; gap: 20px;
+    background: rgba(255,255,255,0.1); padding: 18px 25px;
+    border-radius: 15px; margin: 12px 0; text-align: left;
+    border-left: 4px solid #FFD700;
+    transition: all 0.3s;
+  }
+  .learning-item:hover { transform: translateX(10px); background: rgba(255,255,255,0.15); }
+  .learning-num {
+    background: #FFD700; color: #764ba2;
+    width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .learning-text { font-size: 1.2rem; line-height: 1.5; }
+
+  /* Comparación blocking/non-blocking */
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; }
+  .comparison .card.blocking { border-left: 6px solid #FF6B6B; }
+  .comparison .card.non-blocking { border-left: 6px solid #4CAF50; }
+
+  /* Ejercicio */
+  .exercise-card {
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(15px);
+    padding: 30px 40px; border-radius: 20px; margin-top: 20px;
+    border: 2px solid #FFD700; text-align: left;
+  }
+  .exercise-card h3 { color: #FFD700; margin-bottom: 15px; }
+  .exercise-card .time-badge {
+    display: inline-block; background: #FFD700; color: #764ba2;
+    padding: 8px 20px; border-radius: 25px; font-weight: 700;
+    font-size: 1.1rem; margin-top: 15px;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    font-size: 0.95rem; font-weight: 600; margin: 0 5px;
+  }
+  .badge-modern { background: #4CAF50; color: #fff; }
+  .badge-legacy { background: #FFA500; color: #1e1e1e; }
+  .badge-warn { background: #FF6B6B; color: #fff; }
+
+  /* Resumen final */
+  .summary-item {
+    display: flex; align-items: center; gap: 15px;
+    padding: 12px 20px; margin: 8px 0; text-align: left;
+    background: rgba(255,255,255,0.08); border-radius: 12px;
+    font-size: 1.2rem;
+  }
+  .summary-item .check {
+    color: #4CAF50; font-size: 1.6rem; flex-shrink: 0;
+  }
+
+  /* Iconos animados */
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+  /* Terminal */
+  .terminal {
+    background: #0c0c0c; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left;
+    margin: 15px 0;
+  }
+  .terminal-header {
+    background: #2d2d30; padding: 8px 15px; display: flex; gap: 8px; align-items: center;
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot.red { background: #FF6B6B; }
+  .term-dot.yellow { background: #FFD700; }
+  .term-dot.green { background: #4CAF50; }
+  .term-title { color: #aaa; margin-left: 10px; font-size: 0.9rem; }
+  .terminal-body {
+    padding: 18px 22px; font-family: 'Consolas', monospace;
+    color: #d4d4d4; font-size: 1rem; line-height: 1.6;
+    white-space: pre;
+  }
+
+  /* Two-col small */
+  .two-col-list {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px;
+    text-align: left; margin-top: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-counter">
+  <span class="current" id="currentSlide">1</span> / <span id="totalSlides">1</span>
+</div>
+
+<div class="presentation" id="presentation">
+
+  <!-- SLIDE 1: Portada -->
+  <section class="slide active">
+    <div class="slide-content hero-slide">
+      <div class="big-emoji">⚙️</div>
+      <h1 class="hero">Instalación y Configuración de Node.js</h1>
+      <p class="subtitle">Preparando nuestro entorno de desarrollo backend</p>
+      <p style="font-size:1.3rem;opacity:0.9;">AE2.1 y AE2.2 · Módulo Node Express</p>
+      <p class="instructor">Desarrollo de Aplicaciones Full Stack JavaScript Trainee</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Learning Path -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>Learning Path</h2>
+      <p class="subtitle">¿Qué temas trabajaremos hoy?</p>
+      <div class="grid-2">
+        <div class="card">
+          <span class="icon">📥</span>
+          <h3>Instalación de Node.js</h3>
+          <p>Descarga e instalación en Windows, macOS y Linux. Verificación desde la consola.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🖥️</span>
+          <h3>Consola y Primer Programa</h3>
+          <p>Uso de la terminal, creación de proyectos y ejecución del clásico "Hola Mundo".</p>
+        </div>
+        <div class="card">
+          <span class="icon">🚀</span>
+          <h3>Express.js Básico</h3>
+          <p>Instalación de Express y creación de nuestro primer servidor web.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📦</span>
+          <h3>npm y Paquetes Clave</h3>
+          <p>Gestión de dependencias, <span class="code-inline">--watch</span> nativo, <span class="code-inline">yargs</span> y más.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Objetivos de aprendizaje -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>Objetivos de aprendizaje</h2>
+      <p class="subtitle">¿Qué lograrás al finalizar la clase?</p>
+      <div class="learning-item">
+        <div class="learning-num">1</div>
+        <div class="learning-text">Instalar y configurar <strong>Node.js</strong> correctamente en tu entorno de desarrollo.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">2</div>
+        <div class="learning-text">Crear tu primer proyecto Node y ejecutar programas desde la <strong>consola</strong>.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">3</div>
+        <div class="learning-text">Configurar un servidor básico con <strong>Express.js</strong>.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">4</div>
+        <div class="learning-text">Gestionar dependencias con <strong>npm</strong> e identificar paquetes clave del ecosistema.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">5</div>
+        <div class="learning-text">Diferenciar código <strong>bloqueante</strong> vs <strong>no bloqueante</strong> y comprender el ciclo de vida de un proceso.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: Cronograma de la clase -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🕐 Cronograma de la clase</h2>
+      <p class="subtitle">4 horas · con descanso de 30 minutos</p>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 1 · 60 min</div>
+        <div class="schedule-topic">Instalación de Node.js, VS Code, primer proyecto y "Hola Mundo"</div>
+        <div class="schedule-duration">Teoría + demo</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 2 · 60 min</div>
+        <div class="schedule-topic">Express.js: instalación, servidor básico + Ejercicio N°1</div>
+        <div class="schedule-duration">Práctica</div>
+      </div>
+      <div class="schedule-item break">
+        <div class="schedule-time">☕ Descanso</div>
+        <div class="schedule-topic">Pausa activa · vuelvo con energías renovadas</div>
+        <div class="schedule-duration">30 min</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 3 · 60 min</div>
+        <div class="schedule-topic">npm, paquetes clave, <span class="code-inline">--watch</span> nativo vs nodemon, blocking/non-blocking</div>
+        <div class="schedule-duration">Teoría + demo</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 4 · 60 min</div>
+        <div class="schedule-topic">yargs: CLI en Node + Ejercicio N°2 + cierre</div>
+        <div class="schedule-duration">Práctica</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: ¿Qué es Node.js? -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">🟢</div>
+      <h2>¿Qué es Node.js?</h2>
+      <p style="font-size:1.6rem;max-width:1000px;margin:0 auto 30px;">Es un <span class="accent">entorno de ejecución para JavaScript</span> construido sobre el motor V8 de Chrome, que nos permite correr JS <span class="highlight-yellow">fuera del navegador</span>.</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">🌐</span>
+          <h3>Backend</h3>
+          <p>Construye servidores web, APIs REST y aplicaciones en tiempo real.</p>
+        </div>
+        <div class="card">
+          <span class="icon">⚡</span>
+          <h3>Asincrónico</h3>
+          <p>Modelo no bloqueante basado en eventos: alto rendimiento con pocos recursos.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📚</span>
+          <h3>Ecosistema npm</h3>
+          <p>Más de 2 millones de paquetes disponibles para acelerar el desarrollo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: VS Code -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>Antes de empezar: Visual Studio Code</h2>
+      <p class="subtitle">Nuestro editor de código favorito</p>
+      <div class="grid-2">
+        <div class="card">
+          <span class="icon">1️⃣</span>
+          <h3>Descarga</h3>
+          <p>Ingresa a <span class="code-inline">code.visualstudio.com</span> y descarga el instalador para tu SO.</p>
+        </div>
+        <div class="card">
+          <span class="icon">2️⃣</span>
+          <h3>Instala</h3>
+          <p>Ejecuta el instalador, acepta los términos y usa las opciones por defecto.</p>
+        </div>
+        <div class="card">
+          <span class="icon">3️⃣</span>
+          <h3>Extensiones útiles</h3>
+          <p>Prettier · ESLint · Node.js Extension Pack · Live Server</p>
+        </div>
+        <div class="card">
+          <span class="icon">4️⃣</span>
+          <h3>Terminal integrada</h3>
+          <p>Menú <span class="code-inline">Terminal › New Terminal</span> o <span class="code-inline">Ctrl+ñ</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: Instalación Node Windows -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🪟 Instalación en Windows</h2>
+      <p class="subtitle">Paso a paso</p>
+      <ul class="custom" style="max-width:900px;margin:0 auto;">
+        <li>Ir a <span class="code-inline">https://nodejs.org</span> y descargar la versión <span class="accent">LTS</span> (recomendada).</li>
+        <li>Ejecutar el instalador <span class="code-inline">.msi</span> descargado.</li>
+        <li>Aceptar la licencia y dejar las opciones por defecto (incluye npm y añade a PATH).</li>
+        <li>Finalizar y <span class="highlight-yellow">reiniciar</span> la terminal para que reconozca el PATH.</li>
+      </ul>
+      <div class="terminal" style="max-width:800px;margin:20px auto 0;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">PowerShell — Verificación</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">PS C:\Users\Carola&gt;</span> node -v
+<span style="color:#4CAF50;">v22.12.0</span>
+<span class="prompt">PS C:\Users\Carola&gt;</span> npm -v
+<span style="color:#4CAF50;">10.9.0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: Instalación Mac y Linux -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🍎 macOS y 🐧 Linux</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>🍎 macOS</h3>
+          <p style="margin-bottom:12px;">Con <strong>Homebrew</strong> (recomendado):</p>
+          <div class="code-block" style="font-size:0.95rem;padding:15px;">brew install node</div>
+          <p style="margin-top:12px;">O descargar el <span class="code-inline">.pkg</span> desde <span class="code-inline">nodejs.org</span></p>
+        </div>
+        <div class="card">
+          <h3>🐧 Linux (Ubuntu/Debian)</h3>
+          <div class="code-block" style="font-size:0.95rem;padding:15px;">sudo apt update
+sudo apt install nodejs npm</div>
+          <p style="margin-top:12px;">Alternativa moderna: usar <span class="code-inline">nvm</span> para gestionar versiones.</p>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;">Verificar en todos los casos:</p>
+      <div class="code-block" style="max-width:400px;margin:10px auto;text-align:center;">node -v
+npm -v</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: La consola de comandos -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🖥️ La consola de comandos</h2>
+      <p class="subtitle">Nuestra herramienta principal de trabajo</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">🪟</span>
+          <h3>Windows</h3>
+          <p><strong>PowerShell</strong> o <strong>CMD</strong>. Recomendado: PowerShell.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🍎</span>
+          <h3>macOS</h3>
+          <p><strong>Terminal</strong> (o iTerm2). Shell por defecto: <span class="code-inline">zsh</span>.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🐧</span>
+          <h3>Linux</h3>
+          <p><strong>bash</strong> o <strong>zsh</strong>. Muy potente para desarrollo.</p>
+        </div>
+      </div>
+      <p style="margin-top:30px;font-size:1.3rem;">Ejecuta <span class="code-inline">node</span> sin argumentos para abrir el <span class="accent">REPL</span> (Read-Eval-Print Loop):</p>
+      <div class="code-block" style="max-width:600px;margin:10px auto;">$ node
+&gt; 2 + 2
+4
+&gt; console.log("Hola")
+Hola
+&gt; .exit</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: Crear proyecto -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📁 Creación de un proyecto Node.js</h2>
+      <p class="subtitle">Estructura mínima para empezar</p>
+      <div class="terminal" style="max-width:800px;margin:20px auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal — Inicializando proyecto</span>
+        </div>
+        <div class="terminal-body"><span class="cm"># 1. Crear carpeta y entrar en ella</span>
+<span class="prompt">$</span> mkdir mi-proyecto
+<span class="prompt">$</span> cd mi-proyecto
+
+<span class="cm"># 2. Inicializar el proyecto (genera package.json)</span>
+<span class="prompt">$</span> npm init -y
+
+<span class="cm"># 3. Abrir en VS Code</span>
+<span class="prompt">$</span> code .</div>
+      </div>
+      <p style="margin-top:20px;font-size:1.25rem;">El flag <span class="code-inline">-y</span> acepta todas las opciones por defecto. Sin él, npm te pregunta nombre, versión, autor, etc.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: package.json -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📄 El archivo <span class="accent">package.json</span></h2>
+      <p class="subtitle">La cédula de identidad de tu proyecto</p>
+      <div class="code-block" style="max-width:900px;margin:0 auto;font-size:1rem;"><span class="op">{</span>
+  <span class="str">"name"</span><span class="op">:</span> <span class="str">"mi-proyecto"</span><span class="op">,</span>
+  <span class="str">"version"</span><span class="op">:</span> <span class="str">"1.0.0"</span><span class="op">,</span>
+  <span class="str">"description"</span><span class="op">:</span> <span class="str">""</span><span class="op">,</span>
+  <span class="str">"main"</span><span class="op">:</span> <span class="str">"index.js"</span><span class="op">,</span>
+  <span class="str">"scripts"</span><span class="op">:</span> <span class="op">{</span>
+    <span class="str">"test"</span><span class="op">:</span> <span class="str">"echo \"Error: no test specified\" &amp;&amp; exit 1"</span>
+  <span class="op">},</span>
+  <span class="str">"keywords"</span><span class="op">:</span> <span class="op">[],</span>
+  <span class="str">"author"</span><span class="op">:</span> <span class="str">""</span><span class="op">,</span>
+  <span class="str">"license"</span><span class="op">:</span> <span class="str">"ISC"</span>
+<span class="op">}</span></div>
+      <p style="margin-top:20px;font-size:1.2rem;">Aquí se registran <span class="accent">dependencias</span>, <span class="accent">scripts</span> y metadatos del proyecto.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: Hola Mundo -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>👋 Nuestro primer "Hola Mundo"</h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>1. Crear <span class="code-inline">index.js</span></h3>
+          <div class="code-block" style="font-size:1.05rem;"><span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"¡Hola, Mundo desde Node.js!"</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"Directorio:"</span><span class="op">,</span> process<span class="op">.</span><span class="fn">cwd</span><span class="op">());</span>
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"Versión:"</span><span class="op">,</span> process<span class="op">.</span>version<span class="op">);</span></div>
+        </div>
+        <div>
+          <h3>2. Ejecutar</h3>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+              <span class="term-title">Terminal</span>
+            </div>
+            <div class="terminal-body"><span class="prompt">$</span> node index.js
+<span style="color:#4CAF50;">¡Hola, Mundo desde Node.js!</span>
+Directorio: /home/carola/mi-proyecto
+Versión: v22.12.0</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;"><span class="accent">process</span> es un objeto global que nos da información del entorno de ejecución.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 13: ¿Qué es Express.js? -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">🚂</div>
+      <h2>¿Qué es <span class="accent">Express.js</span>?</h2>
+      <p style="font-size:1.6rem;max-width:1000px;margin:0 auto 30px;">Un framework <span class="accent">minimalista y flexible</span> para Node.js que facilita la creación de servidores web y APIs.</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">🎯</span>
+          <h3>Rutas simples</h3>
+          <p>Define endpoints HTTP con una sintaxis clara: <span class="code-inline">app.get()</span>, <span class="code-inline">app.post()</span>...</p>
+        </div>
+        <div class="card">
+          <span class="icon">🧩</span>
+          <h3>Middleware</h3>
+          <p>Ejecuta lógica entre la petición y la respuesta: logs, auth, validación...</p>
+        </div>
+        <div class="card">
+          <span class="icon">🌍</span>
+          <h3>Estándar de la industria</h3>
+          <p>Miles de empresas lo usan en producción. Base para NestJS y otros.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 14: Instalar Express -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📥 Instalación de Express</h2>
+      <p class="subtitle">Un solo comando</p>
+      <div class="terminal" style="max-width:800px;margin:20px auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal — Instalando Express</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">$</span> npm install express
+
+added 69 packages in 3s
+<span style="color:#4CAF50;">✓</span> express agregado a dependencies</div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;max-width:900px;margin-left:auto;margin-right:auto;">Express queda registrado en <span class="code-inline">package.json</span> dentro de <span class="accent">dependencies</span> y sus archivos se guardan en <span class="code-inline">node_modules/</span>.</p>
+      <div class="code-block" style="max-width:700px;margin:20px auto;font-size:1rem;"><span class="str">"dependencies"</span><span class="op">:</span> <span class="op">{</span>
+  <span class="str">"express"</span><span class="op">:</span> <span class="str">"^4.21.1"</span>
+<span class="op">}</span></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 15: Servidor básico Express -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🚀 Nuestro primer servidor Express</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Archivo <span class="code-inline">server.js</span>:</p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">express</span><span class="op">();</span>
+<span class="kw">const</span> <span class="var">PORT</span> <span class="op">=</span> <span class="num">3000</span><span class="op">;</span>
+
+<span class="cm">// Ruta raíz</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'Hola Mundo desde Express 🚀'</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="var">app</span><span class="op">.</span><span class="fn">listen</span><span class="op">(</span><span class="var">PORT</span><span class="op">, () =&gt; {</span>
+  <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Servidor en http://localhost:</span><span class="op">${</span><span class="var">PORT</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
+<span class="op">});</span></div>
+      <p style="margin-top:20px;font-size:1.2rem;">Ejecutar: <span class="code-inline">node server.js</span> → abrir <span class="code-inline">http://localhost:3000</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 16: Estructura del proyecto -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📂 Estructura básica de un proyecto Express</h2>
+      <div class="grid-2" style="align-items:start;">
+        <div class="code-block" style="font-size:1.1rem;text-align:left;"><span style="color:#FFD700;">mi-proyecto/</span>
+├── <span style="color:#569cd6;">node_modules/</span>   <span class="cm"># Paquetes instalados</span>
+├── <span style="color:#9cdcfe;">public/</span>          <span class="cm"># Archivos estáticos</span>
+│   ├── index.html
+│   └── styles.css
+├── <span style="color:#dcdcaa;">server.js</span>        <span class="cm"># Punto de entrada</span>
+├── <span style="color:#dcdcaa;">package.json</span>     <span class="cm"># Metadatos + deps</span>
+├── <span style="color:#dcdcaa;">package-lock.json</span> <span class="cm"># Versiones exactas</span>
+└── <span style="color:#dcdcaa;">.gitignore</span>       <span class="cm"># Ignora node_modules</span></div>
+        <div>
+          <h3>🎯 Puntos clave</h3>
+          <ul class="custom">
+            <li><span class="code-inline">node_modules/</span> nunca se sube a Git (es pesado).</li>
+            <li><span class="code-inline">package.json</span> permite reinstalar todo con <span class="code-inline">npm install</span>.</li>
+            <li><span class="code-inline">public/</span> se sirve con <span class="code-inline">express.static()</span>.</li>
+            <li>El punto de entrada se declara en <span class="code-inline">"main"</span> del <span class="code-inline">package.json</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 17: Ejercicio 1 -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>💪 Ejercicio N°1</h2>
+      <h3>Creación de un servidor con Express</h3>
+      <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
+        <h3>🎯 Consigna</h3>
+        <ul class="custom">
+          <li>Crear un servidor con Express que responda "Hola Mundo" en la ruta <span class="code-inline">/</span>.</li>
+          <li>Definir una ruta <span class="code-inline">GET /saludo/:nombre</span> que devuelva un mensaje personalizado.</li>
+          <li>Agregar un middleware que registre en consola cada solicitud (método + URL).</li>
+          <li>Servir archivos estáticos desde una carpeta <span class="code-inline">public/</span> con un <span class="code-inline">index.html</span>.</li>
+        </ul>
+        <span class="time-badge">⏱️ 30 minutos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 18: BREAK con temporizador -->
+  <section class="slide break-slide" id="breakSlide">
+    <div class="slide-content">
+      <div class="break-emoji">☕</div>
+      <h2>¡Tiempo de descanso!</h2>
+      <div class="timer-container">
+        <svg class="timer-svg" width="300" height="300">
+          <circle class="timer-bg" cx="150" cy="150" r="130"></circle>
+          <circle class="timer-progress" id="timerProgress" cx="150" cy="150" r="130"></circle>
+        </svg>
+        <div class="timer-text" id="timerText">30:00</div>
+      </div>
+      <p class="return-time">Volvemos a las <strong id="returnTime">--:--</strong></p>
+      <p style="font-size:1.2rem;margin-top:15px;opacity:0.9;">Estira, hidrátate y despeja la mente 💧</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 19: Introducción a npm -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">📦</div>
+      <h2>Introducción a <span class="accent">npm</span></h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 30px;"><strong>Node Package Manager</strong>: el gestor de paquetes por defecto de Node.js.</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">📄</span>
+          <h3>package.json</h3>
+          <p>Archivo de configuración donde se registran las dependencias del proyecto.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📁</span>
+          <h3>node_modules/</h3>
+          <p>Carpeta donde npm guarda todos los paquetes instalados. Se ignora en Git.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🔒</span>
+          <h3>package-lock.json</h3>
+          <p>Bloquea las versiones exactas de cada dependencia para instalaciones reproducibles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 20: Comandos esenciales npm -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚡ Comandos esenciales de npm</h2>
+      <div class="two-col-list">
+        <div>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm init -y</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Crea un package.json con valores por defecto.</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm install &lt;paquete&gt;</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Instala un paquete y lo agrega a dependencies.</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm install -D &lt;paquete&gt;</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Lo instala como devDependency (solo desarrollo).</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm install -g &lt;paquete&gt;</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;">Instalación global (disponible en todo el sistema).</p>
+        </div>
+        <div>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm uninstall &lt;paquete&gt;</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Elimina un paquete del proyecto.</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm update</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Actualiza dependencias según semver.</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm list</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;margin-bottom:20px;">Muestra el árbol de paquetes instalados.</p>
+          <p style="font-size:1.2rem;margin-bottom:8px;"><span class="code-inline">npm run &lt;script&gt;</span></p>
+          <p style="font-size:1.05rem;opacity:0.9;">Ejecuta un script definido en package.json.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 21: Paquetes más usados -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🌟 Paquetes más usados en el ecosistema Node</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>🚀 Servidores y APIs</h3>
+          <p><strong>express</strong> · <strong>koa</strong> · <strong>fastify</strong> · <strong>hapi</strong></p>
+        </div>
+        <div class="card">
+          <h3>🗄️ Bases de datos</h3>
+          <p><strong>mongoose</strong> (MongoDB) · <strong>sequelize</strong> (SQL) · <strong>prisma</strong> · <strong>knex</strong></p>
+        </div>
+        <div class="card">
+          <h3>🛠️ Desarrollo</h3>
+          <p><strong>nodemon</strong> · <strong>dotenv</strong> · <strong>pm2</strong> · <strong>ts-node</strong></p>
+        </div>
+        <div class="card">
+          <h3>🧪 Testing</h3>
+          <p><strong>jest</strong> · <strong>mocha</strong> · <strong>chai</strong> · <strong>supertest</strong></p>
+        </div>
+        <div class="card">
+          <h3>⚡ Tiempo real</h3>
+          <p><strong>socket.io</strong> · <strong>ws</strong></p>
+        </div>
+        <div class="card">
+          <h3>🧰 Utilidades y CLI</h3>
+          <p><strong>lodash</strong> · <strong>moment</strong> / <strong>dayjs</strong> · <strong>yargs</strong> · <strong>morgan</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 22: node --watch nativo -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🔥 <span class="accent">node --watch</span>: modo desarrollo nativo</h2>
+      <p style="font-size:1.4rem;margin-bottom:20px;">Desde <strong>Node.js 22 LTS</strong> es <span class="badge badge-modern">ESTABLE</span> — sin instalar nada extra.</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>✅ Uso básico</h3>
+          <div class="code-block" style="font-size:1.05rem;"><span class="cm"># Reinicia el proceso al detectar</span>
+<span class="cm"># cambios en el archivo o sus imports</span>
+<span class="prompt">$</span> node --watch server.js</div>
+          <h3 style="margin-top:20px;">📍 Watch de una carpeta específica</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="prompt">$</span> node --watch-path=./src server.js</div>
+        </div>
+        <div>
+          <h3>🎯 Script en package.json</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="str">"scripts"</span><span class="op">:</span> <span class="op">{</span>
+  <span class="str">"start"</span><span class="op">:</span> <span class="str">"node server.js"</span><span class="op">,</span>
+  <span class="str">"dev"</span><span class="op">:</span> <span class="str">"node --watch server.js"</span>
+<span class="op">}</span></div>
+          <p style="margin-top:15px;font-size:1.15rem;">Luego se ejecuta con:</p>
+          <div class="code-block" style="font-size:1rem;"><span class="prompt">$</span> npm run dev</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 23: nodemon como alternativa -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🔄 Nodemon: la alternativa clásica</h2>
+      <p style="font-size:1.35rem;margin-bottom:20px;">Antes de <span class="code-inline">--watch</span> nativo, <strong>nodemon</strong> era el estándar. Sigue siendo útil por su configurabilidad. <span class="badge badge-legacy">SIGUE VIGENTE</span></p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>Instalación</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="cm"># como devDependency (recomendado)</span>
+<span class="prompt">$</span> npm install --save-dev nodemon
+
+<span class="cm"># o global</span>
+<span class="prompt">$</span> npm install -g nodemon</div>
+          <h3 style="margin-top:20px;">Uso</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="prompt">$</span> nodemon server.js</div>
+        </div>
+        <div>
+          <h3>¿Cuándo elegir cada uno?</h3>
+          <ul class="custom" style="font-size:1.15rem;">
+            <li><span class="badge badge-modern">--watch</span> Proyectos nuevos, sin dependencias extra.</li>
+            <li><span class="badge badge-legacy">nodemon</span> Cuando necesitas config avanzada: extensiones a vigilar, delay, ignore, comandos custom.</li>
+            <li>Ambos hacen básicamente lo mismo: <span class="accent">reinicio automático al detectar cambios</span>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 24: Blocking vs Non-Blocking - concepto -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⏱️ Bloqueante vs No Bloqueante</h2>
+      <div class="comparison">
+        <div class="card blocking">
+          <h3 style="color:#FF6B6B;">🛑 Bloqueante (sync)</h3>
+          <p style="font-size:1.2rem;">La ejecución se <strong>detiene</strong> hasta que la operación termina.</p>
+          <p style="font-size:1.2rem;margin-top:10px;">Cada tarea debe completarse antes de que empiece la siguiente.</p>
+          <p style="margin-top:15px;font-size:1.05rem;opacity:0.9;">Ejemplo: <span class="code-inline">fs.readFileSync()</span></p>
+        </div>
+        <div class="card non-blocking">
+          <h3 style="color:#4CAF50;">✅ No bloqueante (async)</h3>
+          <p style="font-size:1.2rem;">Node <strong>delega</strong> la operación y sigue ejecutando otro código.</p>
+          <p style="font-size:1.2rem;margin-top:10px;">Cuando la operación termina, se llama al callback / se resuelve la promesa.</p>
+          <p style="margin-top:15px;font-size:1.05rem;opacity:0.9;">Ejemplo: <span class="code-inline">fs.readFile()</span></p>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;">🎯 El modelo <span class="accent">no bloqueante</span> es la clave del rendimiento de Node.js.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 25: Blocking demo -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🛑 Código bloqueante</h2>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">fs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'fs'</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"1. Antes de leer el archivo"</span><span class="op">);</span>
+
+<span class="kw">const</span> <span class="var">data</span> <span class="op">=</span> <span class="var">fs</span><span class="op">.</span><span class="fn">readFileSync</span><span class="op">(</span><span class="str">'archivo.txt'</span><span class="op">,</span> <span class="str">'utf8'</span><span class="op">);</span>
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"2. Contenido:"</span><span class="op">,</span> <span class="var">data</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"3. Después de leer"</span><span class="op">);</span></div>
+      <div class="terminal" style="max-width:800px;margin:20px auto 0;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Salida</span>
+        </div>
+        <div class="terminal-body">1. Antes de leer el archivo
+2. Contenido: Hola desde el archivo
+3. Después de leer</div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;">Los logs salen <span class="highlight-yellow">estrictamente en orden</span>: 1 → 2 → 3.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 26: Non-blocking demo -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>✅ Código no bloqueante</h2>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">fs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'fs'</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"1. Antes de leer el archivo"</span><span class="op">);</span>
+
+<span class="var">fs</span><span class="op">.</span><span class="fn">readFile</span><span class="op">(</span><span class="str">'archivo.txt'</span><span class="op">,</span> <span class="str">'utf8'</span><span class="op">, (</span><span class="var">err</span><span class="op">,</span> <span class="var">data</span><span class="op">) =&gt; {</span>
+  <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"2. Contenido:"</span><span class="op">,</span> <span class="var">data</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">"3. Después de programar la lectura"</span><span class="op">);</span></div>
+      <div class="terminal" style="max-width:800px;margin:20px auto 0;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Salida</span>
+        </div>
+        <div class="terminal-body">1. Antes de leer el archivo
+3. Después de programar la lectura
+2. Contenido: Hola desde el archivo</div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;">El <strong>3 sale antes que el 2</strong>: Node no espera, sigue ejecutando. <span class="highlight-yellow">Ese es el poder de la asincronía.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 27: Ciclo de vida proceso -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>♻️ Ciclo de vida de un proceso Node</h2>
+      <p style="font-size:1.3rem;margin-bottom:20px;">Node ejecuta en un <strong>solo hilo principal</strong>, con la ayuda de <span class="code-inline">libuv</span> para tareas pesadas en segundo plano.</p>
+      <div class="grid-2" style="align-items:start;">
+        <div class="card">
+          <h3>🌀 Modelo</h3>
+          <ul class="custom" style="font-size:1.15rem;">
+            <li>Un solo hilo para JS.</li>
+            <li>Event Loop coordina todo.</li>
+            <li>libuv maneja operaciones I/O en threads del SO.</li>
+            <li>No bloquear el hilo principal = alto rendimiento.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🛠️ Manejar procesos</h3>
+          <ul class="custom" style="font-size:1.15rem;">
+            <li><span class="code-inline">ps</span> · <span class="code-inline">tasklist</span> (Win) → listar procesos.</li>
+            <li><span class="code-inline">kill &lt;PID&gt;</span> → detener un proceso.</li>
+            <li><span class="code-inline">Ctrl+C</span> en terminal → detener el proceso Node en curso.</li>
+            <li><span class="code-inline">process.exit(0)</span> → salir desde el código.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 28: yargs intro -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">⚔️</div>
+      <h2><span class="accent">yargs</span>: CLIs en Node.js</h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 25px;">Un paquete que nos permite construir <strong>herramientas de línea de comandos</strong> profesionales, con argumentos, opciones y ayuda automática.</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">🎯</span>
+          <h3>Argumentos posicionales</h3>
+          <p><span class="code-inline">node app.js sumar 5 3</span></p>
+        </div>
+        <div class="card">
+          <span class="icon">🚩</span>
+          <h3>Flags y opciones</h3>
+          <p><span class="code-inline">--nombre="Carola"</span> <br><span class="code-inline">-v</span> · <span class="code-inline">--verbose</span></p>
+        </div>
+        <div class="card">
+          <span class="icon">📖</span>
+          <h3>Ayuda automática</h3>
+          <p>Genera <span class="code-inline">--help</span> con la documentación de tus comandos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 29: yargs instalación -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📥 Instalación y uso básico de yargs</h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>1. Instalar</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="prompt">$</span> npm install yargs</div>
+          <h3 style="margin-top:20px;">2. Ejecutar con args</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="prompt">$</span> node app.js --nombre="Carola" --edad=30</div>
+          <div class="terminal" style="margin-top:15px;">
+            <div class="terminal-header">
+              <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+              <span class="term-title">Salida</span>
+            </div>
+            <div class="terminal-body">Hola Carola, tienes 30 años 👋</div>
+          </div>
+        </div>
+        <div>
+          <h3>3. Código básico (<span class="code-inline">app.js</span>)</h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="kw">const</span> <span class="var">yargs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'yargs'</span><span class="op">);</span>
+
+<span class="kw">const</span> <span class="var">argv</span> <span class="op">=</span> <span class="fn">yargs</span><span class="op">(</span>process<span class="op">.</span>argv<span class="op">.</span><span class="fn">slice</span><span class="op">(</span><span class="num">2</span><span class="op">))</span>
+  <span class="op">.</span><span class="fn">option</span><span class="op">(</span><span class="str">'nombre'</span><span class="op">, {</span>
+    <span class="var">alias</span><span class="op">:</span> <span class="str">'n'</span><span class="op">,</span>
+    <span class="var">type</span><span class="op">:</span> <span class="str">'string'</span><span class="op">,</span>
+    <span class="var">demandOption</span><span class="op">:</span> <span class="kw">true</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">option</span><span class="op">(</span><span class="str">'edad'</span><span class="op">, {</span>
+    <span class="var">type</span><span class="op">:</span> <span class="str">'number'</span><span class="op">,</span>
+    <span class="var">default</span><span class="op">:</span> <span class="num">18</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">help</span><span class="op">()</span>
+  <span class="op">.</span><span class="fn">argv</span><span class="op">;</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Hola </span><span class="op">${</span><span class="var">argv</span><span class="op">.</span><span class="var">nombre</span><span class="op">}</span><span class="str">, tienes </span><span class="op">${</span><span class="var">argv</span><span class="op">.</span><span class="var">edad</span><span class="op">}</span><span class="str"> años 👋`</span><span class="op">);</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 30: yargs comandos avanzados -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚙️ yargs con <span class="accent">comandos</span></h2>
+      <p style="font-size:1.15rem;margin-bottom:15px;">Crea sub-comandos como Git (<span class="code-inline">git commit</span>, <span class="code-inline">git push</span>):</p>
+      <div class="code-block" style="max-width:1100px;margin:0 auto;font-size:0.95rem;"><span class="kw">const</span> <span class="var">yargs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'yargs'</span><span class="op">);</span>
+
+<span class="fn">yargs</span><span class="op">(</span>process<span class="op">.</span>argv<span class="op">.</span><span class="fn">slice</span><span class="op">(</span><span class="num">2</span><span class="op">))</span>
+  <span class="op">.</span><span class="fn">command</span><span class="op">(</span><span class="str">'sumar &lt;a&gt; &lt;b&gt;'</span><span class="op">,</span> <span class="str">'Suma dos números'</span><span class="op">, () =&gt; {}, (</span><span class="var">argv</span><span class="op">) =&gt; {</span>
+    <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Resultado: </span><span class="op">${</span><span class="var">argv</span><span class="op">.</span><span class="var">a</span> <span class="op">+</span> <span class="var">argv</span><span class="op">.</span><span class="var">b</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">command</span><span class="op">(</span><span class="str">'saludar &lt;nombre&gt;'</span><span class="op">,</span> <span class="str">'Saluda por nombre'</span><span class="op">, () =&gt; {}, (</span><span class="var">argv</span><span class="op">) =&gt; {</span>
+    <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`¡Hola </span><span class="op">${</span><span class="var">argv</span><span class="op">.</span><span class="var">nombre</span><span class="op">}</span><span class="str">! 👋`</span><span class="op">);</span>
+  <span class="op">})</span>
+  <span class="op">.</span><span class="fn">demandCommand</span><span class="op">(</span><span class="num">1</span><span class="op">)</span>
+  <span class="op">.</span><span class="fn">help</span><span class="op">()</span>
+  <span class="op">.</span><span class="fn">parse</span><span class="op">();</span></div>
+      <div class="terminal" style="max-width:900px;margin:15px auto 0;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal — Uso</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">$</span> node app.js sumar 5 3
+Resultado: 8
+<span class="prompt">$</span> node app.js saludar Carola
+¡Hola Carola! 👋
+<span class="prompt">$</span> node app.js --help</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 31: Ejercicio 2 -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>💪 Ejercicio N°2</h2>
+      <h3>CLI con yargs: Agenda de contactos</h3>
+      <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
+        <h3>🎯 Consigna</h3>
+        <p style="font-size:1.15rem;margin-bottom:12px;">Construye una CLI que gestione contactos con los siguientes comandos:</p>
+        <ul class="custom" style="font-size:1.1rem;">
+          <li><span class="code-inline">agregar --nombre "Ana" --telefono "555-1234"</span> → añade un contacto.</li>
+          <li><span class="code-inline">listar</span> → muestra todos los contactos.</li>
+          <li><span class="code-inline">buscar --nombre "Ana"</span> → busca un contacto por nombre.</li>
+          <li><span class="code-inline">eliminar --nombre "Ana"</span> → elimina un contacto.</li>
+        </ul>
+        <p style="font-size:1.1rem;margin-top:15px;">💡 <strong>Bonus:</strong> guarda los contactos en un archivo <span class="code-inline">contactos.json</span> usando <span class="code-inline">fs</span>.</p>
+        <span class="time-badge">⏱️ 30 minutos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 32: Resumen -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎉 Resumen de la clase</h2>
+      <p class="subtitle">Lo que logramos hoy</p>
+      <div class="grid-2">
+        <div>
+          <div class="summary-item"><span class="check">✓</span> Instalar Node.js y VS Code en cualquier SO.</div>
+          <div class="summary-item"><span class="check">✓</span> Crear proyectos con <span class="code-inline">npm init</span> y comprender <span class="code-inline">package.json</span>.</div>
+          <div class="summary-item"><span class="check">✓</span> Ejecutar el primer "Hola Mundo" en Node.</div>
+          <div class="summary-item"><span class="check">✓</span> Levantar un servidor con Express.js.</div>
+        </div>
+        <div>
+          <div class="summary-item"><span class="check">✓</span> Manejar dependencias con npm.</div>
+          <div class="summary-item"><span class="check">✓</span> Usar <span class="code-inline">node --watch</span> nativo y conocer nodemon.</div>
+          <div class="summary-item"><span class="check">✓</span> Distinguir código <strong>bloqueante</strong> vs <strong>no bloqueante</strong>.</div>
+          <div class="summary-item"><span class="check">✓</span> Construir una CLI con <strong>yargs</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 33: Consultas -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji pulse">🤔</div>
+      <h1 style="font-size:4.5rem;">¿Alguna consulta?</h1>
+      <p style="font-size:1.6rem;margin-top:20px;opacity:0.9;">¡Es el momento de resolver todas las dudas!</p>
+      <p style="font-size:1.3rem;margin-top:30px;">👉 Nos vemos en la próxima clase con más Node y Express 🚀</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Anterior</button>
+  <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentIndex = 0;
+  document.getElementById('totalSlides').textContent = totalSlides;
+
+  function showSlide(idx) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    document.getElementById('currentSlide').textContent = idx + 1;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === totalSlides - 1;
+
+    // Detectar slide de descanso e iniciar temporizador
+    const breakSlide = document.getElementById('breakSlide');
+    if (slides[idx] === breakSlide && !breakSlide.dataset.timerStarted) {
+      startBreakTimer();
+      breakSlide.dataset.timerStarted = 'true';
+    }
+  }
+  function nextSlide() { if (currentIndex < totalSlides - 1) { currentIndex++; showSlide(currentIndex); } }
+  function prevSlide() { if (currentIndex > 0) { currentIndex--; showSlide(currentIndex); } }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  });
+
+  // === Temporizador del descanso ===
+  function startBreakTimer() {
+    const duration = 30 * 60; // 30 minutos en segundos
+    const now = new Date();
+    const endTime = new Date(now.getTime() + duration * 1000);
+    const endStr = endTime.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('returnTime').textContent = endStr;
+
+    const circle = document.getElementById('timerProgress');
+    const timerText = document.getElementById('timerText');
+    const radius = 130;
+    const circumference = 2 * Math.PI * radius;
+    circle.style.strokeDasharray = circumference;
+    circle.style.strokeDashoffset = 0;
+
+    let remaining = duration;
+    const interval = setInterval(() => {
+      remaining--;
+      if (remaining < 0) {
+        clearInterval(interval);
+        timerText.textContent = "¡Volvemos!";
+        timerText.style.fontSize = "2rem";
+        return;
+      }
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      timerText.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      const progress = remaining / duration;
+      circle.style.strokeDashoffset = circumference * (1 - progress);
+    }, 1000);
+  }
+
+  showSlide(0);
+</script>
+</body>
+</html>
