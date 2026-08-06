@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sirviendo Contenido Web con Express y Handlebars</title>
+<title>Gestión de Paquetes de Node con NPM</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
@@ -24,7 +24,6 @@
   }
   .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
   .slide-content { max-width: 1200px; width: 100%; text-align: center; }
-  .slide-content.left { text-align: left; }
 
   /* Header */
   .slide-counter {
@@ -63,6 +62,7 @@
   /* Cards */
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; margin-top: 20px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; width: 100%; margin-top: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; width: 100%; margin-top: 20px; }
   .card {
     background: rgba(255,255,255,0.12); backdrop-filter: blur(15px);
     padding: 30px 35px; border-radius: 20px;
@@ -114,9 +114,6 @@
   .op { color: #d4d4d4; }
   .cls { color: #4ec9b0; }
   .prompt { color: #4ec9b0; }
-  .tag { color: #569cd6; }
-  .attr { color: #9cdcfe; }
-  .hbs { color: #FFD700; font-weight: 700; }
 
   /* Portada */
   .hero-slide { text-align: center; }
@@ -235,8 +232,9 @@
     background: rgba(255,255,255,0.08); border-radius: 15px; overflow: hidden;
   }
   .comp-table th, .comp-table td {
-    padding: 15px 20px; text-align: left; font-size: 1.1rem;
+    padding: 15px 20px; text-align: left; font-size: 1.05rem;
     border-bottom: 1px solid rgba(255,255,255,0.15);
+    vertical-align: top;
   }
   .comp-table th {
     background: rgba(255,215,0,0.15); color: #FFD700;
@@ -244,16 +242,16 @@
   }
   .comp-table td .code-inline { font-size: 0.95rem; }
 
-  /* Método HTTP badges */
-  .http-badge {
-    display: inline-block; padding: 4px 12px; border-radius: 12px;
-    font-family: 'Consolas', monospace; font-weight: 700;
-    font-size: 0.95rem; margin-right: 8px;
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 5px 14px; border-radius: 18px;
+    font-size: 0.9rem; font-weight: 700; margin-right: 6px;
+    font-family: 'Consolas', monospace;
   }
-  .http-get { background: #4CAF50; color: #fff; }
-  .http-post { background: #2196F3; color: #fff; }
-  .http-put { background: #FFA500; color: #fff; }
-  .http-delete { background: #FF6B6B; color: #fff; }
+  .badge-local { background: #4CAF50; color: #fff; }
+  .badge-global { background: #FF6B6B; color: #fff; }
+  .badge-dev { background: #FFA500; color: #1e1e1e; }
+  .badge-prod { background: #2196F3; color: #fff; }
 
   /* Resumen final */
   .summary-item {
@@ -290,18 +288,30 @@
   .pulse { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
-  /* Estructura de archivos */
+  /* File tree */
   .file-tree {
     background: #1e1e1e; border-radius: 12px;
     padding: 20px 30px; text-align: left;
-    font-family: 'Consolas', monospace; font-size: 1.05rem;
+    font-family: 'Consolas', monospace; font-size: 1rem;
     line-height: 1.8; color: #d4d4d4;
     border-left: 4px solid #FFD700;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
   }
 
-  /* Antes/Después */
+  /* Compare 2 columns */
   .compare-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+
+  /* Sección clave */
+  .key-box {
+    background: rgba(255,215,0,0.1); border: 2px solid #FFD700;
+    border-radius: 15px; padding: 20px 30px; margin: 15px 0;
+    font-size: 1.2rem;
+  }
+  .key-box strong { color: #FFD700; }
+
+  /* Stats destacadas */
+  .stat-big { font-size: 4rem; color: #FFD700; font-weight: 700; text-shadow: 0 0 20px rgba(255,215,0,0.4); }
+  .stat-label { font-size: 1.2rem; opacity: 0.9; }
 </style>
 </head>
 <body>
@@ -315,10 +325,10 @@
   <!-- SLIDE 1: Portada -->
   <section class="slide active">
     <div class="slide-content hero-slide">
-      <div class="big-emoji">🌐</div>
-      <h1 class="hero">Sirviendo Contenido Web</h1>
-      <p class="subtitle">Servidores dinámicos con Express y Handlebars</p>
-      <p style="font-size:1.3rem;opacity:0.9;">AE4.1 y AE4.2 · Módulo Node Express</p>
+      <div class="big-emoji">📦</div>
+      <h1 class="hero">Gestión de Paquetes de Node</h1>
+      <p class="subtitle">Trabajando con NPM, módulos y dependencias</p>
+      <p style="font-size:1.3rem;opacity:0.9;">AE3.1 y AE3.2 · Módulo Node Express</p>
       <p class="instructor">Desarrollo de Aplicaciones Full Stack JavaScript Trainee</p>
     </div>
   </section>
@@ -330,53 +340,53 @@
       <p class="subtitle">¿Qué temas trabajaremos hoy?</p>
       <div class="grid-2">
         <div class="card">
-          <span class="icon">🚀</span>
-          <h3>Servidores con Express</h3>
-          <p>Configuración inicial, rutas HTTP y manejo de peticiones GET, POST, PUT, DELETE.</p>
+          <span class="icon">📦</span>
+          <h3>NPM en profundidad</h3>
+          <p>Qué es, cómo funciona el ecosistema, instalar, actualizar y eliminar paquetes.</p>
         </div>
         <div class="card">
-          <span class="icon">📁</span>
-          <h3>Contenido estático y dinámico</h3>
-          <p>Servir archivos desde <span class="code-inline">public/</span> y responder con datos variables.</p>
+          <span class="icon">🧩</span>
+          <h3>Módulos en Node</h3>
+          <p>CommonJS (<span class="code-inline">require</span>) vs ES Modules (<span class="code-inline">import/export</span>).</p>
         </div>
         <div class="card">
-          <span class="icon">🎨</span>
-          <h3>Motores de plantillas</h3>
-          <p>¿Qué son? Comparación entre Handlebars, EJS y Pug.</p>
+          <span class="icon">📄</span>
+          <h3>package.json</h3>
+          <p>Estructura, propiedades clave, scripts personalizados y buenas prácticas.</p>
         </div>
         <div class="card">
-          <span class="icon">⚡</span>
-          <h3>Handlebars avanzado</h3>
-          <p>Helpers personalizados, iteraciones, condicionales y páginas parciales.</p>
+          <span class="icon">🔒</span>
+          <h3>Dependencias avanzadas</h3>
+          <p><span class="code-inline">node_modules</span>, <span class="code-inline">package-lock.json</span>, peerDependencies y más.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 3: Objetivos de aprendizaje -->
+  <!-- SLIDE 3: Objetivos aprendizaje -->
   <section class="slide">
     <div class="slide-content">
       <h2>Objetivos de aprendizaje</h2>
       <p class="subtitle">¿Qué lograrás al finalizar la clase?</p>
       <div class="learning-item">
         <div class="learning-num">1</div>
-        <div class="learning-text">Configurar un <strong>servidor Express</strong> con rutas HTTP y respuestas personalizadas.</div>
+        <div class="learning-text">Comprender el rol de <strong>NPM</strong> en el ciclo de vida de un proyecto Node.js.</div>
       </div>
       <div class="learning-item">
         <div class="learning-num">2</div>
-        <div class="learning-text">Servir <strong>contenido estático</strong> desde una carpeta pública y datos dinámicos desde el servidor.</div>
+        <div class="learning-text">Instalar, actualizar y eliminar <strong>paquetes locales y globales</strong>.</div>
       </div>
       <div class="learning-item">
         <div class="learning-num">3</div>
-        <div class="learning-text">Comprender qué es un <strong>motor de plantillas</strong> y por qué es útil en aplicaciones web.</div>
+        <div class="learning-text">Usar <strong>módulos</strong> con CommonJS y ES Modules, importando desde archivos locales y paquetes externos.</div>
       </div>
       <div class="learning-item">
         <div class="learning-num">4</div>
-        <div class="learning-text">Instalar y configurar <strong>Handlebars (HBS)</strong> como motor de plantillas en Express.</div>
+        <div class="learning-text">Configurar <strong>scripts personalizados</strong> en <span class="code-inline">package.json</span> para automatizar tareas.</div>
       </div>
       <div class="learning-item">
         <div class="learning-num">5</div>
-        <div class="learning-text">Aplicar <strong>helpers</strong>, <strong>iteraciones</strong> y <strong>parciales</strong> para modularizar vistas.</div>
+        <div class="learning-text">Diferenciar entre <strong>dependencies</strong>, <strong>devDependencies</strong>, <strong>peerDependencies</strong> y <strong>optionalDependencies</strong>.</div>
       </div>
     </div>
   </section>
@@ -387,13 +397,13 @@
       <h2>🕐 Cronograma de la clase</h2>
       <p class="subtitle">4 horas · con descanso de 30 minutos</p>
       <div class="schedule-item">
-        <div class="schedule-time">Bloque 1 · 90 min</div>
-        <div class="schedule-topic">Servidor Express, rutas HTTP, contenido estático y datos dinámicos</div>
+        <div class="schedule-time">Bloque 1 · 60 min</div>
+        <div class="schedule-topic">NPM, instalación de paquetes, módulos (CommonJS y ES)</div>
         <div class="schedule-duration">Teoría + demo</div>
       </div>
       <div class="schedule-item">
-        <div class="schedule-time">Ejercicio N°1 · 30 min</div>
-        <div class="schedule-topic">Servidor web con Express + rutas + estáticos</div>
+        <div class="schedule-time">Ejercicio N°1 · 40 min</div>
+        <div class="schedule-topic">CLI interactivo con inquirer, chalk y yargs</div>
         <div class="schedule-duration">Práctica</div>
       </div>
       <div class="schedule-item break">
@@ -403,327 +413,401 @@
       </div>
       <div class="schedule-item">
         <div class="schedule-time">Bloque 2 · 60 min</div>
-        <div class="schedule-topic">Motores de plantillas, Handlebars: instalación y config básica</div>
+        <div class="schedule-topic">package.json, scripts y comandos avanzados de NPM</div>
         <div class="schedule-duration">Teoría + demo</div>
       </div>
       <div class="schedule-item">
-        <div class="schedule-time">Bloque 3 · 60 min</div>
-        <div class="schedule-topic">Handlebars avanzado: helpers, partials + Ejercicio N°2 + cierre</div>
-        <div class="schedule-duration">Práctica</div>
+        <div class="schedule-time">Bloque 3 · 50 min</div>
+        <div class="schedule-topic">node_modules, package-lock, tipos de dependencias y cierre</div>
+        <div class="schedule-duration">Teoría + resumen</div>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 5: ¿Qué es un servidor web? -->
+  <!-- SLIDE 5: ¿Qué es NPM? -->
   <section class="slide">
     <div class="slide-content">
-      <div class="big-emoji" style="font-size:5rem;">🖥️</div>
-      <h2>¿Qué es un servidor web?</h2>
-      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 30px;">Un programa que <span class="accent">escucha peticiones HTTP</span> de clientes (navegadores, apps) y responde con contenido: HTML, JSON, imágenes, etc.</p>
+      <div class="big-emoji" style="font-size:5rem;">📦</div>
+      <h2>¿Qué es <span class="accent">NPM</span>?</h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 30px;"><strong>Node Package Manager</strong>: el gestor de paquetes por defecto de Node.js. Nos permite <span class="accent">instalar, compartir y administrar</span> librerías de código de terceros.</p>
       <div class="grid-3">
+        <div class="card" style="text-align:center;">
+          <div class="stat-big">3M+</div>
+          <div class="stat-label">Paquetes disponibles en el registro público</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="stat-big">2010</div>
+          <div class="stat-label">Año de nacimiento, junto a Node.js</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="stat-big">CLI</div>
+          <div class="stat-label">Herramienta de línea de comandos + registro online</div>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.25rem;">Se instala automáticamente con Node.js — <span class="code-inline">npm -v</span> para verificar.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: Funciones principales -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎯 Principales funciones de NPM</h2>
+      <div class="grid-2">
         <div class="card">
           <span class="icon">📥</span>
-          <h3>Recibe</h3>
-          <p>Peticiones del cliente vía HTTP: <span class="code-inline">GET /</span>, <span class="code-inline">POST /login</span>...</p>
+          <h3>Gestión de paquetes</h3>
+          <p>Instalar, actualizar y eliminar librerías de terceros con un solo comando.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🔢</span>
+          <h3>Control de versiones</h3>
+          <p>Especificar y bloquear versiones para garantizar consistencia entre entornos.</p>
         </div>
         <div class="card">
           <span class="icon">⚙️</span>
-          <h3>Procesa</h3>
-          <p>Ejecuta lógica: consulta datos, valida, transforma información.</p>
+          <h3>Automatización de tareas</h3>
+          <p>Ejecutar scripts personalizados en <span class="code-inline">package.json</span>: <span class="code-inline">npm run dev</span>, <span class="code-inline">npm test</span>, etc.</p>
         </div>
         <div class="card">
-          <span class="icon">📤</span>
-          <h3>Responde</h3>
-          <p>Envía HTML, JSON u otro contenido al cliente que lo solicitó.</p>
+          <span class="icon">🌍</span>
+          <h3>Publicación de paquetes</h3>
+          <p>Publicar nuestras propias librerías en <span class="code-inline">npmjs.com</span> para uso público o privado.</p>
         </div>
       </div>
-      <p style="margin-top:25px;font-size:1.3rem;">Con <span class="accent">Express</span>, todo esto se vuelve muy fácil de escribir.</p>
     </div>
   </section>
 
-  <!-- SLIDE 6: Configuración inicial -->
+  <!-- SLIDE 7: Instalación local -->
   <section class="slide">
     <div class="slide-content">
-      <h2>⚙️ Configuración inicial</h2>
-      <p class="subtitle">Preparando el proyecto</p>
-      <div class="terminal" style="max-width:800px;margin:20px auto;">
+      <h2>📥 Instalación de paquetes</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Sintaxis básica:</p>
+      <div class="code-block" style="max-width:900px;margin:0 auto;font-size:1.1rem;text-align:center;">npm install &lt;paquete&gt;</div>
+      <div class="terminal" style="max-width:900px;margin:20px auto;">
         <div class="terminal-header">
           <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
-          <span class="term-title">Terminal — Setup</span>
+          <span class="term-title">Terminal — Ejemplos</span>
         </div>
-        <div class="terminal-body"><span class="cm"># 1. Verificar Node.js</span>
-<span class="prompt">$</span> node -v
-<span style="color:#4CAF50;">v22.12.0</span>
-
-<span class="cm"># 2. Crear proyecto</span>
-<span class="prompt">$</span> mkdir mi-servidor
-<span class="prompt">$</span> cd mi-servidor
-<span class="prompt">$</span> npm init -y
-
-<span class="cm"># 3. Instalar Express</span>
+        <div class="terminal-body"><span class="cm"># Instalar un paquete de producción</span>
 <span class="prompt">$</span> npm install express
 
-<span class="cm"># 4. Abrir en VS Code</span>
-<span class="prompt">$</span> code .</div>
+<span class="cm"># Instalar varios a la vez</span>
+<span class="prompt">$</span> npm install express dotenv cors
+
+<span class="cm"># Instalar como dependencia de desarrollo</span>
+<span class="prompt">$</span> npm install --save-dev nodemon
+<span class="prompt">$</span> npm install -D jest    <span class="cm"># abreviatura</span>
+
+<span class="cm"># Instalar una versión específica</span>
+<span class="prompt">$</span> npm install express@4.18.2
+
+<span class="cm"># Alias corto de install</span>
+<span class="prompt">$</span> npm i lodash</div>
       </div>
-      <p style="margin-top:15px;font-size:1.2rem;">Ya tenemos la base para crear el servidor.</p>
     </div>
   </section>
 
-  <!-- SLIDE 7: Servidor básico -->
+  <!-- SLIDE 8: Global vs Local -->
   <section class="slide">
     <div class="slide-content">
-      <h2>🚀 Servidor básico con Express</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Archivo <span class="code-inline">server.js</span>:</p>
-      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
-<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">express</span><span class="op">();</span>
-<span class="kw">const</span> <span class="var">PORT</span> <span class="op">=</span> <span class="num">3000</span><span class="op">;</span>
-
-<span class="cm">// Definir una ruta</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'¡Bienvenido a mi servidor Express!'</span><span class="op">);</span>
-<span class="op">});</span>
-
-<span class="cm">// Iniciar el servidor</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">listen</span><span class="op">(</span><span class="var">PORT</span><span class="op">, () =&gt; {</span>
-  <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Servidor en http://localhost:</span><span class="op">${</span><span class="var">PORT</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
-<span class="op">});</span></div>
-      <p style="margin-top:15px;font-size:1.2rem;">Ejecutar: <span class="code-inline">node server.js</span></p>
+      <h2>🌐 Paquetes locales vs globales</h2>
+      <div class="compare-2">
+        <div class="card">
+          <span class="badge badge-local">LOCAL</span>
+          <h3 style="display:inline-block;margin-left:10px;">Por proyecto</h3>
+          <div class="code-block" style="font-size:0.95rem;margin-top:12px;"><span class="prompt">$</span> npm install express</div>
+          <ul class="custom" style="font-size:1.1rem;margin-top:12px;">
+            <li>Se guarda en <span class="code-inline">./node_modules/</span></li>
+            <li>Solo disponible en ese proyecto</li>
+            <li>Se registra en <span class="code-inline">package.json</span></li>
+            <li>Es lo que usamos <strong>casi siempre</strong></li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="badge badge-global">GLOBAL</span>
+          <h3 style="display:inline-block;margin-left:10px;">Todo el sistema</h3>
+          <div class="code-block" style="font-size:0.95rem;margin-top:12px;"><span class="prompt">$</span> npm install -g http-server</div>
+          <ul class="custom" style="font-size:1.1rem;margin-top:12px;">
+            <li>Se guarda en carpeta global del sistema</li>
+            <li>Disponible como comando en cualquier lugar</li>
+            <li>NO se registra en <span class="code-inline">package.json</span></li>
+            <li>Solo para <strong>herramientas CLI</strong></li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;">💡 Alternativa moderna: <span class="code-inline">npx paquete</span> ejecuta un paquete sin instalarlo globalmente.</p>
     </div>
   </section>
 
-  <!-- SLIDE 8: Ejecutar y probar -->
+  <!-- SLIDE 9: Actualizar paquetes -->
   <section class="slide">
     <div class="slide-content">
-      <h2>▶️ Ejecutar y probar</h2>
+      <h2>🔄 Actualizar paquetes</h2>
+      <div class="terminal" style="max-width:900px;margin:0 auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal</span>
+        </div>
+        <div class="terminal-body"><span class="cm"># Actualizar TODAS las dependencias del proyecto</span>
+<span class="prompt">$</span> npm update
+
+<span class="cm"># Actualizar un paquete específico</span>
+<span class="prompt">$</span> npm update express
+
+<span class="cm"># Ver qué paquetes tienen actualizaciones disponibles</span>
+<span class="prompt">$</span> npm outdated
+
+Package    Current  Wanted  Latest
+express     4.18.2  4.21.1  4.21.1
+dotenv      16.0.3  16.4.5  16.4.5
+mongoose    7.5.0   7.8.0   8.9.0
+
+<span class="cm"># Instalar la versión exactamente última</span>
+<span class="prompt">$</span> npm install express@latest</div>
+      </div>
+      <div class="key-box" style="max-width:900px;margin:20px auto 0;">
+        ⚠️ <strong>Ojo:</strong> <span class="code-inline">npm update</span> respeta el rango de versiones definido en <span class="code-inline">package.json</span> (por ejemplo <span class="code-inline">^4.18</span> nunca subirá a 5.x). Para saltar de versión mayor hay que hacerlo manualmente.
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: Eliminar paquetes -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🗑️ Eliminar paquetes</h2>
+      <div class="terminal" style="max-width:900px;margin:0 auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal</span>
+        </div>
+        <div class="terminal-body"><span class="cm"># Desinstalar un paquete local</span>
+<span class="prompt">$</span> npm uninstall express
+
+<span class="cm"># Alias cortos</span>
+<span class="prompt">$</span> npm un express
+<span class="prompt">$</span> npm remove express
+<span class="prompt">$</span> npm rm express
+
+<span class="cm"># Desinstalar un paquete global</span>
+<span class="prompt">$</span> npm uninstall -g nodemon
+
+<span class="cm"># Desinstalar varias dependencias</span>
+<span class="prompt">$</span> npm uninstall moment jquery bootstrap</div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;">Al desinstalar, npm:</p>
+      <ul class="custom" style="max-width:800px;margin:10px auto;font-size:1.2rem;">
+        <li>Elimina la carpeta del paquete en <span class="code-inline">node_modules/</span></li>
+        <li>Quita la entrada del <span class="code-inline">package.json</span></li>
+        <li>Actualiza <span class="code-inline">package-lock.json</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: Módulos en Node -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">🧩</div>
+      <h2>Módulos en Node.js</h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 25px;">Los módulos nos permiten <span class="accent">dividir nuestro código</span> en archivos reutilizables y organizados.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>📜 CommonJS</h3>
+          <p style="margin-bottom:10px;">El sistema <strong>original</strong> y por defecto de Node.js desde su creación.</p>
+          <div class="code-block" style="font-size:1rem;background:#1e1e1e;"><span class="var">module</span><span class="op">.</span><span class="var">exports</span> <span class="op">=</span> <span class="fn">funcion</span><span class="op">;</span>
+<span class="kw">const</span> <span class="var">x</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./x'</span><span class="op">);</span></div>
+        </div>
+        <div class="card">
+          <h3>✨ ES Modules</h3>
+          <p style="margin-bottom:10px;">El estándar <strong>moderno</strong> de JavaScript (ECMAScript 2015).</p>
+          <div class="code-block" style="font-size:1rem;background:#1e1e1e;"><span class="kw">export</span> <span class="kw">function</span> <span class="fn">saludo</span><span class="op">() {}</span>
+<span class="kw">import</span> <span class="op">{</span> <span class="var">saludo</span> <span class="op">}</span> <span class="kw">from</span> <span class="str">'./x.js'</span><span class="op">;</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: CommonJS -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📜 CommonJS: <span class="code-inline">require</span> y <span class="code-inline">module.exports</span></h2>
       <div class="grid-2" style="align-items:start;">
         <div>
-          <h3>1. Iniciar el servidor</h3>
-          <div class="terminal">
-            <div class="terminal-header">
-              <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
-              <span class="term-title">Terminal</span>
-            </div>
-            <div class="terminal-body"><span class="prompt">$</span> node server.js
-<span style="color:#4CAF50;">Servidor en http://localhost:3000</span></div>
-          </div>
-          <p style="margin-top:15px;font-size:1.1rem;">💡 Para detenerlo: <span class="code-inline">Ctrl + C</span></p>
-          <p style="margin-top:10px;font-size:1.1rem;">💡 Modo dev: <span class="code-inline">node --watch server.js</span></p>
+          <h3>Exportar — <span class="code-inline">saludo.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="cm">// Exportar una función</span>
+<span class="var">module</span><span class="op">.</span><span class="var">exports</span> <span class="op">=</span> <span class="kw">function</span> <span class="op">() {</span>
+  <span class="kw">return</span> <span class="str">'¡Hola desde un módulo!'</span><span class="op">;</span>
+<span class="op">};</span></div>
+          <p style="margin-top:15px;font-size:1.1rem;">También podemos exportar un objeto con varias cosas:</p>
+          <div class="code-block" style="font-size:1rem;"><span class="var">module</span><span class="op">.</span><span class="var">exports</span> <span class="op">= {</span>
+  <span class="fn">sumar</span><span class="op">: (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span><span class="op">,</span>
+  <span class="fn">restar</span><span class="op">: (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">-</span> <span class="var">b</span>
+<span class="op">};</span></div>
         </div>
         <div>
-          <h3>2. Abrir en el navegador</h3>
-          <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,0.4);">
-            <div style="background:#f0f0f0;padding:8px 15px;color:#333;font-size:0.9rem;font-family:monospace;">🌐 http://localhost:3000</div>
-            <div style="padding:30px;color:#333;text-align:left;">
-              <p style="font-size:1.2rem;">¡Bienvenido a mi servidor Express!</p>
-            </div>
-          </div>
-          <p style="margin-top:15px;font-size:1.1rem;">✅ El servidor responde con lo que definimos en <span class="code-inline">res.send()</span></p>
+          <h3>Importar — <span class="code-inline">app.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="cm">// Importar una función</span>
+<span class="kw">const</span> <span class="var">saludo</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./saludo'</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="fn">saludo</span><span class="op">());</span>
+<span class="cm">// → ¡Hola desde un módulo!</span></div>
+          <p style="margin-top:15px;font-size:1.1rem;">Con desestructuración:</p>
+          <div class="code-block" style="font-size:1rem;"><span class="kw">const</span> <span class="op">{</span> <span class="var">sumar</span><span class="op">,</span> <span class="var">restar</span> <span class="op">} =</span>
+  <span class="fn">require</span><span class="op">(</span><span class="str">'./math'</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="fn">sumar</span><span class="op">(</span><span class="num">2</span><span class="op">,</span> <span class="num">3</span><span class="op">));</span> <span class="cm">// 5</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 9: Métodos HTTP -->
+  <!-- SLIDE 13: ES Modules -->
   <section class="slide">
     <div class="slide-content">
-      <h2>📡 Métodos HTTP</h2>
-      <p class="subtitle">Cada método tiene un propósito específico</p>
-      <div class="grid-2">
-        <div class="card">
-          <span class="http-badge http-get">GET</span>
-          <h3 style="display:inline-block;">Obtener datos</h3>
-          <p style="margin-top:10px;">Leer un recurso sin modificarlo.<br>Ej: cargar una página, listar productos.</p>
-        </div>
-        <div class="card">
-          <span class="http-badge http-post">POST</span>
-          <h3 style="display:inline-block;">Crear datos</h3>
-          <p style="margin-top:10px;">Enviar información nueva al servidor.<br>Ej: registro de usuario, envío de formulario.</p>
-        </div>
-        <div class="card">
-          <span class="http-badge http-put">PUT</span>
-          <h3 style="display:inline-block;">Actualizar datos</h3>
-          <p style="margin-top:10px;">Modificar un recurso existente.<br>Ej: editar perfil, cambiar contraseña.</p>
-        </div>
-        <div class="card">
-          <span class="http-badge http-delete">DELETE</span>
-          <h3 style="display:inline-block;">Eliminar datos</h3>
-          <p style="margin-top:10px;">Borrar un recurso del servidor.<br>Ej: eliminar cuenta, borrar producto.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SLIDE 10: Definir rutas -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🛣️ Definir rutas en Express</h2>
-      <p style="font-size:1.15rem;margin-bottom:15px;">Sintaxis: <span class="code-inline">app.metodo(ruta, callback)</span></p>
-      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1rem;"><span class="cm">// GET: página principal</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'Hola desde /'</span><span class="op">);</span>
-<span class="op">});</span>
-
-<span class="cm">// GET: página "Acerca de"</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/about'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'&lt;h1&gt;Acerca de nosotros&lt;/h1&gt;'</span><span class="op">);</span>
-<span class="op">});</span>
-
-<span class="cm">// POST: recibir datos</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">post</span><span class="op">(</span><span class="str">'/contacto'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'Mensaje recibido'</span><span class="op">);</span>
-<span class="op">});</span></div>
-      <p style="margin-top:15px;font-size:1.2rem;"><span class="accent">req</span>: petición del cliente · <span class="accent">res</span>: respuesta del servidor</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 11: Rutas con parámetros -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🎯 Rutas con parámetros</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos capturar valores dinámicos desde la URL con <span class="code-inline">:parametro</span></p>
-      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="cm">// Parámetros de ruta</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/saludo/:nombre'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="kw">const</span> <span class="op">{</span> <span class="var">nombre</span> <span class="op">} =</span> <span class="var">req</span><span class="op">.</span>params<span class="op">;</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`¡Hola </span><span class="op">${</span><span class="var">nombre</span><span class="op">}</span><span class="str">!`</span><span class="op">);</span>
-<span class="op">});</span>
-
-<span class="cm">// Query strings: ?edad=30&pais=CL</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/buscar'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="kw">const</span> <span class="op">{</span> <span class="var">edad</span><span class="op">,</span> <span class="var">pais</span> <span class="op">} =</span> <span class="var">req</span><span class="op">.</span>query<span class="op">;</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`Edad: </span><span class="op">${</span><span class="var">edad</span><span class="op">}</span><span class="str">, País: </span><span class="op">${</span><span class="var">pais</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
-<span class="op">});</span></div>
-      <div class="grid-2" style="margin-top:15px;">
-        <div class="card" style="padding:15px 20px;">
-          <p style="font-size:1.1rem;"><span class="accent">/saludo/Carola</span> → "¡Hola Carola!"</p>
-        </div>
-        <div class="card" style="padding:15px 20px;">
-          <p style="font-size:1.1rem;"><span class="accent">/buscar?edad=30&pais=CL</span> → "Edad: 30, País: CL"</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SLIDE 12: Contenido estático -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>📁 Contenido estático</h2>
-      <p style="font-size:1.25rem;margin-bottom:15px;">Servir imágenes, CSS, JS y HTML desde una carpeta con una sola línea:</p>
-      <div class="code-block" style="max-width:900px;margin:0 auto;font-size:1.1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">use</span><span class="op">(</span><span class="var">express</span><span class="op">.</span><span class="fn">static</span><span class="op">(</span><span class="str">'public'</span><span class="op">));</span></div>
-      <div class="grid-2" style="margin-top:20px;">
+      <h2>✨ ES Modules: <span class="code-inline">import</span> y <span class="code-inline">export</span></h2>
+      <p style="font-size:1.15rem;margin-bottom:12px;">Requiere <span class="code-inline">"type": "module"</span> en el <span class="code-inline">package.json</span> o extensión <span class="code-inline">.mjs</span></p>
+      <div class="grid-2" style="align-items:start;">
         <div>
-          <h3>📂 Estructura</h3>
-          <div class="file-tree" style="font-size:1rem;padding:15px 20px;"><span style="color:#FFD700;">mi-servidor/</span>
-├── <span style="color:#dcdcaa;">server.js</span>
-├── <span style="color:#dcdcaa;">package.json</span>
-└── <span style="color:#9cdcfe;">public/</span>
-    ├── index.html
-    ├── styles.css
-    └── img/
-        └── logo.png</div>
+          <h3>Exportar — <span class="code-inline">saludo.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="cm">// Named export</span>
+<span class="kw">export</span> <span class="kw">function</span> <span class="fn">saludo</span><span class="op">() {</span>
+  <span class="kw">return</span> <span class="str">'¡Hola desde ES Modules!'</span><span class="op">;</span>
+<span class="op">}</span>
+
+<span class="cm">// Múltiples exports</span>
+<span class="kw">export</span> <span class="kw">const</span> <span class="fn">sumar</span> <span class="op">= (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span><span class="op">;</span>
+<span class="kw">export</span> <span class="kw">const</span> <span class="fn">restar</span> <span class="op">= (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">-</span> <span class="var">b</span><span class="op">;</span>
+
+<span class="cm">// Default export</span>
+<span class="kw">export default</span> <span class="kw">function</span> <span class="fn">principal</span><span class="op">() { }</span></div>
         </div>
         <div>
-          <h3>🌐 URLs generadas</h3>
-          <ul class="custom" style="font-size:1.1rem;">
-            <li><span class="code-inline">/index.html</span> → <span class="code-inline">public/index.html</span></li>
-            <li><span class="code-inline">/styles.css</span> → <span class="code-inline">public/styles.css</span></li>
-            <li><span class="code-inline">/img/logo.png</span> → <span class="code-inline">public/img/logo.png</span></li>
-          </ul>
-          <p style="margin-top:12px;font-size:1.05rem;">Con prefijo:</p>
-          <div class="code-block" style="font-size:0.9rem;margin-top:5px;"><span class="var">app</span><span class="op">.</span><span class="fn">use</span><span class="op">(</span><span class="str">'/assets'</span><span class="op">,</span> <span class="var">express</span><span class="op">.</span><span class="fn">static</span><span class="op">(</span><span class="str">'public'</span><span class="op">));</span></div>
+          <h3>Importar — <span class="code-inline">app.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="cm">// Import de named exports</span>
+<span class="kw">import</span> <span class="op">{</span> <span class="var">saludo</span> <span class="op">}</span> <span class="kw">from</span> <span class="str">'./saludo.js'</span><span class="op">;</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="fn">saludo</span><span class="op">());</span>
+
+<span class="cm">// Varios a la vez</span>
+<span class="kw">import</span> <span class="op">{</span> <span class="var">sumar</span><span class="op">,</span> <span class="var">restar</span> <span class="op">}</span>
+  <span class="kw">from</span> <span class="str">'./math.js'</span><span class="op">;</span>
+
+<span class="cm">// Default import</span>
+<span class="kw">import</span> <span class="var">principal</span> <span class="kw">from</span> <span class="str">'./app.js'</span><span class="op">;</span></div>
         </div>
+      </div>
+      <div class="key-box" style="margin-top:15px;font-size:1.05rem;">💡 En ES Modules la extensión <span class="code-inline">.js</span> es <strong>obligatoria</strong> al importar archivos locales.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 14: Comparación CommonJS vs ES Modules -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚖️ CommonJS vs ES Modules</h2>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Característica</th>
+            <th>CommonJS</th>
+            <th>ES Modules</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Sintaxis</strong></td>
+            <td><span class="code-inline">require</span> / <span class="code-inline">module.exports</span></td>
+            <td><span class="code-inline">import</span> / <span class="code-inline">export</span></td>
+          </tr>
+          <tr>
+            <td><strong>Extensión</strong></td>
+            <td><span class="code-inline">.js</span> (o sin ella al importar)</td>
+            <td><span class="code-inline">.js</span> obligatoria o <span class="code-inline">.mjs</span></td>
+          </tr>
+          <tr>
+            <td><strong>Configuración</strong></td>
+            <td>Por defecto en Node</td>
+            <td>Requiere <span class="code-inline">"type": "module"</span></td>
+          </tr>
+          <tr>
+            <td><strong>Carga</strong></td>
+            <td>Sincrónica</td>
+            <td>Asincrónica (permite <span class="code-inline">top-level await</span>)</td>
+          </tr>
+          <tr>
+            <td><strong>Uso hoy</strong></td>
+            <td>Muy común en proyectos existentes</td>
+            <td>Estándar moderno, tendencia futura</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:20px;font-size:1.2rem;">🎯 En esta clase usamos <span class="accent">CommonJS</span> porque sigue siendo lo más común en tutoriales y proyectos activos con Express.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 15: Externos vs locales -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🌐 Paquetes externos vs archivos locales</h2>
+      <div class="compare-2">
+        <div class="card">
+          <h3>📚 Paquetes externos (npm)</h3>
+          <p style="font-size:1.1rem;">Se importan solo con el <strong>nombre</strong>, sin ruta.</p>
+          <div class="code-block" style="font-size:1rem;margin-top:10px;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">chalk</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'chalk'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">fs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'fs'</span><span class="op">);</span> <span class="cm">// nativo</span></div>
+          <p style="margin-top:10px;font-size:1.05rem;">Node busca en <span class="code-inline">node_modules/</span>.</p>
+        </div>
+        <div class="card">
+          <h3>📁 Archivos locales</h3>
+          <p style="font-size:1.1rem;">Se importan con <strong>ruta relativa</strong> (<span class="code-inline">./</span> o <span class="code-inline">../</span>).</p>
+          <div class="code-block" style="font-size:1rem;margin-top:10px;"><span class="kw">const</span> <span class="var">config</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./config'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">db</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./db/conexion'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">util</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'../lib/util'</span><span class="op">);</span></div>
+          <p style="margin-top:10px;font-size:1.05rem;">Node los busca en tu proyecto.</p>
+        </div>
+      </div>
+      <div class="key-box" style="margin-top:20px;font-size:1.1rem;">
+        <strong>Regla rápida:</strong> si empieza con <span class="code-inline">./</span> o <span class="code-inline">../</span> → archivo local. Si es solo un nombre → paquete de <span class="code-inline">node_modules</span>.
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 13: Datos dinámicos -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🎨 Datos dinámicos en la respuesta</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos armar respuestas HTML con datos del servidor. <span class="accent">Primera aproximación (sin motor de plantillas):</span></p>
-      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/perfil'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="kw">const</span> <span class="var">usuario</span> <span class="op">= {</span>
-    <span class="var">nombre</span><span class="op">:</span> <span class="str">"Carola"</span><span class="op">,</span>
-    <span class="var">edad</span><span class="op">:</span> <span class="num">25</span><span class="op">,</span>
-    <span class="var">ciudad</span><span class="op">:</span> <span class="str">"Santiago"</span>
-  <span class="op">};</span>
-
-  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`
-    &lt;h1&gt;Perfil de </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">nombre</span><span class="op">}</span><span class="str">&lt;/h1&gt;
-    &lt;p&gt;Edad: </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">edad</span><span class="op">}</span><span class="str"> años&lt;/p&gt;
-    &lt;p&gt;Ciudad: </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">ciudad</span><span class="op">}</span><span class="str">&lt;/p&gt;
-  `</span><span class="op">);</span>
-<span class="op">});</span></div>
-      <p style="margin-top:20px;font-size:1.15rem;">⚠️ Esto funciona pero se vuelve <span class="highlight-yellow">insostenible</span> con páginas grandes. Necesitamos algo mejor…</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 14: Por qué modularizar -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🧩 ¿Por qué modularizar las vistas?</h2>
-      <div class="grid-2">
-        <div class="card">
-          <h3>😰 Sin modularización</h3>
-          <ul class="custom" style="font-size:1.1rem;">
-            <li>El HTML se repite en cada ruta.</li>
-            <li>Cambiar el menú requiere editar 20 archivos.</li>
-            <li>El código del servidor mezcla lógica y presentación.</li>
-            <li>Difícil de mantener y probar.</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>😎 Con motor de plantillas</h3>
-          <ul class="custom" style="font-size:1.1rem;">
-            <li>Plantillas <span class="accent">reutilizables</span>.</li>
-            <li>Cabecera y pie de página en un <strong>solo lugar</strong>.</li>
-            <li>Separación clara: <span class="accent">lógica</span> vs <span class="accent">vista</span>.</li>
-            <li>Datos dinámicos con sintaxis simple: <span class="code-inline">{{nombre}}</span></li>
-          </ul>
-        </div>
-      </div>
-      <p style="margin-top:25px;font-size:1.3rem;">👉 Después del ejercicio y descanso, veremos <span class="accent">Handlebars</span>.</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 15: Ejercicio N°1 -->
+  <!-- SLIDE 16: Ejercicio N°1 -->
   <section class="slide">
     <div class="slide-content">
       <h2>💪 Ejercicio N°1</h2>
-      <h3>Servidor Web con Express</h3>
+      <h3>CLI interactivo de tareas</h3>
       <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
         <h3>🎯 Consigna</h3>
-        <ul class="custom" style="font-size:1.15rem;">
-          <li>Configura un servidor Express con al menos <strong>3 rutas GET</strong> (<span class="code-inline">/</span>, <span class="code-inline">/about</span>, <span class="code-inline">/contacto</span>).</li>
-          <li>Sirve archivos estáticos desde la carpeta <span class="code-inline">public/</span> (crea un <span class="code-inline">styles.css</span> y una imagen).</li>
-          <li>Crea una ruta con parámetro: <span class="code-inline">/usuario/:nombre</span> que salude a la persona.</li>
-          <li>Crea una ruta <span class="code-inline">/perfil</span> que responda con HTML dinámico usando un objeto de datos.</li>
+        <p style="font-size:1.1rem;margin-bottom:10px;">Construye una CLI que gestione tareas, aplicando módulos y paquetes externos:</p>
+        <ul class="custom" style="font-size:1.05rem;">
+          <li>Instalar <span class="code-inline">inquirer</span> (menús interactivos), <span class="code-inline">chalk</span> (colores en consola) y <span class="code-inline">yargs</span> (argumentos).</li>
+          <li>Crear un módulo <span class="code-inline">tasks.js</span> con funciones <strong>agregar</strong>, <strong>listar</strong>, <strong>eliminar</strong> y <strong>completar</strong> tareas.</li>
+          <li>Exportar las funciones con <span class="code-inline">module.exports</span>.</li>
+          <li>En <span class="code-inline">index.js</span>, importar el módulo y mostrar un menú con <span class="code-inline">inquirer</span>.</li>
+          <li>Usar <span class="code-inline">chalk</span> para dar color a los mensajes (verde = éxito, rojo = error).</li>
+          <li>Configurar el script <span class="code-inline">start</span> en <span class="code-inline">package.json</span>.</li>
         </ul>
-        <p style="margin-top:12px;font-size:1.05rem;">💡 <strong>Bonus:</strong> agrega un middleware que registre cada solicitud en la consola.</p>
-        <span class="time-badge">⏱️ 30 minutos</span>
+        <span class="time-badge">⏱️ 40 minutos</span>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 16: BREAK con timer manual y hora de término -->
+  <!-- SLIDE 17: BREAK con timer manual -->
   <section class="slide break-slide" id="breakSlide">
     <div class="slide-content">
       <div class="break-emoji">☕</div>
       <h2>¡Tiempo de descanso!</h2>
       <p style="font-size:1.4rem;margin-bottom:10px;">Descanso de <span class="accent">30 minutos</span></p>
 
-      <!-- Botón de inicio (visible antes de arrancar) -->
       <button class="start-timer-btn" id="startTimerBtn" onclick="startBreakTimer()">
         🚀 Iniciar descanso
       </button>
 
-      <!-- Hora de término (aparece al iniciar) -->
       <div class="end-time-display" id="endTimeDisplay">
         <span class="label">🕐 Volvemos a las</span>
         <div class="time" id="endTime">--:--</div>
       </div>
 
-      <!-- Temporizador circular (aparece al iniciar) -->
       <div class="timer-container" id="timerContainer">
         <svg class="timer-svg" width="280" height="280">
           <circle class="timer-bg" cx="140" cy="140" r="120"></circle>
@@ -736,407 +820,383 @@
     </div>
   </section>
 
-  <!-- SLIDE 17: ¿Qué es un motor de plantillas? -->
+  <!-- SLIDE 18: package.json -->
   <section class="slide">
     <div class="slide-content">
-      <div class="big-emoji" style="font-size:5rem;">🎨</div>
-      <h2>¿Qué es un motor de plantillas?</h2>
-      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 25px;">Una herramienta que combina <span class="accent">HTML estático</span> con <span class="accent">datos dinámicos</span> para generar la página final.</p>
-      <div class="compare-2">
+      <div class="big-emoji" style="font-size:5rem;">📄</div>
+      <h2>El archivo <span class="accent">package.json</span></h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 20px;">Es el <strong>corazón</strong> de cualquier proyecto Node.js. Contiene los metadatos del proyecto y todas sus dependencias.</p>
+      <div class="grid-3">
         <div class="card">
-          <h3>❌ Sin motor</h3>
-          <div class="code-block" style="font-size:1rem;background:#1e1e1e;">&lt;h1&gt;Bienvenido&lt;/h1&gt;
-&lt;p&gt;Usuario: Juan&lt;/p&gt;</div>
-          <p style="margin-top:10px;font-size:1.05rem;">Solo sirve para un usuario específico. Rígido.</p>
+          <span class="icon">📇</span>
+          <h3>Metadatos</h3>
+          <p>Nombre, versión, autor, descripción, licencia del proyecto.</p>
         </div>
         <div class="card">
-          <h3>✅ Con motor de plantillas</h3>
-          <div class="code-block" style="font-size:1rem;background:#1e1e1e;">&lt;h1&gt;Bienvenido&lt;/h1&gt;
-&lt;p&gt;Usuario: <span class="hbs">{{nombre}}</span>&lt;/p&gt;</div>
-          <p style="margin-top:10px;font-size:1.05rem;">Reutilizable con cualquier usuario. Dinámico.</p>
+          <span class="icon">🧩</span>
+          <h3>Dependencias</h3>
+          <p>Registro de todos los paquetes que necesita el proyecto.</p>
+        </div>
+        <div class="card">
+          <span class="icon">⚡</span>
+          <h3>Scripts</h3>
+          <p>Comandos personalizados ejecutables con <span class="code-inline">npm run</span>.</p>
         </div>
       </div>
+      <p style="margin-top:20px;font-size:1.25rem;">Se genera con <span class="code-inline">npm init</span> o <span class="code-inline">npm init -y</span> (todo por defecto).</p>
     </div>
   </section>
 
-  <!-- SLIDE 18: Comparación motores -->
+  <!-- SLIDE 19: Propiedades principales -->
   <section class="slide">
     <div class="slide-content">
-      <h2>⚖️ Handlebars vs EJS vs Pug</h2>
-      <p class="subtitle">Los 3 motores más populares</p>
-      <table class="comp-table">
-        <thead>
-          <tr>
-            <th>Motor</th>
-            <th>Sintaxis</th>
-            <th>Ejemplo</th>
-            <th>Ventajas</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Handlebars</strong></td>
-            <td><span class="code-inline">{{variable}}</span></td>
-            <td><span class="code-inline">Hola {{nombre}}</span></td>
-            <td>Simple, modular, muy usado</td>
-          </tr>
-          <tr>
-            <td><strong>EJS</strong></td>
-            <td><span class="code-inline">&lt;%= variable %&gt;</span></td>
-            <td><span class="code-inline">Hola &lt;%= nombre %&gt;</span></td>
-            <td>Similar a HTML, permite JS embebido</td>
-          </tr>
-          <tr>
-            <td><strong>Pug</strong></td>
-            <td>Indentación</td>
-            <td><span class="code-inline">h1= nombre</span></td>
-            <td>Sintaxis reducida, muy legible</td>
-          </tr>
-        </tbody>
-      </table>
-      <p style="margin-top:20px;font-size:1.25rem;">🎯 Hoy trabajaremos con <span class="accent">Handlebars (HBS)</span> por su simplicidad y sintaxis clara.</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 19: Instalación Handlebars -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>📥 Instalación de Handlebars</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Un solo comando:</p>
-      <div class="terminal" style="max-width:700px;margin:0 auto;">
-        <div class="terminal-header">
-          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
-          <span class="term-title">Terminal</span>
-        </div>
-        <div class="terminal-body"><span class="prompt">$</span> npm install hbs
-
-added 5 packages in 2s
-<span style="color:#4CAF50;">✓</span> hbs agregado a dependencies</div>
-      </div>
-      <p style="margin-top:20px;font-size:1.2rem;max-width:900px;margin-left:auto;margin-right:auto;"><span class="code-inline">hbs</span> es el wrapper oficial de Handlebars para Express. Existe también <span class="code-inline">express-handlebars</span>, más completo pero un poco más complejo.</p>
-      <div class="code-block" style="max-width:600px;margin:20px auto;font-size:1rem;"><span class="str">"dependencies"</span><span class="op">:</span> <span class="op">{</span>
-  <span class="str">"express"</span><span class="op">:</span> <span class="str">"^4.21.1"</span><span class="op">,</span>
-  <span class="str">"hbs"</span><span class="op">:</span> <span class="str">"^4.2.0"</span>
+      <h2>🔑 Propiedades principales</h2>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:0.95rem;"><span class="op">{</span>
+  <span class="str">"name"</span><span class="op">:</span> <span class="str">"mi-proyecto"</span><span class="op">,</span>            <span class="cm">// Nombre único (kebab-case)</span>
+  <span class="str">"version"</span><span class="op">:</span> <span class="str">"1.0.0"</span><span class="op">,</span>              <span class="cm">// Versión semver</span>
+  <span class="str">"description"</span><span class="op">:</span> <span class="str">"App de tareas"</span><span class="op">,</span>    <span class="cm">// Descripción corta</span>
+  <span class="str">"main"</span><span class="op">:</span> <span class="str">"index.js"</span><span class="op">,</span>              <span class="cm">// Archivo principal</span>
+  <span class="str">"scripts"</span><span class="op">: {</span>                          <span class="cm">// Comandos personalizados</span>
+    <span class="str">"start"</span><span class="op">:</span> <span class="str">"node index.js"</span><span class="op">,</span>
+    <span class="str">"dev"</span><span class="op">:</span> <span class="str">"node --watch index.js"</span>
+  <span class="op">},</span>
+  <span class="str">"dependencies"</span><span class="op">: {</span>                     <span class="cm">// Necesarias en producción</span>
+    <span class="str">"express"</span><span class="op">:</span> <span class="str">"^4.21.1"</span>
+  <span class="op">},</span>
+  <span class="str">"devDependencies"</span><span class="op">: {</span>                  <span class="cm">// Solo desarrollo</span>
+    <span class="str">"nodemon"</span><span class="op">:</span> <span class="str">"^3.1.0"</span>
+  <span class="op">},</span>
+  <span class="str">"author"</span><span class="op">:</span> <span class="str">"Carola"</span><span class="op">,</span>
+  <span class="str">"license"</span><span class="op">:</span> <span class="str">"ISC"</span>
 <span class="op">}</span></div>
     </div>
   </section>
 
-  <!-- SLIDE 20: Configuración Handlebars -->
+  <!-- SLIDE 20: Semver -->
   <section class="slide">
     <div class="slide-content">
-      <h2>⚙️ Configurar Handlebars en Express</h2>
-      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
-<span class="kw">const</span> <span class="var">hbs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'hbs'</span><span class="op">);</span>
-<span class="kw">const</span> <span class="var">path</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'path'</span><span class="op">);</span>
-
-<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">express</span><span class="op">();</span>
-
-<span class="cm">// Configurar HBS como motor de plantillas</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">set</span><span class="op">(</span><span class="str">'view engine'</span><span class="op">,</span> <span class="str">'hbs'</span><span class="op">);</span>
-
-<span class="cm">// Indicar dónde están las vistas (por defecto: /views)</span>
-<span class="var">app</span><span class="op">.</span><span class="fn">set</span><span class="op">(</span><span class="str">'views'</span><span class="op">,</span> <span class="var">path</span><span class="op">.</span><span class="fn">join</span><span class="op">(</span>__dirname<span class="op">,</span> <span class="str">'views'</span><span class="op">));</span>
-
-<span class="var">app</span><span class="op">.</span><span class="fn">listen</span><span class="op">(</span><span class="num">3000</span><span class="op">, () =&gt;</span> <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">'Servidor listo'</span><span class="op">));</span></div>
-      <p style="margin-top:15px;font-size:1.15rem;">Con esto, Express sabe que los archivos <span class="code-inline">.hbs</span> son plantillas.</p>
+      <h2>🔢 Versionado semántico (semver)</h2>
+      <p style="font-size:1.3rem;margin-bottom:15px;">Toda versión tiene 3 números: <span class="accent">MAJOR.MINOR.PATCH</span></p>
+      <div class="grid-3">
+        <div class="card" style="text-align:center;">
+          <div class="stat-big" style="font-size:3rem;">MAJOR</div>
+          <div class="stat-label" style="margin-top:10px;">Cambios que <strong>rompen compatibilidad</strong></div>
+          <p style="margin-top:10px;font-size:1rem;opacity:0.8;">4.x → 5.x</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="stat-big" style="font-size:3rem;">MINOR</div>
+          <div class="stat-label" style="margin-top:10px;">Nuevas <strong>funcionalidades</strong> compatibles</div>
+          <p style="margin-top:10px;font-size:1rem;opacity:0.8;">4.18 → 4.21</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="stat-big" style="font-size:3rem;">PATCH</div>
+          <div class="stat-label" style="margin-top:10px;"><strong>Parches</strong> y arreglos de bugs</div>
+          <p style="margin-top:10px;font-size:1rem;opacity:0.8;">4.21.1 → 4.21.2</p>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="card">
+          <h3><span class="code-inline">^4.21.1</span> — caret</h3>
+          <p>Acepta cualquier <strong>MINOR o PATCH</strong> nuevo. Ej: 4.22.0 ✅, 5.0.0 ❌</p>
+        </div>
+        <div class="card">
+          <h3><span class="code-inline">~4.21.1</span> — tilde</h3>
+          <p>Solo acepta nuevos <strong>PATCH</strong>. Ej: 4.21.5 ✅, 4.22.0 ❌</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- SLIDE 21: Estructura del proyecto -->
+  <!-- SLIDE 21: Scripts en package.json -->
   <section class="slide">
     <div class="slide-content">
-      <h2>📂 Estructura del proyecto con Handlebars</h2>
+      <h2>⚡ Scripts en <span class="accent">package.json</span></h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Automatiza tareas repetitivas con comandos personalizados.</p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1rem;"><span class="str">"scripts"</span><span class="op">: {</span>
+  <span class="str">"start"</span><span class="op">:</span> <span class="str">"node server.js"</span><span class="op">,</span>
+  <span class="str">"dev"</span><span class="op">:</span> <span class="str">"node --watch server.js"</span><span class="op">,</span>
+  <span class="str">"test"</span><span class="op">:</span> <span class="str">"jest"</span><span class="op">,</span>
+  <span class="str">"lint"</span><span class="op">:</span> <span class="str">"eslint ."</span><span class="op">,</span>
+  <span class="str">"build"</span><span class="op">:</span> <span class="str">"webpack --mode production"</span><span class="op">,</span>
+  <span class="str">"clean"</span><span class="op">:</span> <span class="str">"rm -rf node_modules &amp;&amp; npm install"</span>
+<span class="op">}</span></div>
+      <div class="terminal" style="max-width:700px;margin:20px auto 0;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">$</span> npm run dev
+<span class="prompt">$</span> npm start          <span class="cm"># atajo, no requiere 'run'</span>
+<span class="prompt">$</span> npm test           <span class="cm"># atajo, no requiere 'run'</span>
+<span class="prompt">$</span> npm run lint</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 22: Comandos avanzados -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🛠️ Comandos avanzados de NPM</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3><span class="code-inline">npm list</span></h3>
+          <p>Muestra el árbol completo de paquetes instalados.</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm list --depth=0
+<span class="cm"># Solo primer nivel</span></div>
+        </div>
+        <div class="card">
+          <h3><span class="code-inline">npm outdated</span></h3>
+          <p>Detecta dependencias con actualizaciones disponibles.</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm outdated</div>
+        </div>
+        <div class="card">
+          <h3><span class="code-inline">npm audit</span></h3>
+          <p>Analiza <strong>vulnerabilidades de seguridad</strong> en tus dependencias.</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm audit
+<span class="prompt">$</span> npm audit fix   <span class="cm"># auto-fix</span></div>
+        </div>
+        <div class="card">
+          <h3><span class="code-inline">npm cache clean</span></h3>
+          <p>Limpia la caché de paquetes descargados.</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm cache clean --force</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 23: node_modules -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📁 La carpeta <span class="accent">node_modules</span></h2>
       <div class="grid-2" style="align-items:start;">
-        <div class="file-tree" style="font-size:1.05rem;"><span style="color:#FFD700;">mi-servidor/</span>
+        <div>
+          <ul class="custom">
+            <li>Aquí viven <strong>físicamente</strong> todos los paquetes instalados.</li>
+            <li>Contiene los paquetes que instalaste + sus <strong>sub-dependencias</strong>.</li>
+            <li>Puede pesar <span class="highlight-yellow">cientos de MB</span> incluso en proyectos pequeños.</li>
+            <li>Se puede <strong>regenerar</strong> con <span class="code-inline">npm install</span> desde el <span class="code-inline">package.json</span>.</li>
+            <li>NUNCA se sube a Git (usa <span class="code-inline">.gitignore</span>).</li>
+          </ul>
+        </div>
+        <div>
+          <div class="file-tree"><span style="color:#FFD700;">mi-proyecto/</span>
 ├── <span style="color:#569cd6;">node_modules/</span>
-├── <span style="color:#9cdcfe;">public/</span>            <span class="cm"># estáticos</span>
-│   ├── styles.css
-│   └── logo.png
-├── <span style="color:#9cdcfe;">views/</span>             <span class="cm"># plantillas HBS</span>
-│   ├── home.hbs
-│   ├── perfil.hbs
-│   └── <span style="color:#9cdcfe;">partials/</span>      <span class="cm"># fragmentos</span>
-│       ├── header.hbs
-│       └── footer.hbs
+│   ├── express/
+│   │   ├── package.json
+│   │   ├── index.js
+│   │   └── lib/
+│   ├── body-parser/
+│   ├── cookie-parser/
+│   └── ... (200+ carpetas)
+├── <span style="color:#dcdcaa;">package.json</span>
+├── <span style="color:#dcdcaa;">package-lock.json</span>
+└── <span style="color:#dcdcaa;">.gitignore</span></div>
+          <div class="code-block" style="font-size:0.95rem;margin-top:10px;"><span class="cm"># .gitignore</span>
+node_modules/
+.env
+*.log</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 24: package-lock.json -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🔒 <span class="accent">package-lock.json</span></h2>
+      <p style="font-size:1.3rem;margin-bottom:20px;">Registra las <strong>versiones EXACTAS</strong> instaladas — reproducibilidad total entre entornos.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>package.json</h3>
+          <div class="code-block" style="font-size:0.95rem;background:#1e1e1e;"><span class="str">"dependencies"</span><span class="op">: {</span>
+  <span class="str">"express"</span><span class="op">:</span> <span class="str">"^4.21.1"</span>
+<span class="op">}</span></div>
+          <p style="margin-top:12px;font-size:1.05rem;">"Quiero cualquier 4.x mayor a 4.21.1"</p>
+        </div>
+        <div class="card">
+          <h3>package-lock.json</h3>
+          <div class="code-block" style="font-size:0.9rem;background:#1e1e1e;"><span class="str">"express"</span><span class="op">: {</span>
+  <span class="str">"version"</span><span class="op">:</span> <span class="str">"4.21.2"</span><span class="op">,</span>
+  <span class="str">"resolved"</span><span class="op">:</span> <span class="str">"https://..."</span><span class="op">,</span>
+  <span class="str">"integrity"</span><span class="op">:</span> <span class="str">"sha512-..."</span>
+<span class="op">}</span></div>
+          <p style="margin-top:12px;font-size:1.05rem;">"Instalé exactamente 4.21.2, este es el hash"</p>
+        </div>
+      </div>
+      <div class="key-box" style="margin-top:20px;font-size:1.1rem;">
+        ✅ <strong>Debe subirse a Git</strong> — garantiza que todo el equipo tenga las mismas versiones.
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 25: Tipos de dependencias -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎨 Tipos de dependencias</h2>
+      <div class="grid-2">
+        <div class="card">
+          <span class="badge badge-prod">dependencies</span>
+          <h3 style="display:inline-block;margin-left:8px;">Producción</h3>
+          <p style="margin-top:10px;">Necesarias para que la app <strong>funcione</strong>.</p>
+          <p style="font-size:1rem;margin-top:8px;opacity:0.9;">Ej: express, mongoose, dotenv</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm install express</div>
+        </div>
+        <div class="card">
+          <span class="badge badge-dev">devDependencies</span>
+          <h3 style="display:inline-block;margin-left:8px;">Desarrollo</h3>
+          <p style="margin-top:10px;">Solo útiles <strong>mientras desarrollas</strong>.</p>
+          <p style="font-size:1rem;margin-top:8px;opacity:0.9;">Ej: nodemon, jest, eslint, prettier</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:8px;"><span class="prompt">$</span> npm install -D nodemon</div>
+        </div>
+        <div class="card">
+          <span class="badge" style="background:#9C27B0;color:#fff;">peerDependencies</span>
+          <h3 style="display:inline-block;margin-left:8px;">Compañeras</h3>
+          <p style="margin-top:10px;">El usuario final debe <strong>instalarlas él mismo</strong>.</p>
+          <p style="font-size:1rem;margin-top:8px;opacity:0.9;">Ej: un plugin de React requiere react</p>
+        </div>
+        <div class="card">
+          <span class="badge" style="background:#607D8B;color:#fff;">optionalDependencies</span>
+          <h3 style="display:inline-block;margin-left:8px;">Opcionales</h3>
+          <p style="margin-top:10px;">Si fallan al instalar, <strong>no rompen</strong> el proyecto.</p>
+          <p style="font-size:1rem;margin-top:8px;opacity:0.9;">Ej: paquetes específicos de un SO</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 26: package.json avanzado -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🚀 <span class="code-inline">package.json</span> avanzado</h2>
+      <div class="code-block" style="max-width:1050px;margin:0 auto;font-size:0.95rem;"><span class="op">{</span>
+  <span class="str">"name"</span><span class="op">:</span> <span class="str">"mi-app"</span><span class="op">,</span>
+  <span class="str">"version"</span><span class="op">:</span> <span class="str">"1.0.0"</span><span class="op">,</span>
+  <span class="str">"engines"</span><span class="op">: {</span>                          <span class="cm">// Versiones requeridas</span>
+    <span class="str">"node"</span><span class="op">:</span> <span class="str">"&gt;=20.0.0"</span><span class="op">,</span>
+    <span class="str">"npm"</span><span class="op">:</span> <span class="str">"&gt;=10.0.0"</span>
+  <span class="op">},</span>
+  <span class="str">"type"</span><span class="op">:</span> <span class="str">"module"</span><span class="op">,</span>                    <span class="cm">// Usar ES Modules</span>
+  <span class="str">"dependencies"</span><span class="op">: { ... },</span>
+  <span class="str">"devDependencies"</span><span class="op">: { ... },</span>
+  <span class="str">"peerDependencies"</span><span class="op">: {</span>
+    <span class="str">"react"</span><span class="op">:</span> <span class="str">"^18.0.0"</span>
+  <span class="op">},</span>
+  <span class="str">"optionalDependencies"</span><span class="op">: {</span>
+    <span class="str">"fsevents"</span><span class="op">:</span> <span class="str">"^2.3.3"</span>                <span class="cm">// Solo macOS</span>
+  <span class="op">},</span>
+  <span class="str">"scripts"</span><span class="op">: {</span>
+    <span class="str">"clean"</span><span class="op">:</span> <span class="str">"rm -rf node_modules &amp;&amp; npm install"</span><span class="op">,</span>
+    <span class="str">"predev"</span><span class="op">:</span> <span class="str">"echo 'Iniciando modo dev...'"</span><span class="op">,</span> <span class="cm">// hook</span>
+    <span class="str">"dev"</span><span class="op">:</span> <span class="str">"node --watch server.js"</span>
+  <span class="op">}</span>
+<span class="op">}</span></div>
+      <p style="margin-top:15px;font-size:1.15rem;">Los prefijos <span class="code-inline">pre</span> y <span class="code-inline">post</span> ejecutan hooks automáticos (ej: <span class="code-inline">predev</span> corre antes de <span class="code-inline">dev</span>).</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 27: Estrategias de modularización -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🏗️ Estrategias de modularización</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Un buen proyecto Node se organiza en <strong>capas</strong>:</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="file-tree" style="font-size:0.95rem;"><span style="color:#FFD700;">mi-app/</span>
+├── <span style="color:#9cdcfe;">config/</span>          <span class="cm"># Variables entorno</span>
+│   └── db.js
+├── <span style="color:#9cdcfe;">routes/</span>          <span class="cm"># Endpoints</span>
+│   ├── users.js
+│   └── products.js
+├── <span style="color:#9cdcfe;">controllers/</span>     <span class="cm"># Lógica de negocio</span>
+│   ├── userController.js
+│   └── productController.js
+├── <span style="color:#9cdcfe;">models/</span>          <span class="cm"># Modelos de datos</span>
+├── <span style="color:#9cdcfe;">utils/</span>           <span class="cm"># Funciones auxiliares</span>
 ├── <span style="color:#dcdcaa;">server.js</span>
 └── <span style="color:#dcdcaa;">package.json</span></div>
+        </div>
         <div>
-          <h3>🎯 Convenciones</h3>
+          <h3>🎯 Beneficios</h3>
           <ul class="custom" style="font-size:1.15rem;">
-            <li>Las plantillas se guardan en <span class="code-inline">views/</span>.</li>
-            <li>Los archivos usan extensión <span class="code-inline">.hbs</span>.</li>
-            <li>Los fragmentos reutilizables van en <span class="code-inline">views/partials/</span>.</li>
-            <li>El motor las encuentra automáticamente.</li>
+            <li><strong>Separación de responsabilidades</strong>: cada archivo hace una cosa.</li>
+            <li><strong>Testeable</strong>: podés probar módulos por separado.</li>
+            <li><strong>Escalable</strong>: agregar features sin tocar todo.</li>
+            <li><strong>Colaborativo</strong>: menos conflictos en equipo.</li>
+            <li><strong>Reutilizable</strong>: los módulos sirven para otros proyectos.</li>
           </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 22: Primera vista con res.render -->
+  <!-- SLIDE 28: Ejemplo de modularización -->
   <section class="slide">
     <div class="slide-content">
-      <h2>🖼️ Primera vista con <span class="accent">res.render</span></h2>
+      <h2>💡 Ejemplo práctico de modularización</h2>
       <div class="grid-2" style="align-items:start;">
         <div>
-          <h3>1. Ruta en <span class="code-inline">server.js</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'home'</span><span class="op">, {</span>
-    <span class="var">nombre</span><span class="op">:</span> <span class="str">'Carola'</span><span class="op">,</span>
-    <span class="var">edad</span><span class="op">:</span> <span class="num">25</span>
-  <span class="op">});</span>
-<span class="op">});</span></div>
-          <p style="margin-top:15px;font-size:1.1rem;"><span class="code-inline">res.render()</span> busca <span class="code-inline">views/home.hbs</span> y le pasa los datos.</p>
-        </div>
-        <div>
-          <h3>2. Plantilla <span class="code-inline">views/home.hbs</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;!DOCTYPE html&gt;</span>
-<span class="tag">&lt;html&gt;</span>
-<span class="tag">&lt;head&gt;&lt;title&gt;</span>Inicio<span class="tag">&lt;/title&gt;&lt;/head&gt;</span>
-<span class="tag">&lt;body&gt;</span>
-  <span class="tag">&lt;h1&gt;</span>Hola, <span class="hbs">{{nombre}}</span><span class="tag">&lt;/h1&gt;</span>
-  <span class="tag">&lt;p&gt;</span>Edad: <span class="hbs">{{edad}}</span> años<span class="tag">&lt;/p&gt;</span>
-<span class="tag">&lt;/body&gt;</span>
-<span class="tag">&lt;/html&gt;</span></div>
-          <p style="margin-top:15px;font-size:1.1rem;">Las llaves dobles <span class="code-inline">{{}}</span> son marcadores.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+          <h3><span class="code-inline">utils/math.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="kw">const</span> <span class="fn">sumar</span> <span class="op">= (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span><span class="op">;</span>
+<span class="kw">const</span> <span class="fn">restar</span> <span class="op">= (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">-</span> <span class="var">b</span><span class="op">;</span>
+<span class="kw">const</span> <span class="fn">multiplicar</span> <span class="op">= (</span><span class="var">a</span><span class="op">,</span> <span class="var">b</span><span class="op">) =&gt;</span> <span class="var">a</span> <span class="op">*</span> <span class="var">b</span><span class="op">;</span>
 
-  <!-- SLIDE 23: Iteraciones con each -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🔁 Iterar listas con <span class="accent">{{#each}}</span></h2>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3><span class="code-inline">server.js</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/productos'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'productos'</span><span class="op">, {</span>
-    <span class="var">titulo</span><span class="op">:</span> <span class="str">'Catálogo'</span><span class="op">,</span>
-    <span class="var">productos</span><span class="op">:</span> <span class="op">[</span>
-      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Laptop'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">899</span> <span class="op">},</span>
-      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Mouse'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">25</span> <span class="op">},</span>
-      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Teclado'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">75</span> <span class="op">}</span>
-    <span class="op">]</span>
-  <span class="op">});</span>
-<span class="op">});</span></div>
-        </div>
-        <div>
-          <h3><span class="code-inline">views/productos.hbs</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;h1&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h1&gt;</span>
-
-<span class="tag">&lt;ul&gt;</span>
-  <span class="hbs">{{#each productos}}</span>
-    <span class="tag">&lt;li&gt;</span>
-      <span class="hbs">{{nombre}}</span> - $<span class="hbs">{{precio}}</span>
-    <span class="tag">&lt;/li&gt;</span>
-  <span class="hbs">{{/each}}</span>
-<span class="tag">&lt;/ul&gt;</span></div>
-          <p style="margin-top:12px;font-size:1.05rem;">Dentro del <span class="code-inline">each</span>, <span class="code-inline">this</span> es el elemento actual.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SLIDE 24: Condicionales -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🔀 Condicionales con <span class="accent">{{#if}}</span></h2>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3>Sintaxis básica</h3>
-          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{#if usuario}}</span>
-  <span class="tag">&lt;p&gt;</span>Hola, <span class="hbs">{{usuario.nombre}}</span><span class="tag">&lt;/p&gt;</span>
-<span class="hbs">{{else}}</span>
-  <span class="tag">&lt;a href="/login"&gt;</span>Iniciar sesión<span class="tag">&lt;/a&gt;</span>
-<span class="hbs">{{/if}}</span></div>
-        </div>
-        <div>
-          <h3>Con <span class="code-inline">{{#unless}}</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{#unless productos}}</span>
-  <span class="tag">&lt;p&gt;</span>No hay productos<span class="tag">&lt;/p&gt;</span>
-<span class="hbs">{{/unless}}</span>
-
-<span class="hbs">{{#each productos}}</span>
-  <span class="tag">&lt;li&gt;</span><span class="hbs">{{nombre}}</span><span class="tag">&lt;/li&gt;</span>
-<span class="hbs">{{/each}}</span></div>
-        </div>
-      </div>
-      <p style="margin-top:20px;font-size:1.2rem;"><span class="accent">unless</span> es lo opuesto a <span class="accent">if</span>: se ejecuta cuando el valor es <em>falsy</em> (undefined, null, false, 0, "", []).</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 25: Helpers personalizados -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🛠️ Helpers personalizados</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Funciones que <strong>transforman datos</strong> dentro de la vista.</p>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3><span class="code-inline">server.js</span></h3>
-          <div class="code-block" style="font-size:0.95rem;"><span class="cm">// Helper: mayúsculas</span>
-<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'gritar'</span><span class="op">, (</span><span class="var">texto</span><span class="op">) =&gt;</span> <span class="op">{</span>
-  <span class="kw">return</span> <span class="var">texto</span><span class="op">.</span><span class="fn">toUpperCase</span><span class="op">();</span>
-<span class="op">});</span>
-
-<span class="cm">// Helper: formatear precio</span>
-<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'clp'</span><span class="op">, (</span><span class="var">valor</span><span class="op">) =&gt;</span> <span class="op">{</span>
-  <span class="kw">return</span> <span class="var">valor</span><span class="op">.</span><span class="fn">toLocaleString</span><span class="op">(</span><span class="str">'es-CL'</span><span class="op">, {</span>
+<span class="var">module</span><span class="op">.</span><span class="var">exports</span> <span class="op">= {</span>
+  <span class="var">sumar</span><span class="op">,</span>
+  <span class="var">restar</span><span class="op">,</span>
+  <span class="var">multiplicar</span>
+<span class="op">};</span></div>
+          <h3 style="margin-top:15px;"><span class="code-inline">utils/formato.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="var">module</span><span class="op">.</span><span class="var">exports</span><span class="op">.</span><span class="fn">clp</span> <span class="op">= (</span><span class="var">v</span><span class="op">) =&gt;</span>
+  <span class="var">v</span><span class="op">.</span><span class="fn">toLocaleString</span><span class="op">(</span><span class="str">'es-CL'</span><span class="op">, {</span>
     <span class="var">style</span><span class="op">:</span> <span class="str">'currency'</span><span class="op">,</span>
     <span class="var">currency</span><span class="op">:</span> <span class="str">'CLP'</span>
-  <span class="op">});</span>
-<span class="op">});</span></div>
+  <span class="op">});</span></div>
         </div>
         <div>
-          <h3>En la plantilla</h3>
-          <div class="code-block" style="font-size:0.95rem;"><span class="tag">&lt;h1&gt;</span><span class="hbs">{{gritar titulo}}</span><span class="tag">&lt;/h1&gt;</span>
-<span class="cm">&lt;!-- "OFERTAS DEL MES" --&gt;</span>
+          <h3><span class="code-inline">index.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="kw">const</span> <span class="op">{</span> <span class="var">sumar</span><span class="op">,</span> <span class="var">multiplicar</span> <span class="op">}</span>
+  <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./utils/math'</span><span class="op">);</span>
 
-<span class="tag">&lt;p&gt;</span>Precio: <span class="hbs">{{clp precio}}</span><span class="tag">&lt;/p&gt;</span>
-<span class="cm">&lt;!-- "Precio: $12.990" --&gt;</span>
+<span class="kw">const</span> <span class="op">{</span> <span class="var">clp</span> <span class="op">}</span>
+  <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'./utils/formato'</span><span class="op">);</span>
 
-<span class="hbs">{{#each productos}}</span>
-  <span class="tag">&lt;li&gt;</span><span class="hbs">{{nombre}}</span> - <span class="hbs">{{clp precio}}</span><span class="tag">&lt;/li&gt;</span>
-<span class="hbs">{{/each}}</span></div>
+<span class="kw">const</span> <span class="var">total</span> <span class="op">=</span> <span class="fn">multiplicar</span><span class="op">(</span><span class="num">150</span><span class="op">,</span> <span class="num">1990</span><span class="op">);</span>
+
+<span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Total: </span><span class="op">${</span><span class="fn">clp</span><span class="op">(</span><span class="var">total</span><span class="op">)</span><span class="str">}`</span><span class="op">);</span>
+<span class="cm">// → Total: $298.500</span></div>
+          <p style="margin-top:15px;font-size:1.1rem;">Cada módulo hace <strong>una sola cosa</strong>, y <span class="code-inline">index.js</span> los combina.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SLIDE 26: Páginas parciales -->
+  <!-- SLIDE 29: Buenas prácticas -->
   <section class="slide">
     <div class="slide-content">
-      <h2>🧩 Páginas parciales (partials)</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Fragmentos reutilizables como <strong>header</strong> y <strong>footer</strong>.</p>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3>1. Registrar en <span class="code-inline">server.js</span></h3>
-          <div class="code-block" style="font-size:0.95rem;"><span class="var">hbs</span><span class="op">.</span><span class="fn">registerPartials</span><span class="op">(</span>
-  __dirname <span class="op">+</span> <span class="str">'/views/partials'</span>
-<span class="op">);</span></div>
-          <h3 style="margin-top:20px;">2. Crear <span class="code-inline">partials/header.hbs</span></h3>
-          <div class="code-block" style="font-size:0.95rem;"><span class="tag">&lt;header&gt;</span>
-  <span class="tag">&lt;h1&gt;</span>Mi Sitio<span class="tag">&lt;/h1&gt;</span>
-  <span class="tag">&lt;nav&gt;</span>
-    <span class="tag">&lt;a href="/"&gt;</span>Inicio<span class="tag">&lt;/a&gt;</span>
-    <span class="tag">&lt;a href="/about"&gt;</span>Nosotros<span class="tag">&lt;/a&gt;</span>
-  <span class="tag">&lt;/nav&gt;</span>
-<span class="tag">&lt;/header&gt;</span></div>
+      <h2>✅ Buenas prácticas con NPM</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>👍 Hacer</h3>
+          <ul class="custom" style="font-size:1.1rem;">
+            <li>Usar <span class="code-inline">-D</span> para dependencias de desarrollo.</li>
+            <li>Commitear <span class="code-inline">package-lock.json</span>.</li>
+            <li>Ejecutar <span class="code-inline">npm audit</span> regularmente.</li>
+            <li>Definir <span class="code-inline">"engines"</span> para la versión de Node.</li>
+            <li>Documentar los scripts en el README.</li>
+            <li>Revisar el tamaño y salud de los paquetes antes de instalar.</li>
+          </ul>
         </div>
-        <div>
-          <h3>3. Usar en cualquier vista</h3>
-          <div class="code-block" style="font-size:0.95rem;"><span class="hbs">{{&gt; header}}</span>
-
-<span class="tag">&lt;main&gt;</span>
-  <span class="tag">&lt;h2&gt;</span>Página principal<span class="tag">&lt;/h2&gt;</span>
-  <span class="tag">&lt;p&gt;</span>Bienvenido a nuestro sitio<span class="tag">&lt;/p&gt;</span>
-<span class="tag">&lt;/main&gt;</span>
-
-<span class="hbs">{{&gt; footer}}</span></div>
-          <p style="margin-top:12px;font-size:1.05rem;">La sintaxis <span class="code-inline">{{> nombre}}</span> incluye el parcial.</p>
+        <div class="card">
+          <h3>👎 Evitar</h3>
+          <ul class="custom" style="font-size:1.1rem;">
+            <li>Subir <span class="code-inline">node_modules/</span> a Git.</li>
+            <li>Instalar todo con <span class="code-inline">-g</span> sin necesidad.</li>
+            <li>Modificar archivos dentro de <span class="code-inline">node_modules/</span>.</li>
+            <li>Ignorar advertencias de vulnerabilidad.</li>
+            <li>Mezclar CommonJS y ES Modules sin cuidado.</li>
+            <li>Instalar dependencias "por si acaso" sin usarlas.</li>
+          </ul>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SLIDE 27: Parciales con datos -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🎁 Parciales con datos propios</h2>
-      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos pasarle contexto a un parcial:</p>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3>Parcial <span class="code-inline">partials/card.hbs</span></h3>
-          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;div class="card"&gt;</span>
-  <span class="tag">&lt;h3&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h3&gt;</span>
-  <span class="tag">&lt;p&gt;</span><span class="hbs">{{descripcion}}</span><span class="tag">&lt;/p&gt;</span>
-<span class="tag">&lt;/div&gt;</span></div>
-        </div>
-        <div>
-          <h3>Uso en la vista principal</h3>
-          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{&gt; card titulo="Node.js"
-        descripcion="Backend con JS"}}</span>
-
-<span class="hbs">{{&gt; card titulo="Express"
-        descripcion="Framework web"}}</span>
-
-<span class="cm">&lt;!-- Con iteración --&gt;</span>
-<span class="hbs">{{#each cursos}}</span>
-  <span class="hbs">{{&gt; card this}}</span>
-<span class="hbs">{{/each}}</span></div>
-        </div>
-      </div>
-      <p style="margin-top:20px;font-size:1.2rem;">💡 Súper útil para <span class="accent">componentes reutilizables</span> — cards, botones, alertas.</p>
-    </div>
-  </section>
-
-  <!-- SLIDE 28: Ejemplo integrado -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>🎬 Ejemplo integrado</h2>
-      <p style="font-size:1.15rem;margin-bottom:12px;">Todo junto: partials + each + helper</p>
-      <div class="grid-2" style="align-items:start;">
-        <div>
-          <h3><span class="code-inline">server.js</span></h3>
-          <div class="code-block" style="font-size:0.9rem;"><span class="var">hbs</span><span class="op">.</span><span class="fn">registerPartials</span><span class="op">(</span>__dirname <span class="op">+</span> <span class="str">'/views/partials'</span><span class="op">);</span>
-
-<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'clp'</span><span class="op">, (</span><span class="var">v</span><span class="op">) =&gt;</span>
-  <span class="var">v</span><span class="op">.</span><span class="fn">toLocaleString</span><span class="op">(</span><span class="str">'es-CL'</span><span class="op">, {</span>
-    <span class="var">style</span><span class="op">:</span><span class="str">'currency'</span><span class="op">,</span><span class="var">currency</span><span class="op">:</span><span class="str">'CLP'</span>
-  <span class="op">}));</span>
-
-<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/tienda'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
-  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'tienda'</span><span class="op">, {</span>
-    <span class="var">titulo</span><span class="op">:</span> <span class="str">'Mi Tienda'</span><span class="op">,</span>
-    <span class="var">productos</span><span class="op">: [</span>
-      <span class="op">{</span><span class="var">nombre</span><span class="op">:</span><span class="str">'Laptop'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span><span class="num">899000</span><span class="op">},</span>
-      <span class="op">{</span><span class="var">nombre</span><span class="op">:</span><span class="str">'Mouse'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span><span class="num">15990</span><span class="op">}</span>
-    <span class="op">]</span>
-  <span class="op">});</span>
-<span class="op">});</span></div>
-        </div>
-        <div>
-          <h3><span class="code-inline">views/tienda.hbs</span></h3>
-          <div class="code-block" style="font-size:0.9rem;"><span class="hbs">{{&gt; header}}</span>
-
-<span class="tag">&lt;h1&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h1&gt;</span>
-
-<span class="hbs">{{#if productos}}</span>
-  <span class="tag">&lt;ul&gt;</span>
-    <span class="hbs">{{#each productos}}</span>
-      <span class="tag">&lt;li&gt;</span>
-        <span class="hbs">{{nombre}}</span> - <span class="hbs">{{clp precio}}</span>
-      <span class="tag">&lt;/li&gt;</span>
-    <span class="hbs">{{/each}}</span>
-  <span class="tag">&lt;/ul&gt;</span>
-<span class="hbs">{{else}}</span>
-  <span class="tag">&lt;p&gt;</span>Sin productos<span class="tag">&lt;/p&gt;</span>
-<span class="hbs">{{/if}}</span>
-
-<span class="hbs">{{&gt; footer}}</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SLIDE 29: Ejercicio N°2 -->
-  <section class="slide">
-    <div class="slide-content">
-      <h2>💪 Ejercicio N°2</h2>
-      <h3>Handlebars avanzado: mini catálogo</h3>
-      <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
-        <h3>🎯 Consigna</h3>
-        <p style="font-size:1.1rem;margin-bottom:12px;">Crea una app con Express + Handlebars que muestre un catálogo con:</p>
-        <ul class="custom" style="font-size:1.1rem;">
-          <li>Ruta <span class="code-inline">/</span> que renderice <span class="code-inline">home.hbs</span> con título y mensaje de bienvenida.</li>
-          <li>Ruta <span class="code-inline">/cursos</span> que renderice una lista dinámica de al menos 4 cursos (nombre + duración + precio).</li>
-          <li>Un <strong>helper</strong> personalizado que formatee el precio en pesos chilenos.</li>
-          <li>Un <strong>helper</strong> que ponga el título del curso en mayúsculas.</li>
-          <li>Parciales <span class="code-inline">header.hbs</span> y <span class="code-inline">footer.hbs</span> usados en ambas páginas.</li>
-          <li>Un condicional que muestre "Sin cursos disponibles" si la lista está vacía.</li>
-        </ul>
-        <span class="time-badge">⏱️ 30 minutos</span>
       </div>
     </div>
   </section>
@@ -1148,16 +1208,16 @@ added 5 packages in 2s
       <p class="subtitle">Lo que logramos hoy</p>
       <div class="grid-2">
         <div>
-          <div class="summary-item"><span class="check">✓</span> Configurar un servidor Express desde cero.</div>
-          <div class="summary-item"><span class="check">✓</span> Definir rutas HTTP (GET, POST) con parámetros.</div>
-          <div class="summary-item"><span class="check">✓</span> Servir contenido estático con <span class="code-inline">express.static</span>.</div>
-          <div class="summary-item"><span class="check">✓</span> Enviar datos dinámicos desde el servidor.</div>
+          <div class="summary-item"><span class="check">✓</span> Comprender el rol de NPM en el ecosistema Node.</div>
+          <div class="summary-item"><span class="check">✓</span> Instalar, actualizar y eliminar paquetes.</div>
+          <div class="summary-item"><span class="check">✓</span> Diferenciar paquetes locales y globales.</div>
+          <div class="summary-item"><span class="check">✓</span> Usar módulos con CommonJS y ES Modules.</div>
         </div>
         <div>
-          <div class="summary-item"><span class="check">✓</span> Entender qué es un motor de plantillas.</div>
-          <div class="summary-item"><span class="check">✓</span> Instalar y configurar Handlebars.</div>
-          <div class="summary-item"><span class="check">✓</span> Usar <span class="code-inline">{{#each}}</span> y <span class="code-inline">{{#if}}</span> en las vistas.</div>
-          <div class="summary-item"><span class="check">✓</span> Crear helpers y parciales para modularizar.</div>
+          <div class="summary-item"><span class="check">✓</span> Interpretar y editar el <span class="code-inline">package.json</span>.</div>
+          <div class="summary-item"><span class="check">✓</span> Automatizar con scripts personalizados.</div>
+          <div class="summary-item"><span class="check">✓</span> Entender <span class="code-inline">node_modules</span> y <span class="code-inline">package-lock.json</span>.</div>
+          <div class="summary-item"><span class="check">✓</span> Diferenciar los 4 tipos de dependencias.</div>
         </div>
       </div>
     </div>
@@ -1196,19 +1256,18 @@ added 5 packages in 2s
   function prevSlide() { if (currentIndex > 0) { currentIndex--; showSlide(currentIndex); } }
 
   document.addEventListener('keydown', (e) => {
-    // Evitar que el espacio dispare el botón enfocado y avance
     if (e.target.tagName === 'BUTTON' && e.key === ' ') return;
     if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
   });
 
-  // === Temporizador del descanso (manual, con botón de inicio) ===
+  // === Temporizador manual con botón de inicio ===
   let timerStarted = false;
   function startBreakTimer() {
     if (timerStarted) return;
     timerStarted = true;
 
-    const duration = 30 * 60; // 30 minutos en segundos
+    const duration = 30 * 60;
     const now = new Date();
     const endTime = new Date(now.getTime() + duration * 1000);
     const endStr = endTime.toLocaleTimeString('es-CL', {
@@ -1216,16 +1275,12 @@ added 5 packages in 2s
       minute: '2-digit'
     });
 
-    // Mostrar hora de término
     document.getElementById('endTime').textContent = endStr;
     document.getElementById('endTimeDisplay').classList.add('active');
-
-    // Ocultar botón y mostrar temporizador
     document.getElementById('startTimerBtn').style.display = 'none';
     document.getElementById('timerContainer').classList.add('active');
     document.getElementById('breakMessage').classList.add('active');
 
-    // Configurar círculo SVG
     const circle = document.getElementById('timerProgress');
     const timerText = document.getElementById('timerText');
     const radius = 120;

@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sirviendo Contenido Web con Express y Handlebars</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e1e; color: #ffffff;
+  }
+  .presentation { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateX(50px);
+  }
+  .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
+  .slide-content { max-width: 1200px; width: 100%; text-align: center; }
+  .slide-content.left { text-align: left; }
+
+  /* Header */
+  .slide-counter {
+    position: fixed; top: 30px; right: 30px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    padding: 12px 22px; border-radius: 25px;
+    font-size: 1.1rem; font-weight: 600;
+    z-index: 100; border: 2px solid rgba(255,255,255,0.3);
+  }
+  .slide-counter .current { color: #FFD700; }
+
+  /* Navegación */
+  .nav-buttons {
+    position: fixed; bottom: 30px; right: 30px;
+    display: flex; gap: 12px; z-index: 100;
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+    color: #fff; border: 2px solid rgba(255,255,255,0.3);
+    padding: 12px 22px; border-radius: 25px; font-size: 1rem; cursor: pointer;
+    font-weight: 600; transition: all 0.3s ease;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-3px); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Tipografía */
+  h1 { font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); line-height: 1.2; }
+  h1.hero { font-size: 4rem; }
+  h2 { font-size: 3rem; margin-bottom: 30px; text-shadow: 2px 4px 4px rgba(0,0,0,0.4); line-height: 1.2; }
+  h3 { font-size: 2rem; margin-bottom: 20px; color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+  p, li { font-size: 1.4rem; line-height: 1.8; }
+  .subtitle { font-size: 1.6rem; color: rgba(255,255,255,0.9); margin-bottom: 15px; }
+  .accent { color: #FFD700; font-weight: 700; }
+  .highlight-yellow { color: #FFD700; font-weight: 700; text-shadow: 0 0 15px rgba(255,215,0,0.4); }
+
+  /* Cards */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; margin-top: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; width: 100%; margin-top: 20px; }
+  .card {
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(15px);
+    padding: 30px 35px; border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border: 2px solid rgba(255,255,255,0.15);
+    transition: all 0.3s ease; text-align: left;
+  }
+  .card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.18); }
+  .card h3 { font-size: 1.6rem; margin-bottom: 15px; }
+  .card p, .card li { font-size: 1.15rem; line-height: 1.6; }
+  .card .icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+
+  /* Emojis grandes */
+  .big-emoji { font-size: 6rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+  /* Listas */
+  ul.custom { list-style: none; padding: 0; text-align: left; }
+  ul.custom li {
+    position: relative; padding-left: 40px; margin-bottom: 15px; font-size: 1.3rem;
+  }
+  ul.custom li:before {
+    content: "▸"; position: absolute; left: 10px; color: #FFD700;
+    font-size: 1.5rem; font-weight: bold;
+  }
+
+  /* Código */
+  .code-block {
+    background: #1e1e1e; color: #d4d4d4;
+    border-radius: 12px; padding: 25px 30px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 1.05rem; line-height: 1.6;
+    text-align: left; white-space: pre;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    border-left: 4px solid #FFD700;
+    overflow-x: auto; margin: 15px 0;
+  }
+  .code-inline {
+    background: rgba(0,0,0,0.4); padding: 3px 10px; border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #FFD700; font-size: 0.95em;
+  }
+  .kw { color: #569cd6; }
+  .str { color: #ce9178; }
+  .num { color: #b5cea8; }
+  .fn { color: #dcdcaa; }
+  .cm { color: #6a9955; font-style: italic; }
+  .var { color: #9cdcfe; }
+  .op { color: #d4d4d4; }
+  .cls { color: #4ec9b0; }
+  .prompt { color: #4ec9b0; }
+  .tag { color: #569cd6; }
+  .attr { color: #9cdcfe; }
+  .hbs { color: #FFD700; font-weight: 700; }
+
+  /* Portada */
+  .hero-slide { text-align: center; }
+  .hero-slide h1 { font-size: 4.2rem; margin-bottom: 25px; }
+  .hero-slide .subtitle { font-size: 1.7rem; margin-bottom: 20px; }
+  .hero-slide .instructor { font-size: 1.3rem; margin-top: 40px; opacity: 0.9; }
+
+  /* Cronograma */
+  .schedule-item {
+    display: grid; grid-template-columns: 200px 1fr 120px; gap: 20px;
+    align-items: center; padding: 18px 28px; margin: 12px 0;
+    background: rgba(255,255,255,0.1); border-radius: 15px;
+    border-left: 5px solid #FFD700;
+    transition: all 0.3s;
+  }
+  .schedule-item:hover { background: rgba(255,255,255,0.18); transform: translateX(8px); }
+  .schedule-item.break { border-left-color: #FF6B6B; background: rgba(255,107,107,0.15); }
+  .schedule-time { font-family: 'Consolas', monospace; font-weight: 700; color: #FFD700; font-size: 1.15rem; }
+  .schedule-topic { text-align: left; font-size: 1.15rem; }
+  .schedule-duration { font-size: 1rem; opacity: 0.85; text-align: right; }
+
+  /* BREAK slide */
+  .break-slide { text-align: center; }
+  .break-slide h2 { font-size: 4rem; margin-bottom: 20px; }
+
+  /* Botón de inicio del temporizador */
+  .start-timer-btn {
+    background: #FFD700; color: #764ba2;
+    border: none; padding: 22px 50px;
+    border-radius: 50px; font-size: 1.5rem; font-weight: 700;
+    cursor: pointer; margin-top: 30px;
+    box-shadow: 0 10px 30px rgba(255,215,0,0.4);
+    transition: all 0.3s ease;
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .start-timer-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(255,215,0,0.6);
+  }
+  .start-timer-btn:active { transform: translateY(-2px) scale(1.02); }
+
+  .timer-container {
+    position: relative; width: 280px; height: 280px; margin: 15px auto;
+    display: none; align-items: center; justify-content: center;
+  }
+  .timer-container.active { display: flex; }
+  .timer-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .timer-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 12; }
+  .timer-progress { fill: none; stroke: #FFD700; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .timer-text {
+    font-size: 3.2rem; font-weight: 700; color: #FFD700;
+    font-family: 'Consolas', monospace; text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    z-index: 2;
+  }
+
+  .end-time-display {
+    display: none;
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(15px);
+    padding: 20px 40px; border-radius: 20px;
+    border: 2px solid #FFD700;
+    margin-top: 15px;
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  .end-time-display.active { display: inline-block; }
+  .end-time-display .label {
+    font-size: 1.3rem; opacity: 0.9; margin-bottom: 8px; display: block;
+  }
+  .end-time-display .time {
+    font-size: 3.5rem; font-weight: 700; color: #FFD700;
+    font-family: 'Consolas', monospace;
+    text-shadow: 0 0 20px rgba(255,215,0,0.6);
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 0 40px rgba(255,215,0,0.6); }
+  }
+
+  .break-emoji { font-size: 5rem; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+  .break-message { display: none; font-size: 1.3rem; margin-top: 15px; opacity: 0.9; }
+  .break-message.active { display: block; }
+
+  /* Aprendizajes */
+  .learning-item {
+    display: flex; align-items: center; gap: 20px;
+    background: rgba(255,255,255,0.1); padding: 18px 25px;
+    border-radius: 15px; margin: 12px 0; text-align: left;
+    border-left: 4px solid #FFD700;
+    transition: all 0.3s;
+  }
+  .learning-item:hover { transform: translateX(10px); background: rgba(255,255,255,0.15); }
+  .learning-num {
+    background: #FFD700; color: #764ba2;
+    width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .learning-text { font-size: 1.2rem; line-height: 1.5; }
+
+  /* Ejercicio */
+  .exercise-card {
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(15px);
+    padding: 30px 40px; border-radius: 20px; margin-top: 20px;
+    border: 2px solid #FFD700; text-align: left;
+  }
+  .exercise-card h3 { color: #FFD700; margin-bottom: 15px; }
+  .exercise-card .time-badge {
+    display: inline-block; background: #FFD700; color: #764ba2;
+    padding: 8px 20px; border-radius: 25px; font-weight: 700;
+    font-size: 1.1rem; margin-top: 15px;
+  }
+
+  /* Tabla comparación */
+  .comp-table {
+    width: 100%; border-collapse: collapse; margin-top: 20px;
+    background: rgba(255,255,255,0.08); border-radius: 15px; overflow: hidden;
+  }
+  .comp-table th, .comp-table td {
+    padding: 15px 20px; text-align: left; font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .comp-table th {
+    background: rgba(255,215,0,0.15); color: #FFD700;
+    font-weight: 700; font-size: 1.15rem;
+  }
+  .comp-table td .code-inline { font-size: 0.95rem; }
+
+  /* Método HTTP badges */
+  .http-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 12px;
+    font-family: 'Consolas', monospace; font-weight: 700;
+    font-size: 0.95rem; margin-right: 8px;
+  }
+  .http-get { background: #4CAF50; color: #fff; }
+  .http-post { background: #2196F3; color: #fff; }
+  .http-put { background: #FFA500; color: #fff; }
+  .http-delete { background: #FF6B6B; color: #fff; }
+
+  /* Resumen final */
+  .summary-item {
+    display: flex; align-items: center; gap: 15px;
+    padding: 12px 20px; margin: 8px 0; text-align: left;
+    background: rgba(255,255,255,0.08); border-radius: 12px;
+    font-size: 1.2rem;
+  }
+  .summary-item .check {
+    color: #4CAF50; font-size: 1.6rem; flex-shrink: 0;
+  }
+
+  /* Terminal */
+  .terminal {
+    background: #0c0c0c; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left;
+    margin: 15px 0;
+  }
+  .terminal-header {
+    background: #2d2d30; padding: 8px 15px; display: flex; gap: 8px; align-items: center;
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot.red { background: #FF6B6B; }
+  .term-dot.yellow { background: #FFD700; }
+  .term-dot.green { background: #4CAF50; }
+  .term-title { color: #aaa; margin-left: 10px; font-size: 0.9rem; }
+  .terminal-body {
+    padding: 18px 22px; font-family: 'Consolas', monospace;
+    color: #d4d4d4; font-size: 1rem; line-height: 1.6;
+    white-space: pre;
+  }
+
+  /* Iconos animados */
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+  /* Estructura de archivos */
+  .file-tree {
+    background: #1e1e1e; border-radius: 12px;
+    padding: 20px 30px; text-align: left;
+    font-family: 'Consolas', monospace; font-size: 1.05rem;
+    line-height: 1.8; color: #d4d4d4;
+    border-left: 4px solid #FFD700;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  }
+
+  /* Antes/Después */
+  .compare-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="slide-counter">
+  <span class="current" id="currentSlide">1</span> / <span id="totalSlides">1</span>
+</div>
+
+<div class="presentation" id="presentation">
+
+  <!-- SLIDE 1: Portada -->
+  <section class="slide active">
+    <div class="slide-content hero-slide">
+      <div class="big-emoji">🌐</div>
+      <h1 class="hero">Sirviendo Contenido Web</h1>
+      <p class="subtitle">Servidores dinámicos con Express y Handlebars</p>
+      <p style="font-size:1.3rem;opacity:0.9;">AE4.1 y AE4.2 · Módulo Node Express</p>
+      <p class="instructor">Desarrollo de Aplicaciones Full Stack JavaScript Trainee</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Learning Path -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>Learning Path</h2>
+      <p class="subtitle">¿Qué temas trabajaremos hoy?</p>
+      <div class="grid-2">
+        <div class="card">
+          <span class="icon">🚀</span>
+          <h3>Servidores con Express</h3>
+          <p>Configuración inicial, rutas HTTP y manejo de peticiones GET, POST, PUT, DELETE.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📁</span>
+          <h3>Contenido estático y dinámico</h3>
+          <p>Servir archivos desde <span class="code-inline">public/</span> y responder con datos variables.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🎨</span>
+          <h3>Motores de plantillas</h3>
+          <p>¿Qué son? Comparación entre Handlebars, EJS y Pug.</p>
+        </div>
+        <div class="card">
+          <span class="icon">⚡</span>
+          <h3>Handlebars avanzado</h3>
+          <p>Helpers personalizados, iteraciones, condicionales y páginas parciales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: Objetivos de aprendizaje -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>Objetivos de aprendizaje</h2>
+      <p class="subtitle">¿Qué lograrás al finalizar la clase?</p>
+      <div class="learning-item">
+        <div class="learning-num">1</div>
+        <div class="learning-text">Configurar un <strong>servidor Express</strong> con rutas HTTP y respuestas personalizadas.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">2</div>
+        <div class="learning-text">Servir <strong>contenido estático</strong> desde una carpeta pública y datos dinámicos desde el servidor.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">3</div>
+        <div class="learning-text">Comprender qué es un <strong>motor de plantillas</strong> y por qué es útil en aplicaciones web.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">4</div>
+        <div class="learning-text">Instalar y configurar <strong>Handlebars (HBS)</strong> como motor de plantillas en Express.</div>
+      </div>
+      <div class="learning-item">
+        <div class="learning-num">5</div>
+        <div class="learning-text">Aplicar <strong>helpers</strong>, <strong>iteraciones</strong> y <strong>parciales</strong> para modularizar vistas.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: Cronograma -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🕐 Cronograma de la clase</h2>
+      <p class="subtitle">4 horas · con descanso de 30 minutos</p>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 1 · 90 min</div>
+        <div class="schedule-topic">Servidor Express, rutas HTTP, contenido estático y datos dinámicos</div>
+        <div class="schedule-duration">Teoría + demo</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Ejercicio N°1 · 30 min</div>
+        <div class="schedule-topic">Servidor web con Express + rutas + estáticos</div>
+        <div class="schedule-duration">Práctica</div>
+      </div>
+      <div class="schedule-item break">
+        <div class="schedule-time">☕ Descanso</div>
+        <div class="schedule-topic">Pausa activa · vuelvo con energías renovadas</div>
+        <div class="schedule-duration">30 min</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 2 · 60 min</div>
+        <div class="schedule-topic">Motores de plantillas, Handlebars: instalación y config básica</div>
+        <div class="schedule-duration">Teoría + demo</div>
+      </div>
+      <div class="schedule-item">
+        <div class="schedule-time">Bloque 3 · 60 min</div>
+        <div class="schedule-topic">Handlebars avanzado: helpers, partials + Ejercicio N°2 + cierre</div>
+        <div class="schedule-duration">Práctica</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: ¿Qué es un servidor web? -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">🖥️</div>
+      <h2>¿Qué es un servidor web?</h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 30px;">Un programa que <span class="accent">escucha peticiones HTTP</span> de clientes (navegadores, apps) y responde con contenido: HTML, JSON, imágenes, etc.</p>
+      <div class="grid-3">
+        <div class="card">
+          <span class="icon">📥</span>
+          <h3>Recibe</h3>
+          <p>Peticiones del cliente vía HTTP: <span class="code-inline">GET /</span>, <span class="code-inline">POST /login</span>...</p>
+        </div>
+        <div class="card">
+          <span class="icon">⚙️</span>
+          <h3>Procesa</h3>
+          <p>Ejecuta lógica: consulta datos, valida, transforma información.</p>
+        </div>
+        <div class="card">
+          <span class="icon">📤</span>
+          <h3>Responde</h3>
+          <p>Envía HTML, JSON u otro contenido al cliente que lo solicitó.</p>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;">Con <span class="accent">Express</span>, todo esto se vuelve muy fácil de escribir.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: Configuración inicial -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚙️ Configuración inicial</h2>
+      <p class="subtitle">Preparando el proyecto</p>
+      <div class="terminal" style="max-width:800px;margin:20px auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal — Setup</span>
+        </div>
+        <div class="terminal-body"><span class="cm"># 1. Verificar Node.js</span>
+<span class="prompt">$</span> node -v
+<span style="color:#4CAF50;">v22.12.0</span>
+
+<span class="cm"># 2. Crear proyecto</span>
+<span class="prompt">$</span> mkdir mi-servidor
+<span class="prompt">$</span> cd mi-servidor
+<span class="prompt">$</span> npm init -y
+
+<span class="cm"># 3. Instalar Express</span>
+<span class="prompt">$</span> npm install express
+
+<span class="cm"># 4. Abrir en VS Code</span>
+<span class="prompt">$</span> code .</div>
+      </div>
+      <p style="margin-top:15px;font-size:1.2rem;">Ya tenemos la base para crear el servidor.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: Servidor básico -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🚀 Servidor básico con Express</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Archivo <span class="code-inline">server.js</span>:</p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">express</span><span class="op">();</span>
+<span class="kw">const</span> <span class="var">PORT</span> <span class="op">=</span> <span class="num">3000</span><span class="op">;</span>
+
+<span class="cm">// Definir una ruta</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'¡Bienvenido a mi servidor Express!'</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="cm">// Iniciar el servidor</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">listen</span><span class="op">(</span><span class="var">PORT</span><span class="op">, () =&gt; {</span>
+  <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">`Servidor en http://localhost:</span><span class="op">${</span><span class="var">PORT</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
+<span class="op">});</span></div>
+      <p style="margin-top:15px;font-size:1.2rem;">Ejecutar: <span class="code-inline">node server.js</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: Ejecutar y probar -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>▶️ Ejecutar y probar</h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>1. Iniciar el servidor</h3>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+              <span class="term-title">Terminal</span>
+            </div>
+            <div class="terminal-body"><span class="prompt">$</span> node server.js
+<span style="color:#4CAF50;">Servidor en http://localhost:3000</span></div>
+          </div>
+          <p style="margin-top:15px;font-size:1.1rem;">💡 Para detenerlo: <span class="code-inline">Ctrl + C</span></p>
+          <p style="margin-top:10px;font-size:1.1rem;">💡 Modo dev: <span class="code-inline">node --watch server.js</span></p>
+        </div>
+        <div>
+          <h3>2. Abrir en el navegador</h3>
+          <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 25px rgba(0,0,0,0.4);">
+            <div style="background:#f0f0f0;padding:8px 15px;color:#333;font-size:0.9rem;font-family:monospace;">🌐 http://localhost:3000</div>
+            <div style="padding:30px;color:#333;text-align:left;">
+              <p style="font-size:1.2rem;">¡Bienvenido a mi servidor Express!</p>
+            </div>
+          </div>
+          <p style="margin-top:15px;font-size:1.1rem;">✅ El servidor responde con lo que definimos en <span class="code-inline">res.send()</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9: Métodos HTTP -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📡 Métodos HTTP</h2>
+      <p class="subtitle">Cada método tiene un propósito específico</p>
+      <div class="grid-2">
+        <div class="card">
+          <span class="http-badge http-get">GET</span>
+          <h3 style="display:inline-block;">Obtener datos</h3>
+          <p style="margin-top:10px;">Leer un recurso sin modificarlo.<br>Ej: cargar una página, listar productos.</p>
+        </div>
+        <div class="card">
+          <span class="http-badge http-post">POST</span>
+          <h3 style="display:inline-block;">Crear datos</h3>
+          <p style="margin-top:10px;">Enviar información nueva al servidor.<br>Ej: registro de usuario, envío de formulario.</p>
+        </div>
+        <div class="card">
+          <span class="http-badge http-put">PUT</span>
+          <h3 style="display:inline-block;">Actualizar datos</h3>
+          <p style="margin-top:10px;">Modificar un recurso existente.<br>Ej: editar perfil, cambiar contraseña.</p>
+        </div>
+        <div class="card">
+          <span class="http-badge http-delete">DELETE</span>
+          <h3 style="display:inline-block;">Eliminar datos</h3>
+          <p style="margin-top:10px;">Borrar un recurso del servidor.<br>Ej: eliminar cuenta, borrar producto.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: Definir rutas -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🛣️ Definir rutas en Express</h2>
+      <p style="font-size:1.15rem;margin-bottom:15px;">Sintaxis: <span class="code-inline">app.metodo(ruta, callback)</span></p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1rem;"><span class="cm">// GET: página principal</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'Hola desde /'</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="cm">// GET: página "Acerca de"</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/about'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'&lt;h1&gt;Acerca de nosotros&lt;/h1&gt;'</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="cm">// POST: recibir datos</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">post</span><span class="op">(</span><span class="str">'/contacto'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">'Mensaje recibido'</span><span class="op">);</span>
+<span class="op">});</span></div>
+      <p style="margin-top:15px;font-size:1.2rem;"><span class="accent">req</span>: petición del cliente · <span class="accent">res</span>: respuesta del servidor</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: Rutas con parámetros -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎯 Rutas con parámetros</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos capturar valores dinámicos desde la URL con <span class="code-inline">:parametro</span></p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="cm">// Parámetros de ruta</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/saludo/:nombre'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="kw">const</span> <span class="op">{</span> <span class="var">nombre</span> <span class="op">} =</span> <span class="var">req</span><span class="op">.</span>params<span class="op">;</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`¡Hola </span><span class="op">${</span><span class="var">nombre</span><span class="op">}</span><span class="str">!`</span><span class="op">);</span>
+<span class="op">});</span>
+
+<span class="cm">// Query strings: ?edad=30&pais=CL</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/buscar'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="kw">const</span> <span class="op">{</span> <span class="var">edad</span><span class="op">,</span> <span class="var">pais</span> <span class="op">} =</span> <span class="var">req</span><span class="op">.</span>query<span class="op">;</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`Edad: </span><span class="op">${</span><span class="var">edad</span><span class="op">}</span><span class="str">, País: </span><span class="op">${</span><span class="var">pais</span><span class="op">}</span><span class="str">`</span><span class="op">);</span>
+<span class="op">});</span></div>
+      <div class="grid-2" style="margin-top:15px;">
+        <div class="card" style="padding:15px 20px;">
+          <p style="font-size:1.1rem;"><span class="accent">/saludo/Carola</span> → "¡Hola Carola!"</p>
+        </div>
+        <div class="card" style="padding:15px 20px;">
+          <p style="font-size:1.1rem;"><span class="accent">/buscar?edad=30&pais=CL</span> → "Edad: 30, País: CL"</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: Contenido estático -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📁 Contenido estático</h2>
+      <p style="font-size:1.25rem;margin-bottom:15px;">Servir imágenes, CSS, JS y HTML desde una carpeta con una sola línea:</p>
+      <div class="code-block" style="max-width:900px;margin:0 auto;font-size:1.1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">use</span><span class="op">(</span><span class="var">express</span><span class="op">.</span><span class="fn">static</span><span class="op">(</span><span class="str">'public'</span><span class="op">));</span></div>
+      <div class="grid-2" style="margin-top:20px;">
+        <div>
+          <h3>📂 Estructura</h3>
+          <div class="file-tree" style="font-size:1rem;padding:15px 20px;"><span style="color:#FFD700;">mi-servidor/</span>
+├── <span style="color:#dcdcaa;">server.js</span>
+├── <span style="color:#dcdcaa;">package.json</span>
+└── <span style="color:#9cdcfe;">public/</span>
+    ├── index.html
+    ├── styles.css
+    └── img/
+        └── logo.png</div>
+        </div>
+        <div>
+          <h3>🌐 URLs generadas</h3>
+          <ul class="custom" style="font-size:1.1rem;">
+            <li><span class="code-inline">/index.html</span> → <span class="code-inline">public/index.html</span></li>
+            <li><span class="code-inline">/styles.css</span> → <span class="code-inline">public/styles.css</span></li>
+            <li><span class="code-inline">/img/logo.png</span> → <span class="code-inline">public/img/logo.png</span></li>
+          </ul>
+          <p style="margin-top:12px;font-size:1.05rem;">Con prefijo:</p>
+          <div class="code-block" style="font-size:0.9rem;margin-top:5px;"><span class="var">app</span><span class="op">.</span><span class="fn">use</span><span class="op">(</span><span class="str">'/assets'</span><span class="op">,</span> <span class="var">express</span><span class="op">.</span><span class="fn">static</span><span class="op">(</span><span class="str">'public'</span><span class="op">));</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13: Datos dinámicos -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎨 Datos dinámicos en la respuesta</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos armar respuestas HTML con datos del servidor. <span class="accent">Primera aproximación (sin motor de plantillas):</span></p>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/perfil'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="kw">const</span> <span class="var">usuario</span> <span class="op">= {</span>
+    <span class="var">nombre</span><span class="op">:</span> <span class="str">"Carola"</span><span class="op">,</span>
+    <span class="var">edad</span><span class="op">:</span> <span class="num">25</span><span class="op">,</span>
+    <span class="var">ciudad</span><span class="op">:</span> <span class="str">"Santiago"</span>
+  <span class="op">};</span>
+
+  <span class="var">res</span><span class="op">.</span><span class="fn">send</span><span class="op">(</span><span class="str">`
+    &lt;h1&gt;Perfil de </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">nombre</span><span class="op">}</span><span class="str">&lt;/h1&gt;
+    &lt;p&gt;Edad: </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">edad</span><span class="op">}</span><span class="str"> años&lt;/p&gt;
+    &lt;p&gt;Ciudad: </span><span class="op">${</span><span class="var">usuario</span><span class="op">.</span><span class="var">ciudad</span><span class="op">}</span><span class="str">&lt;/p&gt;
+  `</span><span class="op">);</span>
+<span class="op">});</span></div>
+      <p style="margin-top:20px;font-size:1.15rem;">⚠️ Esto funciona pero se vuelve <span class="highlight-yellow">insostenible</span> con páginas grandes. Necesitamos algo mejor…</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 14: Por qué modularizar -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🧩 ¿Por qué modularizar las vistas?</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>😰 Sin modularización</h3>
+          <ul class="custom" style="font-size:1.1rem;">
+            <li>El HTML se repite en cada ruta.</li>
+            <li>Cambiar el menú requiere editar 20 archivos.</li>
+            <li>El código del servidor mezcla lógica y presentación.</li>
+            <li>Difícil de mantener y probar.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>😎 Con motor de plantillas</h3>
+          <ul class="custom" style="font-size:1.1rem;">
+            <li>Plantillas <span class="accent">reutilizables</span>.</li>
+            <li>Cabecera y pie de página en un <strong>solo lugar</strong>.</li>
+            <li>Separación clara: <span class="accent">lógica</span> vs <span class="accent">vista</span>.</li>
+            <li>Datos dinámicos con sintaxis simple: <span class="code-inline">{{nombre}}</span></li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:25px;font-size:1.3rem;">👉 Después del ejercicio y descanso, veremos <span class="accent">Handlebars</span>.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 15: Ejercicio N°1 -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>💪 Ejercicio N°1</h2>
+      <h3>Servidor Web con Express</h3>
+      <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
+        <h3>🎯 Consigna</h3>
+        <ul class="custom" style="font-size:1.15rem;">
+          <li>Configura un servidor Express con al menos <strong>3 rutas GET</strong> (<span class="code-inline">/</span>, <span class="code-inline">/about</span>, <span class="code-inline">/contacto</span>).</li>
+          <li>Sirve archivos estáticos desde la carpeta <span class="code-inline">public/</span> (crea un <span class="code-inline">styles.css</span> y una imagen).</li>
+          <li>Crea una ruta con parámetro: <span class="code-inline">/usuario/:nombre</span> que salude a la persona.</li>
+          <li>Crea una ruta <span class="code-inline">/perfil</span> que responda con HTML dinámico usando un objeto de datos.</li>
+        </ul>
+        <p style="margin-top:12px;font-size:1.05rem;">💡 <strong>Bonus:</strong> agrega un middleware que registre cada solicitud en la consola.</p>
+        <span class="time-badge">⏱️ 30 minutos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 16: BREAK con timer manual y hora de término -->
+  <section class="slide break-slide" id="breakSlide">
+    <div class="slide-content">
+      <div class="break-emoji">☕</div>
+      <h2>¡Tiempo de descanso!</h2>
+      <p style="font-size:1.4rem;margin-bottom:10px;">Descanso de <span class="accent">30 minutos</span></p>
+
+      <!-- Botón de inicio (visible antes de arrancar) -->
+      <button class="start-timer-btn" id="startTimerBtn" onclick="startBreakTimer()">
+        🚀 Iniciar descanso
+      </button>
+
+      <!-- Hora de término (aparece al iniciar) -->
+      <div class="end-time-display" id="endTimeDisplay">
+        <span class="label">🕐 Volvemos a las</span>
+        <div class="time" id="endTime">--:--</div>
+      </div>
+
+      <!-- Temporizador circular (aparece al iniciar) -->
+      <div class="timer-container" id="timerContainer">
+        <svg class="timer-svg" width="280" height="280">
+          <circle class="timer-bg" cx="140" cy="140" r="120"></circle>
+          <circle class="timer-progress" id="timerProgress" cx="140" cy="140" r="120"></circle>
+        </svg>
+        <div class="timer-text" id="timerText">30:00</div>
+      </div>
+
+      <p class="break-message" id="breakMessage">Estira, hidrátate y despeja la mente 💧</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 17: ¿Qué es un motor de plantillas? -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji" style="font-size:5rem;">🎨</div>
+      <h2>¿Qué es un motor de plantillas?</h2>
+      <p style="font-size:1.5rem;max-width:1000px;margin:0 auto 25px;">Una herramienta que combina <span class="accent">HTML estático</span> con <span class="accent">datos dinámicos</span> para generar la página final.</p>
+      <div class="compare-2">
+        <div class="card">
+          <h3>❌ Sin motor</h3>
+          <div class="code-block" style="font-size:1rem;background:#1e1e1e;">&lt;h1&gt;Bienvenido&lt;/h1&gt;
+&lt;p&gt;Usuario: Juan&lt;/p&gt;</div>
+          <p style="margin-top:10px;font-size:1.05rem;">Solo sirve para un usuario específico. Rígido.</p>
+        </div>
+        <div class="card">
+          <h3>✅ Con motor de plantillas</h3>
+          <div class="code-block" style="font-size:1rem;background:#1e1e1e;">&lt;h1&gt;Bienvenido&lt;/h1&gt;
+&lt;p&gt;Usuario: <span class="hbs">{{nombre}}</span>&lt;/p&gt;</div>
+          <p style="margin-top:10px;font-size:1.05rem;">Reutilizable con cualquier usuario. Dinámico.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 18: Comparación motores -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚖️ Handlebars vs EJS vs Pug</h2>
+      <p class="subtitle">Los 3 motores más populares</p>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Motor</th>
+            <th>Sintaxis</th>
+            <th>Ejemplo</th>
+            <th>Ventajas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Handlebars</strong></td>
+            <td><span class="code-inline">{{variable}}</span></td>
+            <td><span class="code-inline">Hola {{nombre}}</span></td>
+            <td>Simple, modular, muy usado</td>
+          </tr>
+          <tr>
+            <td><strong>EJS</strong></td>
+            <td><span class="code-inline">&lt;%= variable %&gt;</span></td>
+            <td><span class="code-inline">Hola &lt;%= nombre %&gt;</span></td>
+            <td>Similar a HTML, permite JS embebido</td>
+          </tr>
+          <tr>
+            <td><strong>Pug</strong></td>
+            <td>Indentación</td>
+            <td><span class="code-inline">h1= nombre</span></td>
+            <td>Sintaxis reducida, muy legible</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:20px;font-size:1.25rem;">🎯 Hoy trabajaremos con <span class="accent">Handlebars (HBS)</span> por su simplicidad y sintaxis clara.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 19: Instalación Handlebars -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📥 Instalación de Handlebars</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Un solo comando:</p>
+      <div class="terminal" style="max-width:700px;margin:0 auto;">
+        <div class="terminal-header">
+          <div class="term-dot red"></div><div class="term-dot yellow"></div><div class="term-dot green"></div>
+          <span class="term-title">Terminal</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">$</span> npm install hbs
+
+added 5 packages in 2s
+<span style="color:#4CAF50;">✓</span> hbs agregado a dependencies</div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;max-width:900px;margin-left:auto;margin-right:auto;"><span class="code-inline">hbs</span> es el wrapper oficial de Handlebars para Express. Existe también <span class="code-inline">express-handlebars</span>, más completo pero un poco más complejo.</p>
+      <div class="code-block" style="max-width:600px;margin:20px auto;font-size:1rem;"><span class="str">"dependencies"</span><span class="op">:</span> <span class="op">{</span>
+  <span class="str">"express"</span><span class="op">:</span> <span class="str">"^4.21.1"</span><span class="op">,</span>
+  <span class="str">"hbs"</span><span class="op">:</span> <span class="str">"^4.2.0"</span>
+<span class="op">}</span></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 20: Configuración Handlebars -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>⚙️ Configurar Handlebars en Express</h2>
+      <div class="code-block" style="max-width:1000px;margin:0 auto;font-size:1.05rem;"><span class="kw">const</span> <span class="var">express</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'express'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">hbs</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'hbs'</span><span class="op">);</span>
+<span class="kw">const</span> <span class="var">path</span> <span class="op">=</span> <span class="fn">require</span><span class="op">(</span><span class="str">'path'</span><span class="op">);</span>
+
+<span class="kw">const</span> <span class="var">app</span> <span class="op">=</span> <span class="fn">express</span><span class="op">();</span>
+
+<span class="cm">// Configurar HBS como motor de plantillas</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">set</span><span class="op">(</span><span class="str">'view engine'</span><span class="op">,</span> <span class="str">'hbs'</span><span class="op">);</span>
+
+<span class="cm">// Indicar dónde están las vistas (por defecto: /views)</span>
+<span class="var">app</span><span class="op">.</span><span class="fn">set</span><span class="op">(</span><span class="str">'views'</span><span class="op">,</span> <span class="var">path</span><span class="op">.</span><span class="fn">join</span><span class="op">(</span>__dirname<span class="op">,</span> <span class="str">'views'</span><span class="op">));</span>
+
+<span class="var">app</span><span class="op">.</span><span class="fn">listen</span><span class="op">(</span><span class="num">3000</span><span class="op">, () =&gt;</span> <span class="fn">console</span><span class="op">.</span><span class="fn">log</span><span class="op">(</span><span class="str">'Servidor listo'</span><span class="op">));</span></div>
+      <p style="margin-top:15px;font-size:1.15rem;">Con esto, Express sabe que los archivos <span class="code-inline">.hbs</span> son plantillas.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 21: Estructura del proyecto -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>📂 Estructura del proyecto con Handlebars</h2>
+      <div class="grid-2" style="align-items:start;">
+        <div class="file-tree" style="font-size:1.05rem;"><span style="color:#FFD700;">mi-servidor/</span>
+├── <span style="color:#569cd6;">node_modules/</span>
+├── <span style="color:#9cdcfe;">public/</span>            <span class="cm"># estáticos</span>
+│   ├── styles.css
+│   └── logo.png
+├── <span style="color:#9cdcfe;">views/</span>             <span class="cm"># plantillas HBS</span>
+│   ├── home.hbs
+│   ├── perfil.hbs
+│   └── <span style="color:#9cdcfe;">partials/</span>      <span class="cm"># fragmentos</span>
+│       ├── header.hbs
+│       └── footer.hbs
+├── <span style="color:#dcdcaa;">server.js</span>
+└── <span style="color:#dcdcaa;">package.json</span></div>
+        <div>
+          <h3>🎯 Convenciones</h3>
+          <ul class="custom" style="font-size:1.15rem;">
+            <li>Las plantillas se guardan en <span class="code-inline">views/</span>.</li>
+            <li>Los archivos usan extensión <span class="code-inline">.hbs</span>.</li>
+            <li>Los fragmentos reutilizables van en <span class="code-inline">views/partials/</span>.</li>
+            <li>El motor las encuentra automáticamente.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 22: Primera vista con res.render -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🖼️ Primera vista con <span class="accent">res.render</span></h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>1. Ruta en <span class="code-inline">server.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'home'</span><span class="op">, {</span>
+    <span class="var">nombre</span><span class="op">:</span> <span class="str">'Carola'</span><span class="op">,</span>
+    <span class="var">edad</span><span class="op">:</span> <span class="num">25</span>
+  <span class="op">});</span>
+<span class="op">});</span></div>
+          <p style="margin-top:15px;font-size:1.1rem;"><span class="code-inline">res.render()</span> busca <span class="code-inline">views/home.hbs</span> y le pasa los datos.</p>
+        </div>
+        <div>
+          <h3>2. Plantilla <span class="code-inline">views/home.hbs</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html&gt;</span>
+<span class="tag">&lt;head&gt;&lt;title&gt;</span>Inicio<span class="tag">&lt;/title&gt;&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>Hola, <span class="hbs">{{nombre}}</span><span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;p&gt;</span>Edad: <span class="hbs">{{edad}}</span> años<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></div>
+          <p style="margin-top:15px;font-size:1.1rem;">Las llaves dobles <span class="code-inline">{{}}</span> son marcadores.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 23: Iteraciones con each -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🔁 Iterar listas con <span class="accent">{{#each}}</span></h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3><span class="code-inline">server.js</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/productos'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'productos'</span><span class="op">, {</span>
+    <span class="var">titulo</span><span class="op">:</span> <span class="str">'Catálogo'</span><span class="op">,</span>
+    <span class="var">productos</span><span class="op">:</span> <span class="op">[</span>
+      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Laptop'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">899</span> <span class="op">},</span>
+      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Mouse'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">25</span> <span class="op">},</span>
+      <span class="op">{</span> <span class="var">nombre</span><span class="op">:</span> <span class="str">'Teclado'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span> <span class="num">75</span> <span class="op">}</span>
+    <span class="op">]</span>
+  <span class="op">});</span>
+<span class="op">});</span></div>
+        </div>
+        <div>
+          <h3><span class="code-inline">views/productos.hbs</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;h1&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h1&gt;</span>
+
+<span class="tag">&lt;ul&gt;</span>
+  <span class="hbs">{{#each productos}}</span>
+    <span class="tag">&lt;li&gt;</span>
+      <span class="hbs">{{nombre}}</span> - $<span class="hbs">{{precio}}</span>
+    <span class="tag">&lt;/li&gt;</span>
+  <span class="hbs">{{/each}}</span>
+<span class="tag">&lt;/ul&gt;</span></div>
+          <p style="margin-top:12px;font-size:1.05rem;">Dentro del <span class="code-inline">each</span>, <span class="code-inline">this</span> es el elemento actual.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 24: Condicionales -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🔀 Condicionales con <span class="accent">{{#if}}</span></h2>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>Sintaxis básica</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{#if usuario}}</span>
+  <span class="tag">&lt;p&gt;</span>Hola, <span class="hbs">{{usuario.nombre}}</span><span class="tag">&lt;/p&gt;</span>
+<span class="hbs">{{else}}</span>
+  <span class="tag">&lt;a href="/login"&gt;</span>Iniciar sesión<span class="tag">&lt;/a&gt;</span>
+<span class="hbs">{{/if}}</span></div>
+        </div>
+        <div>
+          <h3>Con <span class="code-inline">{{#unless}}</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{#unless productos}}</span>
+  <span class="tag">&lt;p&gt;</span>No hay productos<span class="tag">&lt;/p&gt;</span>
+<span class="hbs">{{/unless}}</span>
+
+<span class="hbs">{{#each productos}}</span>
+  <span class="tag">&lt;li&gt;</span><span class="hbs">{{nombre}}</span><span class="tag">&lt;/li&gt;</span>
+<span class="hbs">{{/each}}</span></div>
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;"><span class="accent">unless</span> es lo opuesto a <span class="accent">if</span>: se ejecuta cuando el valor es <em>falsy</em> (undefined, null, false, 0, "", []).</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 25: Helpers personalizados -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🛠️ Helpers personalizados</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Funciones que <strong>transforman datos</strong> dentro de la vista.</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3><span class="code-inline">server.js</span></h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="cm">// Helper: mayúsculas</span>
+<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'gritar'</span><span class="op">, (</span><span class="var">texto</span><span class="op">) =&gt;</span> <span class="op">{</span>
+  <span class="kw">return</span> <span class="var">texto</span><span class="op">.</span><span class="fn">toUpperCase</span><span class="op">();</span>
+<span class="op">});</span>
+
+<span class="cm">// Helper: formatear precio</span>
+<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'clp'</span><span class="op">, (</span><span class="var">valor</span><span class="op">) =&gt;</span> <span class="op">{</span>
+  <span class="kw">return</span> <span class="var">valor</span><span class="op">.</span><span class="fn">toLocaleString</span><span class="op">(</span><span class="str">'es-CL'</span><span class="op">, {</span>
+    <span class="var">style</span><span class="op">:</span> <span class="str">'currency'</span><span class="op">,</span>
+    <span class="var">currency</span><span class="op">:</span> <span class="str">'CLP'</span>
+  <span class="op">});</span>
+<span class="op">});</span></div>
+        </div>
+        <div>
+          <h3>En la plantilla</h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="tag">&lt;h1&gt;</span><span class="hbs">{{gritar titulo}}</span><span class="tag">&lt;/h1&gt;</span>
+<span class="cm">&lt;!-- "OFERTAS DEL MES" --&gt;</span>
+
+<span class="tag">&lt;p&gt;</span>Precio: <span class="hbs">{{clp precio}}</span><span class="tag">&lt;/p&gt;</span>
+<span class="cm">&lt;!-- "Precio: $12.990" --&gt;</span>
+
+<span class="hbs">{{#each productos}}</span>
+  <span class="tag">&lt;li&gt;</span><span class="hbs">{{nombre}}</span> - <span class="hbs">{{clp precio}}</span><span class="tag">&lt;/li&gt;</span>
+<span class="hbs">{{/each}}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 26: Páginas parciales -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🧩 Páginas parciales (partials)</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Fragmentos reutilizables como <strong>header</strong> y <strong>footer</strong>.</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>1. Registrar en <span class="code-inline">server.js</span></h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="var">hbs</span><span class="op">.</span><span class="fn">registerPartials</span><span class="op">(</span>
+  __dirname <span class="op">+</span> <span class="str">'/views/partials'</span>
+<span class="op">);</span></div>
+          <h3 style="margin-top:20px;">2. Crear <span class="code-inline">partials/header.hbs</span></h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="tag">&lt;header&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>Mi Sitio<span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;nav&gt;</span>
+    <span class="tag">&lt;a href="/"&gt;</span>Inicio<span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;a href="/about"&gt;</span>Nosotros<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/nav&gt;</span>
+<span class="tag">&lt;/header&gt;</span></div>
+        </div>
+        <div>
+          <h3>3. Usar en cualquier vista</h3>
+          <div class="code-block" style="font-size:0.95rem;"><span class="hbs">{{&gt; header}}</span>
+
+<span class="tag">&lt;main&gt;</span>
+  <span class="tag">&lt;h2&gt;</span>Página principal<span class="tag">&lt;/h2&gt;</span>
+  <span class="tag">&lt;p&gt;</span>Bienvenido a nuestro sitio<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/main&gt;</span>
+
+<span class="hbs">{{&gt; footer}}</span></div>
+          <p style="margin-top:12px;font-size:1.05rem;">La sintaxis <span class="code-inline">{{> nombre}}</span> incluye el parcial.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 27: Parciales con datos -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎁 Parciales con datos propios</h2>
+      <p style="font-size:1.2rem;margin-bottom:15px;">Podemos pasarle contexto a un parcial:</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3>Parcial <span class="code-inline">partials/card.hbs</span></h3>
+          <div class="code-block" style="font-size:1rem;"><span class="tag">&lt;div class="card"&gt;</span>
+  <span class="tag">&lt;h3&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h3&gt;</span>
+  <span class="tag">&lt;p&gt;</span><span class="hbs">{{descripcion}}</span><span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/div&gt;</span></div>
+        </div>
+        <div>
+          <h3>Uso en la vista principal</h3>
+          <div class="code-block" style="font-size:1rem;"><span class="hbs">{{&gt; card titulo="Node.js"
+        descripcion="Backend con JS"}}</span>
+
+<span class="hbs">{{&gt; card titulo="Express"
+        descripcion="Framework web"}}</span>
+
+<span class="cm">&lt;!-- Con iteración --&gt;</span>
+<span class="hbs">{{#each cursos}}</span>
+  <span class="hbs">{{&gt; card this}}</span>
+<span class="hbs">{{/each}}</span></div>
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:1.2rem;">💡 Súper útil para <span class="accent">componentes reutilizables</span> — cards, botones, alertas.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 28: Ejemplo integrado -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎬 Ejemplo integrado</h2>
+      <p style="font-size:1.15rem;margin-bottom:12px;">Todo junto: partials + each + helper</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <h3><span class="code-inline">server.js</span></h3>
+          <div class="code-block" style="font-size:0.9rem;"><span class="var">hbs</span><span class="op">.</span><span class="fn">registerPartials</span><span class="op">(</span>__dirname <span class="op">+</span> <span class="str">'/views/partials'</span><span class="op">);</span>
+
+<span class="var">hbs</span><span class="op">.</span><span class="fn">registerHelper</span><span class="op">(</span><span class="str">'clp'</span><span class="op">, (</span><span class="var">v</span><span class="op">) =&gt;</span>
+  <span class="var">v</span><span class="op">.</span><span class="fn">toLocaleString</span><span class="op">(</span><span class="str">'es-CL'</span><span class="op">, {</span>
+    <span class="var">style</span><span class="op">:</span><span class="str">'currency'</span><span class="op">,</span><span class="var">currency</span><span class="op">:</span><span class="str">'CLP'</span>
+  <span class="op">}));</span>
+
+<span class="var">app</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="str">'/tienda'</span><span class="op">, (</span><span class="var">req</span><span class="op">,</span> <span class="var">res</span><span class="op">) =&gt; {</span>
+  <span class="var">res</span><span class="op">.</span><span class="fn">render</span><span class="op">(</span><span class="str">'tienda'</span><span class="op">, {</span>
+    <span class="var">titulo</span><span class="op">:</span> <span class="str">'Mi Tienda'</span><span class="op">,</span>
+    <span class="var">productos</span><span class="op">: [</span>
+      <span class="op">{</span><span class="var">nombre</span><span class="op">:</span><span class="str">'Laptop'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span><span class="num">899000</span><span class="op">},</span>
+      <span class="op">{</span><span class="var">nombre</span><span class="op">:</span><span class="str">'Mouse'</span><span class="op">,</span> <span class="var">precio</span><span class="op">:</span><span class="num">15990</span><span class="op">}</span>
+    <span class="op">]</span>
+  <span class="op">});</span>
+<span class="op">});</span></div>
+        </div>
+        <div>
+          <h3><span class="code-inline">views/tienda.hbs</span></h3>
+          <div class="code-block" style="font-size:0.9rem;"><span class="hbs">{{&gt; header}}</span>
+
+<span class="tag">&lt;h1&gt;</span><span class="hbs">{{titulo}}</span><span class="tag">&lt;/h1&gt;</span>
+
+<span class="hbs">{{#if productos}}</span>
+  <span class="tag">&lt;ul&gt;</span>
+    <span class="hbs">{{#each productos}}</span>
+      <span class="tag">&lt;li&gt;</span>
+        <span class="hbs">{{nombre}}</span> - <span class="hbs">{{clp precio}}</span>
+      <span class="tag">&lt;/li&gt;</span>
+    <span class="hbs">{{/each}}</span>
+  <span class="tag">&lt;/ul&gt;</span>
+<span class="hbs">{{else}}</span>
+  <span class="tag">&lt;p&gt;</span>Sin productos<span class="tag">&lt;/p&gt;</span>
+<span class="hbs">{{/if}}</span>
+
+<span class="hbs">{{&gt; footer}}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 29: Ejercicio N°2 -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>💪 Ejercicio N°2</h2>
+      <h3>Handlebars avanzado: mini catálogo</h3>
+      <div class="exercise-card" style="max-width:1000px;margin:0 auto;">
+        <h3>🎯 Consigna</h3>
+        <p style="font-size:1.1rem;margin-bottom:12px;">Crea una app con Express + Handlebars que muestre un catálogo con:</p>
+        <ul class="custom" style="font-size:1.1rem;">
+          <li>Ruta <span class="code-inline">/</span> que renderice <span class="code-inline">home.hbs</span> con título y mensaje de bienvenida.</li>
+          <li>Ruta <span class="code-inline">/cursos</span> que renderice una lista dinámica de al menos 4 cursos (nombre + duración + precio).</li>
+          <li>Un <strong>helper</strong> personalizado que formatee el precio en pesos chilenos.</li>
+          <li>Un <strong>helper</strong> que ponga el título del curso en mayúsculas.</li>
+          <li>Parciales <span class="code-inline">header.hbs</span> y <span class="code-inline">footer.hbs</span> usados en ambas páginas.</li>
+          <li>Un condicional que muestre "Sin cursos disponibles" si la lista está vacía.</li>
+        </ul>
+        <span class="time-badge">⏱️ 30 minutos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 30: Resumen -->
+  <section class="slide">
+    <div class="slide-content">
+      <h2>🎉 Resumen de la clase</h2>
+      <p class="subtitle">Lo que logramos hoy</p>
+      <div class="grid-2">
+        <div>
+          <div class="summary-item"><span class="check">✓</span> Configurar un servidor Express desde cero.</div>
+          <div class="summary-item"><span class="check">✓</span> Definir rutas HTTP (GET, POST) con parámetros.</div>
+          <div class="summary-item"><span class="check">✓</span> Servir contenido estático con <span class="code-inline">express.static</span>.</div>
+          <div class="summary-item"><span class="check">✓</span> Enviar datos dinámicos desde el servidor.</div>
+        </div>
+        <div>
+          <div class="summary-item"><span class="check">✓</span> Entender qué es un motor de plantillas.</div>
+          <div class="summary-item"><span class="check">✓</span> Instalar y configurar Handlebars.</div>
+          <div class="summary-item"><span class="check">✓</span> Usar <span class="code-inline">{{#each}}</span> y <span class="code-inline">{{#if}}</span> en las vistas.</div>
+          <div class="summary-item"><span class="check">✓</span> Crear helpers y parciales para modularizar.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 31: Consultas -->
+  <section class="slide">
+    <div class="slide-content">
+      <div class="big-emoji pulse">🤔</div>
+      <h1 style="font-size:4.5rem;">¿Alguna consulta?</h1>
+      <p style="font-size:1.6rem;margin-top:20px;opacity:0.9;">¡Es el momento de resolver todas las dudas!</p>
+      <p style="font-size:1.3rem;margin-top:30px;">👉 Nos vemos en la próxima clase con más Node y Express 🚀</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav-buttons">
+  <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Anterior</button>
+  <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Siguiente →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentIndex = 0;
+  document.getElementById('totalSlides').textContent = totalSlides;
+
+  function showSlide(idx) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    document.getElementById('currentSlide').textContent = idx + 1;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === totalSlides - 1;
+  }
+  function nextSlide() { if (currentIndex < totalSlides - 1) { currentIndex++; showSlide(currentIndex); } }
+  function prevSlide() { if (currentIndex > 0) { currentIndex--; showSlide(currentIndex); } }
+
+  document.addEventListener('keydown', (e) => {
+    // Evitar que el espacio dispare el botón enfocado y avance
+    if (e.target.tagName === 'BUTTON' && e.key === ' ') return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  });
+
+  // === Temporizador del descanso (manual, con botón de inicio) ===
+  let timerStarted = false;
+  function startBreakTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+
+    const duration = 30 * 60; // 30 minutos en segundos
+    const now = new Date();
+    const endTime = new Date(now.getTime() + duration * 1000);
+    const endStr = endTime.toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Mostrar hora de término
+    document.getElementById('endTime').textContent = endStr;
+    document.getElementById('endTimeDisplay').classList.add('active');
+
+    // Ocultar botón y mostrar temporizador
+    document.getElementById('startTimerBtn').style.display = 'none';
+    document.getElementById('timerContainer').classList.add('active');
+    document.getElementById('breakMessage').classList.add('active');
+
+    // Configurar círculo SVG
+    const circle = document.getElementById('timerProgress');
+    const timerText = document.getElementById('timerText');
+    const radius = 120;
+    const circumference = 2 * Math.PI * radius;
+    circle.style.strokeDasharray = circumference;
+    circle.style.strokeDashoffset = 0;
+
+    let remaining = duration;
+    const interval = setInterval(() => {
+      remaining--;
+      if (remaining < 0) {
+        clearInterval(interval);
+        timerText.textContent = "¡Volvemos!";
+        timerText.style.fontSize = "2rem";
+        return;
+      }
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      timerText.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      const progress = remaining / duration;
+      circle.style.strokeDashoffset = circumference * (1 - progress);
+    }, 1000);
+  }
+
+  showSlide(0);
+</script>
+</body>
+</html>
